@@ -1,9 +1,8 @@
-# ISO 14229-1 Protocol
-
 [![Latest version](https://img.shields.io/crates/v/iso14229-1.svg)](https://crates.io/crates/iso14229-1)
 [![Documentation](https://docs.rs/bleasy/badge.svg)](https://docs.rs/iso14229-1)
 ![LGPL](https://img.shields.io/badge/license-LGPL-green.svg)
 ![MIT](https://img.shields.io/badge/license-MIT-yellow.svg)
+![Downloads](https://img.shields.io/crates/d/iso14229-1)
 
 ## Overview
 

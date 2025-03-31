@@ -1,9 +1,8 @@
-# ISO 13400-2 Protocol 
-
 [![Latest version](https://img.shields.io/crates/v/iso13400-2.svg)](https://crates.io/crates/iso13400-2)
 [![Documentation](https://docs.rs/iso13400-2/badge.svg)](https://docs.rs/iso13400-2)
 ![LGPL](https://img.shields.io/badge/license-LGPL-green.svg)
 ![MIT](https://img.shields.io/badge/license-MIT-yellow.svg)
+![Downloads](https://img.shields.io/crates/d/iso13400-2)
 
 ## Overview
 

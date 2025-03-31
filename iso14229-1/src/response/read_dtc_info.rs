@@ -737,7 +737,7 @@ impl ResponseData for DTCInfo {
 
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -753,7 +753,7 @@ impl ResponseData for DTCInfo {
             DTCReportType::ReportDTCSnapshotIdentification => {
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let number = data[offset];
                     offset += 1;
@@ -767,7 +767,7 @@ impl ResponseData for DTCInfo {
                 })
             }
             DTCReportType::ReportDTCSnapshotRecordByDTCNumber => {
-                let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
                 let status = data[offset];
                 offset += 1;
@@ -840,7 +840,7 @@ impl ResponseData for DTCInfo {
                 offset += 1;
                 let func_unit = data[offset];
                 offset += 1;
-                let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
                 let status = data[offset];
                 offset += 1;
@@ -851,7 +851,7 @@ impl ResponseData for DTCInfo {
                     offset += 1;
                     let func_unit = data[offset];
                     offset += 1;
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -879,7 +879,7 @@ impl ResponseData for DTCInfo {
                     offset += 1;
                     let func_unit = data[offset];
                     offset += 1;
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -899,7 +899,7 @@ impl ResponseData for DTCInfo {
 
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -918,7 +918,7 @@ impl ResponseData for DTCInfo {
 
                 let mut record = None;
                 if data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
 
@@ -936,7 +936,7 @@ impl ResponseData for DTCInfo {
 
                 let mut record = None;
                 if data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
 
@@ -954,7 +954,7 @@ impl ResponseData for DTCInfo {
 
                 let mut record = None;
                 if data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
 
@@ -972,7 +972,7 @@ impl ResponseData for DTCInfo {
 
                 let mut record = None;
                 if data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
 
@@ -991,7 +991,7 @@ impl ResponseData for DTCInfo {
 
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -1006,7 +1006,7 @@ impl ResponseData for DTCInfo {
             }
             #[cfg(any(feature = "std2006", feature = "std2013"))]
             DTCReportType::ReportMirrorMemoryDTCExtDataRecordByDTCNumber => {
-                let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
                 let status = data[offset];
                 offset += 1;
@@ -1080,7 +1080,7 @@ impl ResponseData for DTCInfo {
 
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -1096,7 +1096,7 @@ impl ResponseData for DTCInfo {
             DTCReportType::ReportDTCFaultDetectionCounter => {
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let counter = data[offset];
                     offset += 1;
@@ -1114,7 +1114,7 @@ impl ResponseData for DTCInfo {
 
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -1140,7 +1140,7 @@ impl ResponseData for DTCInfo {
 
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -1156,7 +1156,7 @@ impl ResponseData for DTCInfo {
             DTCReportType::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber => {
                 let mem_selection = data[offset];
                 offset += 1;
-                let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
                 let status = data[offset];
                 offset += 1;
@@ -1219,7 +1219,7 @@ impl ResponseData for DTCInfo {
                 let mut records = Vec::new();
                 while data_len > offset {
                     utils::data_length_check(data_len, offset + 4, false)?;
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -1255,7 +1255,7 @@ impl ResponseData for DTCInfo {
                 while data_len > offset {
                     let severity = data[offset];
                     offset += 1;
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;
@@ -1288,7 +1288,7 @@ impl ResponseData for DTCInfo {
 
                     let mut records = Vec::new();
                     while data_len > offset {
-                        let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                        let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                         offset += 3;
                         let status = data[offset];
                         offset += 1;
@@ -1321,7 +1321,7 @@ impl ResponseData for DTCInfo {
 
                 let mut records = Vec::new();
                 while data_len > offset {
-                    let dtc = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                    let dtc = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                     offset += 3;
                     let status = data[offset];
                     offset += 1;

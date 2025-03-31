@@ -76,24 +76,25 @@ macro_rules! enum_extend {
 pub struct U24(pub(crate) u32);
 
 impl U24 {
+    pub const MAX: Self = Self(0x00FF_FFFF);
     #[inline]
     pub fn new(val: u32) -> Self {
-        Self(val)
+        Self (val & Self::MAX.0)
     }
     #[inline]
-    pub fn from_be_bytes(data: [u8; 4]) -> Self {
-        U24(u32::from_be_bytes(data))
+    pub fn from_be_bytes(data: [u8; 3]) -> Self {
+        U24(u32::from_be_bytes([0x00, data[0], data[1], data[2]]))
     }
 
-    #[inline]
-    pub fn from_le_bytes(data: [u8; 4]) -> Self {
-        U24(u32::from_le_bytes(data))
-    }
-
-    #[inline]
-    pub fn from_ne_bytes(data: [u8; 4]) -> Self {
-        U24(u32::from_ne_bytes(data))
-    }
+    // #[inline]
+    // pub fn from_le_bytes(data: [u8; 4]) -> Self {
+    //     U24(u32::from_le_bytes(data))
+    // }
+    //
+    // #[inline]
+    // pub fn from_ne_bytes(data: [u8; 4]) -> Self {
+    //     U24(u32::from_ne_bytes(data))
+    // }
 }
 
 impl<'a> TryFrom<&'a [u8]> for U24 {
@@ -122,7 +123,7 @@ impl Into<Vec<u8>> for U24 {
 impl From<u32> for U24 {
     #[inline]
     fn from(value: u32) -> Self {
-        Self (value & 0xFFFFFF)
+        Self::new(value)
     }
 }
 

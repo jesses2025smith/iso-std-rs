@@ -5,8 +5,8 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "A ISO 14229-1 protocol."
-homepage = "https://github.com/zhuyu4839/iso14229-1"
-repository = "https://github.com/zhuyu4839/iso14229-1"
+homepage = "https://github.com/zhuyu4839/ecu-proto-rs/tree/develop/is14229-1"
+repository.workspace = true
 keywords = [
     "automotive",
     "UDS",

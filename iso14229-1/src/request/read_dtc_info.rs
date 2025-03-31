@@ -287,7 +287,7 @@ impl RequestData for DTCInfo {
             DTCReportType::ReportDTCByStatusMask =>  Ok(Self::ReportDTCByStatusMask(data[offset])),
             DTCReportType::ReportDTCSnapshotIdentification => Ok(Self::ReportDTCSnapshotIdentification),
             DTCReportType::ReportDTCSnapshotRecordByDTCNumber => {
-                let mask_record = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let mask_record = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
                 let record_num = data[offset];
 
@@ -298,7 +298,7 @@ impl RequestData for DTCInfo {
             }
             DTCReportType::ReportDTCStoredDataByRecordNumber => Ok(Self::ReportDTCStoredDataByRecordNumber { stored_num: data[offset], }),
             DTCReportType::ReportDTCExtDataRecordByDTCNumber => {
-                let mask_record = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let mask_record = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
                 let extra_num = data[offset];
 
@@ -328,7 +328,7 @@ impl RequestData for DTCInfo {
                 })
             },
             DTCReportType::ReportSeverityInformationOfDTC => {
-                let mask_record = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let mask_record = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
 
                 Ok(Self::ReportSeverityInformationOfDTC {
                     mask_record,
@@ -343,7 +343,7 @@ impl RequestData for DTCInfo {
             DTCReportType::ReportMirrorMemoryDTCByStatusMask => Ok(Self::ReportMirrorMemoryDTCByStatusMask(data[offset])),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
             DTCReportType::ReportMirrorMemoryDTCExtDataRecordByDTCNumber => {
-                let mask_record = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let mask_record = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
                 let extra_num = data[offset];
 
@@ -380,7 +380,7 @@ impl RequestData for DTCInfo {
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
             DTCReportType::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber => {
-                let mask_record = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let mask_record = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
 
                 Ok(Self::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber {
@@ -391,7 +391,7 @@ impl RequestData for DTCInfo {
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
             DTCReportType::ReportUserDefMemoryDTCExtDataRecordByDTCNumber => {
-                let mask_record = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+                let mask_record = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
                 offset += 3;
 
                 Ok(Self::ReportUserDefMemoryDTCExtDataRecordByDTCNumber {
