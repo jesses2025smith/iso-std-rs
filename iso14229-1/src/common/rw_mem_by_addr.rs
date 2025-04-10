@@ -1,6 +1,7 @@
 //! Commons of Service 23|3D
 
-use crate::{AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, utils, ByteOrder};
+use commty::ByteOrder;
+use crate::{AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, utils};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MemoryLocation {

@@ -8,6 +8,7 @@ pub use constant::*;
 mod error;
 pub use error::*;
 
+use commty::ByteOrder;
 use std::{collections::HashMap, fmt::{Display, Formatter}};
 
 enum_extend! (
@@ -84,27 +85,6 @@ impl Display for Service {
             Self::ResponseOnEvent => write!(f, "ResponseOnEvent"),
             Self::LinkCtrl => write!(f, "LinkControl"),
             Self::NRC => write!(f, "Negative Response with Code"),
-        }
-    }
-}
-
-#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum ByteOrder {
-    Big,
-    #[default]
-    Little,
-    #[cfg(target_endian = "little")]
-    Native,
-    #[cfg(target_endian = "big")]
-    Native,
-}
-
-impl ByteOrder {
-    pub fn is_little_endian(&self) -> bool {
-        match self {
-            Self::Big => false,
-            Self::Little => true,
-            Self::Native => cfg!(target_endian = "little"),
         }
     }
 }

@@ -1,9 +1,9 @@
 //! response of Service 34
 
-
+use commty::ByteOrder;
 use std::collections::HashSet;
 use lazy_static::lazy_static;
-use crate::{ByteOrder, Configuration, error::Iso14229Error, LengthFormatIdentifier, response::{Code, Response, SubFunction}, ResponseData, utils, Service};
+use crate::{Configuration, error::Iso14229Error, LengthFormatIdentifier, response::{Code, Response, SubFunction}, ResponseData, utils, Service};
 
 lazy_static!(
     pub static ref REQUEST_DOWNLOAD_NEGATIVES: HashSet<Code> = HashSet::from([

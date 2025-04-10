@@ -9,7 +9,6 @@ mod frame;
 pub use crate::can::*;
 pub use crate::constants::*;
 pub use crate::core::{
-    ByteOrder,
     FlowControlContext,
     FlowControlState,
     Event as IsoTpEvent,

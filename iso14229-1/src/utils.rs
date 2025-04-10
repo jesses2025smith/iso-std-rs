@@ -163,12 +163,8 @@ pub(crate) fn u128_to_vec_fix(value: u128, bo: ByteOrder) -> Vec<u8> {
 
     result.resize(count, Default::default());
 
-    match bo {
-        ByteOrder::Big => result.reverse(),
-        ByteOrder::Little => {},
-        ByteOrder::Native => if !bo.is_little_endian() {
-            result.reverse();
-        },
+    if bo.is_big() {
+        result.reverse();
     }
 
     result
@@ -178,12 +174,8 @@ pub(crate) fn u128_to_vec(value: u128, len: usize, bo: ByteOrder) -> Vec<u8> {
     let mut result = value.to_le_bytes().to_vec();
     result.resize(len, Default::default());
 
-    match bo {
-        ByteOrder::Big => result.reverse(),
-        ByteOrder::Little => {},
-        ByteOrder::Native => if !bo.is_little_endian() {
-            result.reverse();
-        },
+    if bo.is_big() {
+        result.reverse();
     }
 
     result
@@ -192,12 +184,8 @@ pub(crate) fn u128_to_vec(value: u128, len: usize, bo: ByteOrder) -> Vec<u8> {
 #[inline]
 pub(crate) fn slice_to_u128(slice: &[u8], bo: ByteOrder) -> u128 {
     let mut data = slice.to_vec();
-    match bo {
-        ByteOrder::Big => data.reverse(),
-        ByteOrder::Little => {},
-        ByteOrder::Native => if !bo.is_little_endian() {
-            data.reverse();
-        },
+    if bo.is_big() {
+        data.reverse();
     }
 
     data.resize(std::mem::size_of::<u128>(), Default::default());

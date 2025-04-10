@@ -12,9 +12,9 @@ interesting use cases.
 
 Of course, we're also happy to accept code contributions for outstanding feature requests!
 
-* Please fork [develop](https://github.com/zhuyu4839/ecu-proto-rs/tree/develop) branch
+* Please fork [develop](https://github.com/jesses2025smith/ecu-proto-rs/tree/develop) branch
 
 ### Contributors
-<a href="https://github.com/zhuyu4839/ecu-proto-rs/graphs/contributors">
-  <img src="https://contributors-img.web.app/image?repo=zhuyu4839/ecu-proto-rs" alt=""/>
+<a href="https://github.com/jesses2025smith/ecu-proto-rs/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=jesses2025smith/ecu-proto-rs" alt=""/>
 </a>

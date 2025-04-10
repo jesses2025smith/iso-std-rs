@@ -24,18 +24,6 @@ bitflags! {
     }
 }
 
-/// byte order define.
-#[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
-pub enum ByteOrder {
-    /// Motorola byte order
-    Big,
-    /// Intel byte order
-    #[default]
-    Little,
-    /// The native byte order depends on your CPU
-    Native,
-}
-
 impl Display for State {
     #[allow(deprecated)]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
