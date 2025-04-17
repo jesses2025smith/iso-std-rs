@@ -35,37 +35,37 @@ impl Display for State {
             first = false;
         }
         if self.contains(State::WaitFirst) {
-            write!(f, "{}", format!("{}WaitFirst", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}WaitFirst", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitFlowCtrl) {
-            write!(f, "{}", format!("{}WaitFlowCtrl", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}WaitFlowCtrl", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitData) {
-            write!(f, "{}", format!("{}WaitData", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}WaitData", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitBusy) {
-            write!(f, "{}", format!("{}WaitBusy", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}WaitBusy", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::ResponsePending) {
-            write!(f, "{}", format!("{}ResponsePending", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}ResponsePending", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::Sending) {
-            write!(f, "{}", format!("{}Sending", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}Sending", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::Error) {
-            write!(f, "{}", format!("{}Error", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}Error", if first { "" } else { " | " }))?;
             idle = false;
         }
         if idle {
@@ -112,10 +112,10 @@ impl TryFrom<u8> for FlowControlState {
     }
 }
 
-impl Into<u8> for FlowControlState {
+impl From<FlowControlState> for u8 {
     #[inline]
-    fn into(self) -> u8 {
-        self as u8
+    fn from(val: FlowControlState) -> Self {
+        val as u8
     }
 }
 

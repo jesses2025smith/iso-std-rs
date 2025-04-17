@@ -30,12 +30,12 @@ impl TryFrom<&[u8]> for HeaderNegative {
     }
 }
 
-impl Into<Vec<u8>> for HeaderNegative {
-    fn into(self) -> Vec<u8> {
+impl From<HeaderNegative> for Vec<u8> {
+    fn from(val: HeaderNegative) -> Self {
         let mut result = HEADER_NEGATIVE.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = HeaderNegative::length() as u32;
         result.extend(length.to_be_bytes());
-        result.push(self.code.into());
+        result.push(val.code.into());
 
         result
     }
@@ -63,7 +63,6 @@ pub struct VehicleID {  // 0x0004
 }
 
 impl VehicleID {
-    #[must_use]
     pub fn new(
         vin: String,
         address: LogicAddress,
@@ -72,7 +71,7 @@ impl VehicleID {
         further_act: FurtherAction,
         sync_status: Option<SyncStatus>,
     ) -> Result<Self, Iso13400Error> {
-        let vin_len = vin.as_bytes().len();
+        let vin_len = vin.len();
         if vin_len != LENGTH_OF_VIN {
             return Err(Iso13400Error::InputError(
                 format!("length of vin must equal {}", LENGTH_OF_VIN)
@@ -120,21 +119,21 @@ impl TryFrom<&[u8]> for VehicleID {
     }
 }
 
-impl Into<Vec<u8>> for VehicleID {
-    fn into(self) -> Vec<u8> {
+impl From<VehicleID> for Vec<u8> {
+    fn from(val: VehicleID) -> Self {
         let mut result = UDP_RESP_VEHICLE_IDENTIFIER.to_be_bytes().to_vec();
-        let mut length = Self::length() as u32;
-        if self.sync_status.is_some() {
+        let mut length = VehicleID::length() as u32;
+        if val.sync_status.is_some() {
             length += 1;
         }
         result.extend(length.to_be_bytes());
-        result.extend(self.vin.as_bytes());
-        let address: u16 = self.address.into();
+        result.extend(val.vin.as_bytes());
+        let address: u16 = val.address.into();
         result.extend(address.to_be_bytes());
-        result.append(&mut self.eid.into());
-        result.append(&mut self.gid.into());
-        result.push(self.further_act.into());
-        if let Some(status) = self.sync_status {
+        result.append(&mut val.eid.into());
+        result.append(&mut val.gid.into());
+        result.push(val.further_act.into());
+        if let Some(status) = val.sync_status {
             result.push(status.into());
         }
 
@@ -192,18 +191,18 @@ impl TryFrom<&[u8]> for EntityStatus {
     }
 }
 
-impl Into<Vec<u8>> for EntityStatus {
-    fn into(self) -> Vec<u8> {
+impl From<EntityStatus> for Vec<u8> {
+    fn from(val: EntityStatus) -> Self {
         let mut result = UDP_RESP_ENTITY_STATUS.to_be_bytes().to_vec();
-        let mut length = Self::length() as u32;
-        if self.max_data_size.is_some() {
+        let mut length = EntityStatus::length() as u32;
+        if val.max_data_size.is_some() {
             length += 4;
         }
         result.extend(length.to_be_bytes());
-        result.push(self.node_type.into());
-        result.push(self.mcts);
-        result.push(self.ncts);
-        if let Some(size) = self.max_data_size {
+        result.push(val.node_type.into());
+        result.push(val.mcts);
+        result.push(val.ncts);
+        if let Some(size) = val.max_data_size {
             result.extend(size.to_be_bytes());
         }
 
@@ -249,12 +248,12 @@ impl TryFrom<&[u8]> for DiagnosticPowerMode {
     }
 }
 
-impl Into<Vec<u8>> for DiagnosticPowerMode {
-    fn into(self) -> Vec<u8> {
+impl From<DiagnosticPowerMode> for Vec<u8> {
+    fn from(val: DiagnosticPowerMode) -> Self {
         let mut result = UDP_RESP_DIAGNOSTIC_POWER_MODE.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = DiagnosticPowerMode::length() as u32;
         result.extend(length.to_be_bytes());
-        result.push(self.mode.into());
+        result.push(val.mode.into());
         result
     }
 }
@@ -314,21 +313,21 @@ impl TryFrom<&[u8]> for RoutingActive {
     }
 }
 
-impl Into<Vec<u8>> for RoutingActive {
-    fn into(self) -> Vec<u8> {
+impl From<RoutingActive> for Vec<u8> {
+    fn from(val: RoutingActive) -> Self {
         let mut result = TCP_RESP_ROUTING_ACTIVE.to_be_bytes().to_vec();
-        let mut length = Self::length() as u32;
-        if self.user_def.is_some() {
+        let mut length = RoutingActive::length() as u32;
+        if val.user_def.is_some() {
             length += 4;
         }
         result.extend(length.to_be_bytes());
-        let dst_addr: u16 = self.dst_addr.into();
+        let dst_addr: u16 = val.dst_addr.into();
         result.extend(dst_addr.to_be_bytes());
-        let src_addr: u16 = self.src_addr.into();
+        let src_addr: u16 = val.src_addr.into();
         result.extend(src_addr.to_be_bytes());
-        result.push(self.active_code.into());
-        result.extend(self.reserved.to_be_bytes());
-        if let Some(user_def) = self.user_def {
+        result.push(val.active_code.into());
+        result.extend(val.reserved.to_be_bytes());
+        if let Some(user_def) = val.user_def {
             result.extend(user_def.to_be_bytes());
         }
 
@@ -364,12 +363,12 @@ impl TryFrom<&[u8]> for AliveCheck {
     }
 }
 
-impl Into<Vec<u8>> for AliveCheck {
-    fn into(self) -> Vec<u8> {
+impl From<AliveCheck> for Vec<u8> {
+    fn from(val: AliveCheck) -> Self {
         let mut result = TCP_RESP_ALIVE_CHECK.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = AliveCheck::length() as u32;
         result.extend(length.to_be_bytes());
-        let src_addr: u16 = self.src_addr.into();
+        let src_addr: u16 = val.src_addr.into();
         result.extend(src_addr.to_be_bytes());
         result
     }
@@ -426,17 +425,17 @@ impl TryFrom<&[u8]> for DiagnosticPositive {
     }
 }
 
-impl Into<Vec<u8>> for DiagnosticPositive {
-    fn into(mut self) -> Vec<u8> {
+impl From<DiagnosticPositive> for Vec<u8> {
+    fn from(mut val: DiagnosticPositive) -> Self {
         let mut result = TCP_RESP_DIAGNOSTIC_POSITIVE.to_be_bytes().to_vec();
-        let length = (Self::length() + self.pre_diag_data.len()) as u32;
+        let length = (DiagnosticPositive::length() + val.pre_diag_data.len()) as u32;
         result.extend(length.to_be_bytes());
-        let src_addr: u16 = self.src_addr.into();
+        let src_addr: u16 = val.src_addr.into();
         result.extend(src_addr.to_be_bytes());
-        let dst_addr: u16 = self.dst_addr.into();
+        let dst_addr: u16 = val.dst_addr.into();
         result.extend(dst_addr.to_be_bytes());
-        result.push(self.code.into());
-        result.append(&mut self.pre_diag_data);
+        result.push(val.code.into());
+        result.append(&mut val.pre_diag_data);
 
         result
     }
@@ -501,17 +500,17 @@ impl TryFrom<&[u8]> for DiagnosticNegative {
     }
 }
 
-impl Into<Vec<u8>> for DiagnosticNegative {
-    fn into(mut self) -> Vec<u8> {
+impl From<DiagnosticNegative> for Vec<u8> {
+    fn from(mut val: DiagnosticNegative) -> Self {
         let mut result = TCP_RESP_DIAGNOSTIC_NEGATIVE.to_be_bytes().to_vec();
-        let length = (Self::length() + self.pre_diag_data.len()) as u32;
+        let length = (DiagnosticNegative::length() + val.pre_diag_data.len()) as u32;
         result.extend(length.to_be_bytes());
-        let src_addr: u16 = self.src_addr.into();
+        let src_addr: u16 = val.src_addr.into();
         result.extend(src_addr.to_be_bytes());
-        let dst_addr: u16 = self.dst_addr.into();
+        let dst_addr: u16 = val.dst_addr.into();
         result.extend(dst_addr.to_be_bytes());
-        result.push(self.code.into());
-        result.append(&mut self.pre_diag_data);
+        result.push(val.code.into());
+        result.append(&mut val.pre_diag_data);
 
         result
     }

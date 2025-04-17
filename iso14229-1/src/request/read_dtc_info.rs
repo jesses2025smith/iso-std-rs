@@ -1,5 +1,5 @@
 //! request of Service 19
-
+#![allow(clippy::non_minimal_cfg)]
 
 use crate::{Configuration, DTCReportType, Iso14229Error, request::{Request, SubFunction}, RequestData, Service, utils};
 
@@ -98,31 +98,31 @@ pub enum DTCInfo {
     },
 }
 
-impl Into<Vec<u8>> for DTCInfo {
-    fn into(self) -> Vec<u8> {
+impl From<DTCInfo> for Vec<u8> {
+    fn from(val: DTCInfo) -> Self {
         let mut result = Vec::new();
 
-        match self {
-            Self::ReportNumberOfDTCByStatusMask(v) => result.push(v),
-            Self::ReportDTCByStatusMask(v) => result.push(v),
+        match val {
+            DTCInfo::ReportNumberOfDTCByStatusMask(v) => result.push(v),
+            DTCInfo::ReportDTCByStatusMask(v) => result.push(v),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportMirrorMemoryDTCByStatusMask(v) => result.push(v),
+            DTCInfo::ReportMirrorMemoryDTCByStatusMask(v) => result.push(v),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportNumberOfMirrorMemoryDTCByStatusMask(v) => result.push(v),
+            DTCInfo::ReportNumberOfMirrorMemoryDTCByStatusMask(v) => result.push(v),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportNumberOfEmissionsOBDDTCByStatusMask(v) => result.push(v),
+            DTCInfo::ReportNumberOfEmissionsOBDDTCByStatusMask(v) => result.push(v),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportEmissionsOBDDTCByStatusMask(v) => result.push(v),
-            Self::ReportDTCSnapshotIdentification => {},
-            Self::ReportDTCSnapshotRecordByDTCNumber {
+            DTCInfo::ReportEmissionsOBDDTCByStatusMask(v) => result.push(v),
+            DTCInfo::ReportDTCSnapshotIdentification => {},
+            DTCInfo::ReportDTCSnapshotRecordByDTCNumber {
                 mask_record,
                 record_num,
             } => {
                 result.append(&mut mask_record.into());
                 result.push(record_num);
             },
-            Self::ReportDTCStoredDataByRecordNumber { stored_num } => result.push(stored_num),
-            Self::ReportDTCExtDataRecordByDTCNumber {
+            DTCInfo::ReportDTCStoredDataByRecordNumber { stored_num } => result.push(stored_num),
+            DTCInfo::ReportDTCExtDataRecordByDTCNumber {
                 mask_record,
                 extra_num,
             } => {
@@ -130,46 +130,46 @@ impl Into<Vec<u8>> for DTCInfo {
                 result.push(extra_num);
             },
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportMirrorMemoryDTCExtDataRecordByDTCNumber {
+            DTCInfo::ReportMirrorMemoryDTCExtDataRecordByDTCNumber {
                 mask_record,
                 extra_num,
             } => {
                 result.append(&mut mask_record.into());
                 result.push(extra_num);
             },
-            Self::ReportNumberOfDTCBySeverityMaskRecord {
+            DTCInfo::ReportNumberOfDTCBySeverityMaskRecord {
                 severity_mask,
                 status_mask,
             } => {
                 result.push(severity_mask);
                 result.push(status_mask);
             },
-            Self::ReportDTCBySeverityMaskRecord {
+            DTCInfo::ReportDTCBySeverityMaskRecord {
                 severity_mask,
                 status_mask,
             } => {
                 result.push(severity_mask);
                 result.push(status_mask);
             },
-            Self::ReportSeverityInformationOfDTC { mask_record } => result.append(&mut mask_record.into()),
-            Self::ReportSupportedDTC => {},
-            Self::ReportFirstTestFailedDTC => {},
-            Self::ReportFirstConfirmedDTC => {},
-            Self::ReportMostRecentTestFailedDTC => {},
-            Self::ReportMostRecentConfirmedDTC => {},
-            Self::ReportDTCFaultDetectionCounter => {},
-            Self::ReportDTCWithPermanentStatus => {},
+            DTCInfo::ReportSeverityInformationOfDTC { mask_record } => result.append(&mut mask_record.into()),
+            DTCInfo::ReportSupportedDTC => {},
+            DTCInfo::ReportFirstTestFailedDTC => {},
+            DTCInfo::ReportFirstConfirmedDTC => {},
+            DTCInfo::ReportMostRecentTestFailedDTC => {},
+            DTCInfo::ReportMostRecentConfirmedDTC => {},
+            DTCInfo::ReportDTCFaultDetectionCounter => {},
+            DTCInfo::ReportDTCWithPermanentStatus => {},
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportDTCExtDataRecordByRecordNumber { extra_num } => result.push(extra_num),
+            DTCInfo::ReportDTCExtDataRecordByRecordNumber { extra_num } => result.push(extra_num),
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportUserDefMemoryDTCByStatusMask {
+            DTCInfo::ReportUserDefMemoryDTCByStatusMask {
                 status_mask,
                 mem_selection } => {
                 result.push(status_mask);
                 result.push(mem_selection);
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber {
+            DTCInfo::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber {
                 mask_record,
                 record_num,
                 mem_selection
@@ -179,7 +179,7 @@ impl Into<Vec<u8>> for DTCInfo {
                 result.push(mem_selection);
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportUserDefMemoryDTCExtDataRecordByDTCNumber {
+            DTCInfo::ReportUserDefMemoryDTCExtDataRecordByDTCNumber {
                 mask_record,
                 extra_num,
                 mem_selection
@@ -189,17 +189,17 @@ impl Into<Vec<u8>> for DTCInfo {
                 result.push(mem_selection);
             },
             #[cfg(any(feature = "std2020"))]
-            Self::ReportSupportedDTCExtDataRecord { extra_num } => result.push(extra_num),
+            DTCInfo::ReportSupportedDTCExtDataRecord { extra_num } => result.push(extra_num),
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportWWHOBDDTCByMaskRecord { func_gid, status_mask, severity_mask } => {
+            DTCInfo::ReportWWHOBDDTCByMaskRecord { func_gid, status_mask, severity_mask } => {
                 result.push(func_gid);
                 result.push(status_mask);
                 result.push(severity_mask);
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportWWHOBDDTCWithPermanentStatus { func_gid } => result.push(func_gid),
+            DTCInfo::ReportWWHOBDDTCWithPermanentStatus { func_gid } => result.push(func_gid),
             #[cfg(any(feature = "std2020"))]
-            Self::ReportDTCInformationByDTCReadinessGroupIdentifier { func_gid, readiness_gid } => {
+            DTCInfo::ReportDTCInformationByDTCReadinessGroupIdentifier { func_gid, readiness_gid } => {
                 result.push(func_gid);
                 result.push(readiness_gid);
             },
@@ -211,7 +211,7 @@ impl Into<Vec<u8>> for DTCInfo {
 
 impl RequestData for DTCInfo {
     fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
-        match sub_func { 
+        match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
 
@@ -403,7 +403,7 @@ impl RequestData for DTCInfo {
             #[cfg(any(feature = "std2020"))]
             DTCReportType::ReportSupportedDTCExtDataRecord => {
                 let extra_num = data[offset];
-                if extra_num < 1 || extra_num > 0xFD {
+                if !(1..=0xFD).contains(&extra_num) {
                     return Err(Iso14229Error::InvalidData(hex::encode(data)));
                 }
 

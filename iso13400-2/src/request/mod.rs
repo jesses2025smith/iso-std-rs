@@ -21,10 +21,10 @@ impl TryFrom<&[u8]> for VehicleID {
     }
 }
 
-impl Into<Vec<u8>> for VehicleID {
-    fn into(self) -> Vec<u8> {
+impl From<VehicleID> for Vec<u8> {
+    fn from(_: VehicleID) -> Self {
         let mut result = UDP_REQ_VEHICLE_IDENTIFIER.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = VehicleID::length() as u32;
         result.extend(length.to_be_bytes());
 
         result
@@ -58,12 +58,12 @@ impl TryFrom<&[u8]> for VehicleIDWithEID {
     }
 }
 
-impl Into<Vec<u8>> for VehicleIDWithEID {
-    fn into(self) -> Vec<u8> {
+impl From<VehicleIDWithEID> for Vec<u8> {
+    fn from(val: VehicleIDWithEID) -> Self {
         let mut result = UDP_REQ_VEHICLE_ID_WITH_EID.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = VehicleIDWithEID::length() as u32;
         result.extend(length.to_be_bytes());
-        result.append(&mut self.eid.into());
+        result.append(&mut val.eid.into());
 
         result
     }
@@ -76,9 +76,8 @@ pub struct VehicleIDWithVIN {     // 0x0003
 }
 
 impl VehicleIDWithVIN {
-    #[must_use]
     pub fn new(vin: &str) -> Result<Self, Iso13400Error> {
-        let vin_len = vin.as_bytes().len();
+        let vin_len = vin.len();
         if vin_len != Self::length() {
             return Err(Iso13400Error::InputError(
                 format!("length of vin must equal {}", Self::length())
@@ -110,12 +109,12 @@ impl TryFrom<&[u8]> for VehicleIDWithVIN {
     }
 }
 
-impl Into<Vec<u8>> for VehicleIDWithVIN {
-    fn into(self) -> Vec<u8> {
+impl From<VehicleIDWithVIN> for Vec<u8> {
+    fn from(val: VehicleIDWithVIN) -> Self {
         let mut result = UDP_REQ_VEHICLE_ID_WITH_VIN.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = VehicleIDWithVIN::length() as u32;
         result.extend(length.to_be_bytes());
-        result.append(&mut self.vin.as_bytes().to_vec());
+        result.append(&mut val.vin.as_bytes().to_vec());
 
         result
     }
@@ -140,10 +139,10 @@ impl TryFrom<&[u8]> for EntityStatus {
     }
 }
 
-impl Into<Vec<u8>> for EntityStatus {
-    fn into(self) -> Vec<u8> {
+impl From<EntityStatus> for Vec<u8> {
+    fn from(_: EntityStatus) -> Self {
         let mut result = UDP_REQ_ENTITY_STATUS.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = EntityStatus::length() as u32;
         result.extend(length.to_be_bytes());
 
         result
@@ -169,10 +168,10 @@ impl TryFrom<&[u8]> for DiagnosticPowerMode {
     }
 }
 
-impl Into<Vec<u8>> for DiagnosticPowerMode {
-    fn into(self) -> Vec<u8> {
+impl From<DiagnosticPowerMode> for Vec<u8> {
+    fn from(_: DiagnosticPowerMode) -> Self {
         let mut result = UDP_REQ_DIAGNOSTIC_POWER_MODE.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = DiagnosticPowerMode::length() as u32;
         result.extend(length.to_be_bytes());
 
         result
@@ -229,19 +228,19 @@ impl TryFrom<&[u8]> for RoutingActive {
     }
 }
 
-impl Into<Vec<u8>> for RoutingActive {
-    fn into(self) -> Vec<u8> {
+impl From<RoutingActive> for Vec<u8> {
+    fn from(val: RoutingActive) -> Self {
         let mut result = TCP_REQ_ROUTING_ACTIVE.to_be_bytes().to_vec();
-        let mut length = Self::length() as u32;
-        if self.user_def.is_some() {
+        let mut length = RoutingActive::length() as u32;
+        if val.user_def.is_some() {
             length += 4;
         }
         result.extend(length.to_be_bytes());
-        let src_addr: u16 = self.src_addr.into();
+        let src_addr: u16 = val.src_addr.into();
         result.extend(src_addr.to_be_bytes());
-        result.push(self.active.into());
-        result.extend(self.reserved.to_be_bytes());
-        if let Some(user_def) = self.user_def {
+        result.push(val.active.into());
+        result.extend(val.reserved.to_be_bytes());
+        if let Some(user_def) = val.user_def {
             result.extend(user_def.to_be_bytes());
         }
 
@@ -268,10 +267,10 @@ impl TryFrom<&[u8]> for AliveCheck {
     }
 }
 
-impl Into<Vec<u8>> for AliveCheck {
-    fn into(self) -> Vec<u8> {
+impl From<AliveCheck> for Vec<u8> {
+    fn from(_: AliveCheck) -> Self {
         let mut result = TCP_REQ_ALIVE_CHECK.to_be_bytes().to_vec();
-        let length = Self::length() as u32;
+        let length = AliveCheck::length() as u32;
         result.extend(length.to_be_bytes());
 
         result

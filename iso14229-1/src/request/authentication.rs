@@ -44,12 +44,12 @@ pub enum Authentication {
     AuthenticationConfiguration,    // 0x08
 }
 
-impl Into<Vec<u8>> for Authentication {
-    fn into(self) -> Vec<u8> {
+impl From<Authentication> for Vec<u8> {
+    fn from(val: Authentication) -> Self {
         let mut result = Vec::new();
-        match self {
-            Self::DeAuthenticate => {},
-            Self::VerifyCertificateUnidirectional {
+        match val {
+            Authentication::DeAuthenticate => {},
+            Authentication::VerifyCertificateUnidirectional {
                 config,
                 certificate,
                 challenge,
@@ -58,7 +58,7 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut certificate.into());
                 result.append(&mut challenge.into());
             },
-            Self::VerifyCertificateBidirectional {
+            Authentication::VerifyCertificateBidirectional {
                 config,
                 certificate,
                 challenge,
@@ -67,28 +67,28 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut certificate.into());
                 result.append(&mut challenge.into());
             },
-            Self::ProofOfOwnership {
+            Authentication::ProofOfOwnership {
                 proof_of_ownership,
                 ephemeral_public_key,
             } => {
                 result.append(&mut proof_of_ownership.into());
                 result.append(&mut ephemeral_public_key.into());
             },
-            Self::TransmitCertificate {
+            Authentication::TransmitCertificate {
                 cert_evaluation_id,
                 certificate,
             } => {
                 result.extend(cert_evaluation_id.to_be_bytes());
                 result.append(&mut certificate.into());
             },
-            Self::RequestChallengeForAuthentication {
+            Authentication::RequestChallengeForAuthentication {
                 config,
                 algo_indicator,
             } => {
                 result.push(config);
                 result.append(&mut algo_indicator.into());
             },
-            Self::VerifyProofOfOwnershipUnidirectional {
+            Authentication::VerifyProofOfOwnershipUnidirectional {
                 algo_indicator,
                 proof_of_ownership,
                 challenge,
@@ -99,7 +99,7 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut challenge.into());
                 result.append(&mut additional.into());
             },
-            Self::VerifyProofOfOwnershipBidirectional {
+            Authentication::VerifyProofOfOwnershipBidirectional {
                 algo_indicator,
                 proof_of_ownership,
                 challenge,
@@ -110,7 +110,7 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut challenge.into());
                 result.append(&mut additional.into());
             },
-            Self::AuthenticationConfiguration => {}
+            Authentication::AuthenticationConfiguration => {}
         }
 
         result

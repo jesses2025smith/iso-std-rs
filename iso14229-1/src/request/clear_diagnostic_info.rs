@@ -1,4 +1,5 @@
 //! request of Service 14
+#![allow(clippy::non_minimal_cfg)]
 
 
 use crate::{Configuration, Iso14229Error, request::{Request, SubFunction}, RequestData, utils, Service};

@@ -52,9 +52,9 @@ impl From<u16> for RoutineId {
     }
 }
 
-impl Into<u16> for RoutineId {
+impl From<RoutineId> for u16 {
     #[inline]
-    fn into(self) -> u16 {
-        self.0
+    fn from(val: RoutineId) -> Self {
+        val.0
     }
 }

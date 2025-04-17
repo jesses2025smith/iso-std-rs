@@ -80,11 +80,11 @@ impl<'a> TryFrom<&'a [u8]> for SessionTiming {
     }
 }
 
-impl Into<Vec<u8>> for SessionTiming {
+impl From<SessionTiming> for Vec<u8> {
     #[inline]
-    fn into(self) -> Vec<u8> {
-        let mut result = self.p2.to_be_bytes().to_vec();
-        result.extend(self.p2_star.to_be_bytes());
+    fn from(val: SessionTiming) -> Self {
+        let mut result = val.p2.to_be_bytes().to_vec();
+        result.extend(val.p2_star.to_be_bytes());
         result
     }
 }

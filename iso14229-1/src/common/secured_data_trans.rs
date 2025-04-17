@@ -34,10 +34,10 @@ pub struct AdministrativeParameter {
     __: u8,
 }
 
-impl Into<Vec<u8>> for AdministrativeParameter {
+impl From<AdministrativeParameter> for Vec<u8> {
     #[inline]
-    fn into(self) -> Vec<u8> {
-        self.0.to_be_bytes().to_vec()
+    fn from(val: AdministrativeParameter) -> Self {
+        val.0.to_be_bytes().to_vec()
     }
 }
 
@@ -118,10 +118,10 @@ impl TryFrom<u8> for SignatureEncryptionCalculation {
     }
 }
 
-impl Into<u8> for SignatureEncryptionCalculation {
+impl From<SignatureEncryptionCalculation> for u8 {
     #[inline]
-    fn into(self) -> u8 {
-        match self {
+    fn from(val: SignatureEncryptionCalculation) -> Self {
+        match val {
             SignatureEncryptionCalculation::VehicleManufacturerSpecific(v) |
             SignatureEncryptionCalculation::SystemSupplier(v) => v,
         }
@@ -135,10 +135,10 @@ mod test_apar {
     #[test]
     fn apar() -> anyhow::Result<()> {
         let mut value: AdministrativeParameter = Default::default();
-        assert_eq!(value.is_request(), false);
+        assert!(!value.is_request());
 
         value.request_set(true);
-        assert_eq!(value.is_request(), true);
+        assert!(value.is_request());
 
         Ok(())
     }

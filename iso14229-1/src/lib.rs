@@ -1,3 +1,5 @@
+#![allow(clippy::non_minimal_cfg)]
+
 mod common;
 pub use common::*;
 pub mod request;

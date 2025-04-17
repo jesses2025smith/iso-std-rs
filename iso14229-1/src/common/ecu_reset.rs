@@ -34,17 +34,17 @@ impl TryFrom<u8> for ECUResetType {
     }
 }
 
-impl Into<u8> for ECUResetType {
-    fn into(self) -> u8 {
-        match self {
-            Self::HardReset => 0x01,
-            Self::KeyOffOnReset => 0x02,
-            Self::SoftReset => 0x03,
-            Self::EnableRapidPowerShutDown => 0x04,
-            Self::DisableRapidPowerShutDown => 0x05,
-            Self::VehicleManufacturerSpecific(v) => v,
-            Self::SystemSupplierSpecific(v) => v,
-            Self::Reserved(v) => v,
+impl From<ECUResetType> for u8 {
+    fn from(val: ECUResetType) -> Self {
+        match val {
+            ECUResetType::HardReset => 0x01,
+            ECUResetType::KeyOffOnReset => 0x02,
+            ECUResetType::SoftReset => 0x03,
+            ECUResetType::EnableRapidPowerShutDown => 0x04,
+            ECUResetType::DisableRapidPowerShutDown => 0x05,
+            ECUResetType::VehicleManufacturerSpecific(v) => v,
+            ECUResetType::SystemSupplierSpecific(v) => v,
+            ECUResetType::Reserved(v) => v,
         }
     }
 }

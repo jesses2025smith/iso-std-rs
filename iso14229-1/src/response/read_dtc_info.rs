@@ -1,5 +1,5 @@
 //! response of Service 19
-
+#![allow(clippy::non_minimal_cfg)]
 
 use std::collections::HashSet;
 use lazy_static::lazy_static;
@@ -221,7 +221,7 @@ pub enum DTCInfo {
         status_record: DTCAndStatusRecord,
         number: Option<u8>,     // 0x00~0xFE
         records: Vec<Vec<u8>>,
-    } ,
+    },
     #[cfg(any(feature = "std2020"))]
     ReportSupportedDTCExtDataRecord {       // 0x1A
         avl_mask: u8,
@@ -257,16 +257,16 @@ pub enum DTCInfo {
     },
 }
 
-impl Into<Vec<u8>> for DTCInfo {
-    fn into(self) -> Vec<u8> {
+impl From<DTCInfo> for Vec<u8> {
+    fn from(val: DTCInfo) -> Self {
         let mut result = Vec::new();
-        match self {
-            Self::ReportNumberOfDTCByStatusMask { avl_mask, fid, count } => {
+        match val {
+            DTCInfo::ReportNumberOfDTCByStatusMask { avl_mask, fid, count } => {
                 result.push(avl_mask);
                 result.push(fid.into());
                 result.extend(count.to_be_bytes());
             },
-            Self::ReportDTCByStatusMask { avl_mask, records } => {
+            DTCInfo::ReportDTCByStatusMask { avl_mask, records } => {
                 result.push(avl_mask);
                 records.into_iter()
                     .for_each(|v| {
@@ -275,7 +275,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportMirrorMemoryDTCByStatusMask { avl_mask, records } => {
+            DTCInfo::ReportMirrorMemoryDTCByStatusMask { avl_mask, records } => {
                 result.push(avl_mask);
                 records.into_iter()
                     .for_each(|v| {
@@ -284,19 +284,19 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportNumberOfMirrorMemoryDTCByStatusMask { avl_mask, fid, count } => {
+            DTCInfo::ReportNumberOfMirrorMemoryDTCByStatusMask { avl_mask, fid, count } => {
                 result.push(avl_mask);
                 result.push(fid.into());
                 result.extend(count.to_be_bytes());
             },
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportNumberOfEmissionsOBDDTCByStatusMask { avl_mask, fid, count } => {
+            DTCInfo::ReportNumberOfEmissionsOBDDTCByStatusMask { avl_mask, fid, count } => {
                 result.push(avl_mask);
                 result.push(fid.into());
                 result.extend(count.to_be_bytes());
             },
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportEmissionsOBDDTCByStatusMask { avl_mask, records } => {
+            DTCInfo::ReportEmissionsOBDDTCByStatusMask { avl_mask, records } => {
                 result.push(avl_mask);
                 records.into_iter()
                     .for_each(|v| {
@@ -304,14 +304,14 @@ impl Into<Vec<u8>> for DTCInfo {
                         result.push(v.status);
                     });
             },
-            Self::ReportDTCSnapshotIdentification { records } => {
+            DTCInfo::ReportDTCSnapshotIdentification { records } => {
                 records.into_iter()
                     .for_each(|v| {
                         result.append(&mut v.dtc.into());
                         result.push(v.number);
                     });
             },
-            Self::ReportDTCSnapshotRecordByDTCNumber { status_record, records } => {
+            DTCInfo::ReportDTCSnapshotRecordByDTCNumber { status_record, records } => {
                 result.append(&mut status_record.dtc.into());
                 result.push(status_record.status);
                 records.into_iter()
@@ -326,7 +326,7 @@ impl Into<Vec<u8>> for DTCInfo {
                             })
                     });
             },
-            Self::ReportDTCStoredDataByRecordNumber { records } => {
+            DTCInfo::ReportDTCStoredDataByRecordNumber { records } => {
                 records.into_iter()
                     .for_each(|v| {
                         result.push(v.number);
@@ -345,7 +345,7 @@ impl Into<Vec<u8>> for DTCInfo {
                             });
                     })
             },
-            Self::ReportDTCExtDataRecordByDTCNumber { status_record, records } => {
+            DTCInfo::ReportDTCExtDataRecordByDTCNumber { status_record, records } => {
                 result.append(&mut status_record.dtc.into());
                 result.push(status_record.status);
                 records.into_iter()
@@ -355,7 +355,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Self::ReportMirrorMemoryDTCExtDataRecordByDTCNumber { status_record, records } => {
+            DTCInfo::ReportMirrorMemoryDTCExtDataRecordByDTCNumber { status_record, records } => {
                 result.append(&mut status_record.dtc.into());
                 result.push(status_record.status);
                 records.into_iter()
@@ -364,12 +364,12 @@ impl Into<Vec<u8>> for DTCInfo {
                         result.append(&mut v.data);
                     });
             },
-            Self::ReportNumberOfDTCBySeverityMaskRecord { avl_mask, fid, count } => {
+            DTCInfo::ReportNumberOfDTCBySeverityMaskRecord { avl_mask, fid, count } => {
                 result.push(avl_mask);
                 result.push(fid.into());
                 result.extend(count.to_be_bytes());
             },
-            Self::ReportDTCBySeverityMaskRecord { avl_mask, record, others } => {
+            DTCInfo::ReportDTCBySeverityMaskRecord { avl_mask, record, others } => {
                 result.push(avl_mask);
                 result.push(record.severity);
                 result.push(record.func_unit);
@@ -384,7 +384,7 @@ impl Into<Vec<u8>> for DTCInfo {
                         result.push(v.status);
                     });
             },
-            Self::ReportSeverityInformationOfDTC { avl_mask, records } => {
+            DTCInfo::ReportSeverityInformationOfDTC { avl_mask, records } => {
                 result.push(avl_mask);
                 records.into_iter()
                     .for_each(|v| {
@@ -394,7 +394,7 @@ impl Into<Vec<u8>> for DTCInfo {
                         result.push(v.status);
                     });
             },
-            Self::ReportSupportedDTC { avl_mask, records, } => {
+            DTCInfo::ReportSupportedDTC { avl_mask, records, } => {
                 result.push(avl_mask);
                 records.into_iter()
                     .for_each(|v| {
@@ -402,24 +402,24 @@ impl Into<Vec<u8>> for DTCInfo {
                         result.push(v.status);
                     });
             },
-            Self::ReportFirstTestFailedDTC { avl_mask, record } |
-            Self::ReportFirstConfirmedDTC { avl_mask, record } |
-            Self::ReportMostRecentTestFailedDTC { avl_mask, record } |
-            Self::ReportMostRecentConfirmedDTC { avl_mask, record } => {
+            DTCInfo::ReportFirstTestFailedDTC { avl_mask, record } |
+            DTCInfo::ReportFirstConfirmedDTC { avl_mask, record } |
+            DTCInfo::ReportMostRecentTestFailedDTC { avl_mask, record } |
+            DTCInfo::ReportMostRecentConfirmedDTC { avl_mask, record } => {
                 result.push(avl_mask);
                 if let Some(v) = record {
                     result.append(&mut v.dtc.into());
                     result.push(v.status);
                 }
             },
-            Self::ReportDTCFaultDetectionCounter { records } => {
+            DTCInfo::ReportDTCFaultDetectionCounter { records } => {
                 records.into_iter()
                     .for_each(|v| {
                         result.append(&mut v.dtc.into());
                         result.push(v.counter);
                     });
             },
-            Self::ReportDTCWithPermanentStatus { avl_mask, records, } => {
+            DTCInfo::ReportDTCWithPermanentStatus { avl_mask, records, } => {
                 result.push(avl_mask);
                 records.into_iter()
                     .for_each(|v| {
@@ -428,7 +428,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportDTCExtDataRecordByRecordNumber { number, records } => {
+            DTCInfo::ReportDTCExtDataRecordByRecordNumber { number, records } => {
                 result.push(number);
                 records.into_iter()
                     .for_each(|mut v| {
@@ -438,7 +438,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     })
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportUserDefMemoryDTCByStatusMask { mem_selection, avl_mask, records } => {
+            DTCInfo::ReportUserDefMemoryDTCByStatusMask { mem_selection, avl_mask, records } => {
                 result.push(mem_selection);
                 result.push(avl_mask);
                 records.into_iter()
@@ -448,7 +448,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber { mem_selection, status_record, records } => {
+            DTCInfo::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber { mem_selection, status_record, records } => {
                 result.push(mem_selection);
                 result.append(&mut status_record.dtc.into());
                 result.push(status_record.status);
@@ -465,7 +465,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportUserDefMemoryDTCExtDataRecordByDTCNumber { mem_selection, status_record, number, records } => {
+            DTCInfo::ReportUserDefMemoryDTCExtDataRecordByDTCNumber { mem_selection, status_record, number, records } => {
                 result.push(mem_selection);
                 result.append(&mut status_record.dtc.into());
                 result.push(status_record.status);
@@ -476,7 +476,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     .for_each(|mut v| result.append(&mut v));
             },
             #[cfg(any(feature = "std2020"))]
-            Self::ReportSupportedDTCExtDataRecord { avl_mask, number, records } => {
+            DTCInfo::ReportSupportedDTCExtDataRecord { avl_mask, number, records } => {
                 result.push(avl_mask);
                 result.push(number);
                 records.into_iter()
@@ -486,7 +486,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportWWHOBDDTCByMaskRecord {
+            DTCInfo::ReportWWHOBDDTCByMaskRecord {
                 func_gid,    // 00 to FE
                 status_avl_mask,
                 severity_avl_mask,
@@ -504,7 +504,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Self::ReportWWHOBDDTCWithPermanentStatus {
+            DTCInfo::ReportWWHOBDDTCWithPermanentStatus {
                 func_gid,    // 00 to FE
                 status_avl_mask,
                 fid,
@@ -520,7 +520,7 @@ impl Into<Vec<u8>> for DTCInfo {
                     });
             },
             #[cfg(any(feature = "std2020"))]
-            Self::ReportDTCInformationByDTCReadinessGroupIdentifier {
+            DTCInfo::ReportDTCInformationByDTCReadinessGroupIdentifier {
                 func_gid,    // 00 to FE
                 status_avl_mask,
                 format_identifier,
@@ -1211,7 +1211,7 @@ impl ResponseData for DTCInfo {
                 offset += 1;
                 let number = data[offset];
                 offset += 1;
-                if number < 0x01 || number > 0xFD {
+                if !(0x01..=0xFD).contains(&number) {
                     return Err(Iso14229Error::InvalidData(hex::encode(data)));
                 }
                 utils::data_length_check(data_len, offset + 4 * number as usize, false)?;

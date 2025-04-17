@@ -22,10 +22,10 @@ pub enum FrameType {
     FlowControl = 0x30,
 }
 
-impl Into<u8> for FrameType {
+impl From<FrameType> for u8 {
     #[inline]
-    fn into(self) -> u8 {
-        self as u8
+    fn from(val: FrameType) -> Self {
+        val as u8
     }
 }
 
@@ -58,9 +58,9 @@ pub enum Frame {
 
 unsafe impl Send for Frame {}
 
-impl Into<FrameType> for &Frame {
-    fn into(self) -> FrameType {
-        match self {
+impl From<&Frame> for FrameType {
+    fn from(val: &Frame) -> Self {
+        match val {
             Frame::SingleFrame { .. } => FrameType::Single,
             Frame::FirstFrame { .. } => FrameType::First,
             Frame::ConsecutiveFrame { .. } => FrameType::Consecutive,

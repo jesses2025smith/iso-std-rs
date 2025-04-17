@@ -33,16 +33,16 @@ impl TryFrom<u8> for SessionType {
     }
 }
 
-impl Into<u8> for SessionType {
-    fn into(self) -> u8 {
-        match self {
-            Self::Default => 0x01,
-            Self::Programming => 0x02,
-            Self::Extended => 0x03,
-            Self::SafetySystemDiagnostic => 0x04,
-            Self::VehicleManufacturerSpecific(v) => v,
-            Self::SystemSupplierSpecific(v) => v,
-            Self::Reserved(v) => v,
+impl From<SessionType> for u8 {
+    fn from(val: SessionType) -> Self {
+        match val {
+            SessionType::Default => 0x01,
+            SessionType::Programming => 0x02,
+            SessionType::Extended => 0x03,
+            SessionType::SafetySystemDiagnostic => 0x04,
+            SessionType::VehicleManufacturerSpecific(v) => v,
+            SessionType::SystemSupplierSpecific(v) => v,
+            SessionType::Reserved(v) => v,
         }
     }
 }

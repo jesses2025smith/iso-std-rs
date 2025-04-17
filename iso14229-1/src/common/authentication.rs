@@ -33,12 +33,12 @@ impl NotNullableData {
     }
 }
 
-impl Into<Vec<u8>> for NotNullableData {
+impl From<NotNullableData> for Vec<u8> {
     #[inline]
-    fn into(mut self) -> Vec<u8> {
-        let len = self.0.len() as u16;
+    fn from(mut val: NotNullableData) -> Self {
+        let len = val.0.len() as u16;
         let mut result = len.to_be_bytes().to_vec();
-        result.append(&mut self.0);
+        result.append(&mut val.0);
 
         result
     }
@@ -60,12 +60,12 @@ impl NullableData {
     }
 }
 
-impl Into<Vec<u8>> for NullableData {
+impl From<NullableData> for Vec<u8> {
     #[inline]
-    fn into(mut self) -> Vec<u8> {
-        let len = self.0.len() as u16;
+    fn from(mut val: NullableData) -> Self {
+        let len = val.0.len() as u16;
         let mut result = len.to_be_bytes().to_vec();
-        result.append(&mut self.0);
+        result.append(&mut val.0);
 
         result
     }
@@ -74,10 +74,10 @@ impl Into<Vec<u8>> for NullableData {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AlgorithmIndicator(pub [u8; ALGORITHM_INDICATOR_LENGTH]);
 
-impl Into<Vec<u8>> for AlgorithmIndicator {
+impl From<AlgorithmIndicator> for Vec<u8> {
     #[inline]
-    fn into(self) -> Vec<u8> {
-        self.0.to_vec()
+    fn from(val: AlgorithmIndicator) -> Self {
+        val.0.to_vec()
     }
 }
 

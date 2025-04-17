@@ -2,12 +2,14 @@ use std::{collections::HashMap, fmt::Display, thread, sync::{Arc, Mutex, MutexGu
 use std::time::Duration;
 use rs_can::{CanDevice, CanFrame, CanListener};
 
+type Listeners<C, F> = Arc<Mutex<HashMap<String, Box<dyn CanListener<C, F>>>>>;
+
 #[derive(Clone)]
 pub struct CanAdapter<D, C, F> {
     pub(crate) device: D,
     pub(crate) sender: Sender<F>,
     pub(crate) receiver: Arc<Mutex<Receiver<F>>>,
-    pub(crate) listeners: Arc<Mutex<HashMap<String, Box<dyn CanListener<C, F>>>>>,
+    pub(crate) listeners: Listeners<C, F>,
     pub(crate) stop_tx: Sender<()>,
     pub(crate) stop_rx: Arc<Mutex<Receiver<()>>>,
     pub(crate) send_task: Weak<thread::JoinHandle<()>>,
@@ -83,8 +85,7 @@ where
         match self.listeners.lock() {
             Ok(v) => {
                 v.keys()
-                    .into_iter()
-                    .map(|f| f.clone())
+                    .cloned()
                     .collect()
             },
             Err(e) => {
@@ -176,7 +177,7 @@ where
         )
     }
 
-    fn transmit_callback(receiver: &Arc<Mutex<Receiver<F>>>, device: &D, listeners: &Arc<Mutex<HashMap<String, Box<dyn CanListener<C, F>>>>>, timeout: Option<u32>) {
+    fn transmit_callback(receiver: &Arc<Mutex<Receiver<F>>>, device: &D, listeners: &Listeners<C, F>, timeout: Option<u32>) {
         if let Ok(receiver) = receiver.lock() {
             if let Ok(msg) = receiver.try_recv() {
                 log::trace!("SyncISO-TP - transmitting: {}", msg);
@@ -210,7 +211,7 @@ where
         }
     }
 
-    fn receive_callback(device: &D, listeners: &Arc<Mutex<HashMap<String, Box<dyn CanListener<C, F>>>>>, timeout: Option<u32>) {
+    fn receive_callback(device: &D, listeners: &Listeners<C, F>, timeout: Option<u32>) {
         let channels = device.opened_channels();
         channels.into_iter()
             .for_each(|c| {

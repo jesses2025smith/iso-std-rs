@@ -1,4 +1,4 @@
-#![allow(unused_imports)]
+#![allow(unused_imports, clippy::non_minimal_cfg)]
 
 /* - Diagnostic and communication management functional unit - */
 mod session_ctrl;           // 0x10

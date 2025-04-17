@@ -31,7 +31,7 @@ impl RoutineCtrl {
         routine_info: Option<u8>,
         routine_status: Vec<u8>,
     ) -> Result<Self, Iso14229Error> {
-        if routine_info.is_none() && routine_status.len() > 0 {
+        if routine_info.is_none() && !routine_status.is_empty() {
             return Err(Iso14229Error::InvalidData(
                 "`routineStatusRecord` mut be empty when `routineInfo` is None".to_string()
             ));

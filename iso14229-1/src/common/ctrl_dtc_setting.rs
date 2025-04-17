@@ -27,14 +27,14 @@ impl TryFrom<u8> for DTCSettingType {
     }
 }
 
-impl Into<u8> for DTCSettingType {
-    fn into(self) -> u8 {
-        match self {
-            Self::On => 0x01,
-            Self::Off => 0x02,
-            Self::VehicleManufacturerSpecific(v) => v,
-            Self::SystemSupplierSpecific(v) => v,
-            Self::Reserved(v) => v,
+impl From<DTCSettingType> for u8 {
+    fn from(val: DTCSettingType) -> Self {
+        match val {
+            DTCSettingType::On => 0x01,
+            DTCSettingType::Off => 0x02,
+            DTCSettingType::VehicleManufacturerSpecific(v) => v,
+            DTCSettingType::SystemSupplierSpecific(v) => v,
+            DTCSettingType::Reserved(v) => v,
         }
     }
 }

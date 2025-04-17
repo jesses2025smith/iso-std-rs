@@ -68,22 +68,22 @@ impl From<u8> for AuthReturnValue {
     }
 }
 
-impl Into<u8> for AuthReturnValue {
+impl From<AuthReturnValue> for u8 {
     #[inline]
-    fn into(self) -> u8 {
-        match self {
-            Self::RequestAccepted => 0x00,
-            Self::GeneralReject => 0x01,
-            Self::AuthenticationConfigurationAPCE => 0x02,
-            Self::AuthenticationConfigurationACRWithAsymmetricCryptography => 0x03,
-            Self::AuthenticationConfigurationACRWithSymmetricCryptography => 0x04,
-            Self::DeAuthenticationSuccessful => 0x11,
-            Self::CertificateVerifiedOrOwnershipVerificationNecessary => 0x11,
-            Self::OwnershipVerifiedOrAuthenticationComplete => 0x12,
-            Self::CertificateVerified => 0x13,
-            Self::VehicleManufacturerSpecific(v) |
-            Self::SystemSupplierSpecific(v) => v,
-            Self::Reserved(v) => v,
+    fn from(val: AuthReturnValue) -> Self {
+        match val {
+            AuthReturnValue::RequestAccepted => 0x00,
+            AuthReturnValue::GeneralReject => 0x01,
+            AuthReturnValue::AuthenticationConfigurationAPCE => 0x02,
+            AuthReturnValue::AuthenticationConfigurationACRWithAsymmetricCryptography => 0x03,
+            AuthReturnValue::AuthenticationConfigurationACRWithSymmetricCryptography => 0x04,
+            AuthReturnValue::DeAuthenticationSuccessful => 0x11,
+            AuthReturnValue::CertificateVerifiedOrOwnershipVerificationNecessary => 0x11,
+            AuthReturnValue::OwnershipVerifiedOrAuthenticationComplete => 0x12,
+            AuthReturnValue::CertificateVerified => 0x13,
+            AuthReturnValue::VehicleManufacturerSpecific(v) |
+            AuthReturnValue::SystemSupplierSpecific(v) => v,
+            AuthReturnValue::Reserved(v) => v,
         }
     }
 }
@@ -128,13 +128,13 @@ pub enum Authentication {
     AuthenticationConfiguration(AuthReturnValue),
 }
 
-impl Into<Vec<u8>> for Authentication {
-    fn into(self) -> Vec<u8> {
+impl From<Authentication> for Vec<u8> {
+    fn from(val: Authentication) -> Self {
         let mut result = Vec::new();
 
-        match self {
-            Self::DeAuthenticate(v) => result.push(v.into()),
-            Self::VerifyCertificateUnidirectional {
+        match val {
+            Authentication::DeAuthenticate(v) => result.push(v.into()),
+            Authentication::VerifyCertificateUnidirectional {
                 value,
                 challenge,
                 ephemeral_public_key,
@@ -143,7 +143,7 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut challenge.into());
                 result.append(&mut ephemeral_public_key.into());
             },
-            Self::VerifyCertificateBidirectional {
+            Authentication::VerifyCertificateBidirectional {
                 value,
                 challenge,
                 certificate,
@@ -156,15 +156,15 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut certificate.into());
                 result.append(&mut proof_of_ownership.into());
             },
-            Self::ProofOfOwnership {
+            Authentication::ProofOfOwnership {
                 value,
                 session_keyinfo,
             } => {
                 result.push(value.into());
                 result.append(&mut session_keyinfo.into());
             },
-            Self::TransmitCertificate(v) => result.push(v.into()),
-            Self::RequestChallengeForAuthentication {
+            Authentication::TransmitCertificate(v) => result.push(v.into()),
+            Authentication::RequestChallengeForAuthentication {
                 value,
                 algo_indicator,
                 challenge,
@@ -175,7 +175,7 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut challenge.into());
                 result.append(&mut additional.into());
             },
-            Self::VerifyProofOfOwnershipUnidirectional {
+            Authentication::VerifyProofOfOwnershipUnidirectional {
                 value,
                 algo_indicator,
                 session_keyinfo,
@@ -184,7 +184,7 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut algo_indicator.into());
                 result.append(&mut session_keyinfo.into());
             },
-            Self::VerifyProofOfOwnershipBidirectional {
+            Authentication::VerifyProofOfOwnershipBidirectional {
                 value,
                 algo_indicator,
                 proof_of_ownership,
@@ -195,7 +195,7 @@ impl Into<Vec<u8>> for Authentication {
                 result.append(&mut proof_of_ownership.into());
                 result.append(&mut session_keyinfo.into());
             },
-            Self::AuthenticationConfiguration(v) => result.push(v.into()),
+            Authentication::AuthenticationConfiguration(v) => result.push(v.into()),
         }
 
         result

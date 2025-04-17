@@ -81,7 +81,6 @@ pub struct SecuredDataTransNegative {   // min_len 11
 }
 
 impl SecuredDataTransNegative {
-    #[must_use]
     pub fn new(
         mut apar: AdministrativeParameter,
         signature: SignatureEncryptionCalculation,

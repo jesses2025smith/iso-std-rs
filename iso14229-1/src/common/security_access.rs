@@ -8,7 +8,7 @@ pub struct SecurityAccessLevel(pub(crate) u8);
 
 impl SecurityAccessLevel {
     pub fn new(level: u8) -> Result<Self, Iso14229Error> {
-        if level < 1 || level > 0x7D {
+        if !(1..=0x7D).contains(&level) {
             return Err(Iso14229Error::InvalidParam(format!("access level: {}", level)));
         }
 
@@ -24,9 +24,9 @@ impl TryFrom<u8> for SecurityAccessLevel {
     }
 }
 
-impl Into<u8> for SecurityAccessLevel {
-    fn into(self) -> u8 {
-        self.0
+impl From<SecurityAccessLevel> for u8 {
+    fn from(val: SecurityAccessLevel) -> Self {
+        val.0
     }
 }
 

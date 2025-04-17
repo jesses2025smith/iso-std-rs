@@ -35,18 +35,18 @@ impl TryFrom<u8> for CommunicationCtrlType {
     }
 }
 
-impl Into<u8> for CommunicationCtrlType {
-    fn into(self) -> u8 {
-        match self {
-            Self::EnableRxAndTx => 0x00,
-            Self::EnableRxAndDisableTx => 0x01,
-            Self::DisableRxAndEnableTx => 0x02,
-            Self::DisableRxAndTx => 0x03,
-            Self::EnableRxAndDisableTxWithEnhancedAddressInformation => 0x04,
-            Self::EnableRxAndTxWithEnhancedAddressInformation => 0x05,
-            Self::VehicleManufacturerSpecific(v) => v,
-            Self::SystemSupplierSpecific(v) => v,
-            Self::Reserved(v) => v,
+impl From<CommunicationCtrlType> for u8 {
+    fn from(val: CommunicationCtrlType) -> Self {
+        match val {
+            CommunicationCtrlType::EnableRxAndTx => 0x00,
+            CommunicationCtrlType::EnableRxAndDisableTx => 0x01,
+            CommunicationCtrlType::DisableRxAndEnableTx => 0x02,
+            CommunicationCtrlType::DisableRxAndTx => 0x03,
+            CommunicationCtrlType::EnableRxAndDisableTxWithEnhancedAddressInformation => 0x04,
+            CommunicationCtrlType::EnableRxAndTxWithEnhancedAddressInformation => 0x05,
+            CommunicationCtrlType::VehicleManufacturerSpecific(v) => v,
+            CommunicationCtrlType::SystemSupplierSpecific(v) => v,
+            CommunicationCtrlType::Reserved(v) => v,
         }
     }
 }

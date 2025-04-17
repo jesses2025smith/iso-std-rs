@@ -143,9 +143,9 @@ impl RequestData for DynamicallyDefineDID {
                 let mut max_addr = memory.0;
                 let mut max_size = memory.1;
                 others.iter()
-                    .for_each(|v| {
-                        let curr_addr = (*v).0;
-                        let curr_size = (*v).1;
+                    .for_each(|&v| {
+                        let curr_addr = v.0;
+                        let curr_size = v.1;
                         if curr_addr > max_addr {
                             max_addr = curr_addr;
                         }

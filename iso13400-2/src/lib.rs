@@ -138,11 +138,11 @@ impl TryFrom<&[u8]> for Id {
     }
 }
 
-impl Into<Vec<u8>> for Id {
+impl From<Id> for Vec<u8> {
     #[inline]
-    fn into(self) -> Vec<u8> {
-        let mut result = self.0.to_le_bytes().to_vec();
-        result.resize(Self::length(), Default::default());
+    fn from(val: Id) -> Self {
+        let mut result = val.0.to_le_bytes().to_vec();
+        result.resize(Id::length(), Default::default());
         result.reverse();
 
         result
@@ -195,9 +195,9 @@ impl TryFrom<u16> for PayloadType {
     }
 }
 
-impl Into<u16> for PayloadType {
-    fn into(self) -> u16 {
-        self as u16
+impl From<PayloadType> for u16 {
+    fn from(val: PayloadType) -> Self {
+        val as u16
     }
 }
 

@@ -115,9 +115,9 @@ impl TryFrom<u8> for ScalingByteExtensionUnit {
     }
 }
 
-impl Into<u8> for ScalingByteExtensionUnit {
+impl From<ScalingByteExtensionUnit> for u8 {
     #[inline]
-    fn into(self) -> u8 {
-        self.id
+    fn from(val: ScalingByteExtensionUnit) -> Self {
+        val.id
     }
 }

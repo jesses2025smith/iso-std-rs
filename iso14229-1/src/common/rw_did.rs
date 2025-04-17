@@ -126,60 +126,60 @@ impl From<u16> for DataIdentifier {
     }
 }
 
-impl Into<u16> for DataIdentifier {
-    fn into(self) -> u16 {
-        match self {
-            Self::BootSoftwareIdentification => 0xF180,
-            Self::ApplicationSoftwareIdentification => 0xF181,
-            Self::ApplicationDataIdentification => 0xF182,
-            Self::BootSoftwareFingerprint => 0xF183,
-            Self::ApplicationSoftwareFingerprint => 0xF184,
-            Self::ApplicationDataFingerprint => 0xF185,
-            Self::ActiveDiagnosticSession => 0xF186,
-            Self::VehicleManufacturerSparePartNumber => 0xF187,
-            Self::VehicleManufacturerECUSoftwareNumber => 0xF188,
-            Self::VehicleManufacturerECUSoftwareVersionNumber => 0xF189,
-            Self::SystemSupplierIdentifier => 0xF18A,
-            Self::ECUManufacturingDate => 0xF18B,
-            Self::ECUSerialNumber => 0xF18C,
-            Self::SupportedFunctionalUnits => 0xF18D,
-            Self::VehicleManufacturerKitAssemblyPartNumber => 0xF18E,
-            Self::ISOSAEReservedStandardized => 0xF18F,
-            Self::VIN => 0xF190,
-            Self::VehicleManufacturerECUHardwareNumber => 0xF191,
-            Self::SystemSupplierECUHardwareNumber => 0xF192,
-            Self::SystemSupplierECUHardwareVersionNumber => 0xF193,
-            Self::SystemSupplierECUSoftwareNumber => 0xF194,
-            Self::SystemSupplierECUSoftwareVersionNumber => 0xF195,
-            Self::ExhaustRegulationOrTypeApprovalNumber => 0xF196,
-            Self::SystemNameOrEngineType => 0xF197,
-            Self::RepairShopCodeOrTesterSerialNumber => 0xF198,
-            Self::ProgrammingDate => 0xF199,
-            Self::CalibrationRepairShopCodeOrCalibrationEquipmentSerialNumber => 0xF19A,
-            Self::CalibrationDate => 0xF19B,
-            Self::CalibrationEquipmentSoftwareNumber => 0xF19C,
-            Self::ECUInstallationDate => 0xF19D,
-            Self::ODXFile => 0xF19E,
-            Self::Entity => 0xF19F,
-            Self::VehicleManufacturerSpecific(v) |
-            Self::NetworkConfigurationDataForTractorTrailerApplication(v) |
-            Self::IdentificationOptionVehicleManufacturerSpecific(v) |
-            Self::IdentificationOptionSystemSupplierSpecific(v) |
-            Self::Periodic(v) |
-            Self::DynamicallyDefined(v) |
-            Self::OBD(v) |
-            Self::OBDMonitor(v) |
-            Self::OBDInfoType(v) |
-            Self::Tachograph(v) |
-            Self::AirbagDeployment(v) |
-            Self::EDREntries(v) |
-            Self::SafetySystem(v) |
-            Self::SystemSupplierSpecific(v) => v,
-            Self::NumberOfEDRDevices => 0xFA10,
-            Self::EDRIdentification => 0xFA11,
-            Self::EDRDeviceAddressInformation => 0xFA12,
-            Self::UDSVersion => 0xFF00,
-            Self::Reserved(v) => v,
+impl From<DataIdentifier> for u16 {
+    fn from(val: DataIdentifier) -> Self {
+        match val {
+            DataIdentifier::BootSoftwareIdentification => 0xF180,
+            DataIdentifier::ApplicationSoftwareIdentification => 0xF181,
+            DataIdentifier::ApplicationDataIdentification => 0xF182,
+            DataIdentifier::BootSoftwareFingerprint => 0xF183,
+            DataIdentifier::ApplicationSoftwareFingerprint => 0xF184,
+            DataIdentifier::ApplicationDataFingerprint => 0xF185,
+            DataIdentifier::ActiveDiagnosticSession => 0xF186,
+            DataIdentifier::VehicleManufacturerSparePartNumber => 0xF187,
+            DataIdentifier::VehicleManufacturerECUSoftwareNumber => 0xF188,
+            DataIdentifier::VehicleManufacturerECUSoftwareVersionNumber => 0xF189,
+            DataIdentifier::SystemSupplierIdentifier => 0xF18A,
+            DataIdentifier::ECUManufacturingDate => 0xF18B,
+            DataIdentifier::ECUSerialNumber => 0xF18C,
+            DataIdentifier::SupportedFunctionalUnits => 0xF18D,
+            DataIdentifier::VehicleManufacturerKitAssemblyPartNumber => 0xF18E,
+            DataIdentifier::ISOSAEReservedStandardized => 0xF18F,
+            DataIdentifier::VIN => 0xF190,
+            DataIdentifier::VehicleManufacturerECUHardwareNumber => 0xF191,
+            DataIdentifier::SystemSupplierECUHardwareNumber => 0xF192,
+            DataIdentifier::SystemSupplierECUHardwareVersionNumber => 0xF193,
+            DataIdentifier::SystemSupplierECUSoftwareNumber => 0xF194,
+            DataIdentifier::SystemSupplierECUSoftwareVersionNumber => 0xF195,
+            DataIdentifier::ExhaustRegulationOrTypeApprovalNumber => 0xF196,
+            DataIdentifier::SystemNameOrEngineType => 0xF197,
+            DataIdentifier::RepairShopCodeOrTesterSerialNumber => 0xF198,
+            DataIdentifier::ProgrammingDate => 0xF199,
+            DataIdentifier::CalibrationRepairShopCodeOrCalibrationEquipmentSerialNumber => 0xF19A,
+            DataIdentifier::CalibrationDate => 0xF19B,
+            DataIdentifier::CalibrationEquipmentSoftwareNumber => 0xF19C,
+            DataIdentifier::ECUInstallationDate => 0xF19D,
+            DataIdentifier::ODXFile => 0xF19E,
+            DataIdentifier::Entity => 0xF19F,
+            DataIdentifier::VehicleManufacturerSpecific(v) |
+            DataIdentifier::NetworkConfigurationDataForTractorTrailerApplication(v) |
+            DataIdentifier::IdentificationOptionVehicleManufacturerSpecific(v) |
+            DataIdentifier::IdentificationOptionSystemSupplierSpecific(v) |
+            DataIdentifier::Periodic(v) |
+            DataIdentifier::DynamicallyDefined(v) |
+            DataIdentifier::OBD(v) |
+            DataIdentifier::OBDMonitor(v) |
+            DataIdentifier::OBDInfoType(v) |
+            DataIdentifier::Tachograph(v) |
+            DataIdentifier::AirbagDeployment(v) |
+            DataIdentifier::EDREntries(v) |
+            DataIdentifier::SafetySystem(v) |
+            DataIdentifier::SystemSupplierSpecific(v) => v,
+            DataIdentifier::NumberOfEDRDevices => 0xFA10,
+            DataIdentifier::EDRIdentification => 0xFA11,
+            DataIdentifier::EDRDeviceAddressInformation => 0xFA12,
+            DataIdentifier::UDSVersion => 0xFF00,
+            DataIdentifier::Reserved(v) => v,
         }
     }
 }
@@ -220,11 +220,11 @@ impl DIDData {
 //     }
 // }
 
-impl Into<Vec<u8>> for DIDData {
-    fn into(mut self) -> Vec<u8> {
-        let did: u16 = self.did.into();
+impl From<DIDData> for Vec<u8> {
+    fn from(mut val: DIDData) -> Self {
+        let did: u16 = val.did.into();
         let mut result = did.to_be_bytes().to_vec();
-        result.append(&mut self.data);
+        result.append(&mut val.data);
 
         result
     }

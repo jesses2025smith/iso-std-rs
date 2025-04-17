@@ -27,9 +27,9 @@ impl LengthFormatIdentifier {
     }
 }
 
-impl Into<u8> for LengthFormatIdentifier {
-    fn into(self) -> u8 {
-        self.0
+impl From<LengthFormatIdentifier> for u8 {
+    fn from(val: LengthFormatIdentifier) -> Self {
+        val.0
     }
 }
 
@@ -70,10 +70,10 @@ impl From<u8> for DataFormatIdentifier {
     }
 }
 
-impl Into<u8> for DataFormatIdentifier {
+impl From<DataFormatIdentifier> for u8 {
     #[inline]
-    fn into(self) -> u8 {
-        self.0
+    fn from(val: DataFormatIdentifier) -> Self {
+        val.0
     }
 }
 
@@ -100,9 +100,9 @@ impl AddressAndLengthFormatIdentifier {
     }
 }
 
-impl Into<u8> for AddressAndLengthFormatIdentifier {
-    fn into(self) -> u8 {
-        self.0
+impl From<AddressAndLengthFormatIdentifier> for u8 {
+    fn from(val: AddressAndLengthFormatIdentifier) -> Self {
+        val.0
     }
 }
 

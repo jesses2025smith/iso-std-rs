@@ -44,13 +44,13 @@ macro_rules! enum_extend {
             )*
         }
 
-        impl Into<$value_type> for $enum_name {
+        impl From<$enum_name> for $value_type {
             #[inline]
-            fn into(self) -> $value_type {
-                match self {
+            fn from(val: $enum_name) -> Self {
+                match val {
                     $(
                         $(#[$variant_meta])*
-                        Self::$variant => $value,
+                        $enum_name::$variant => $value,
                     )*
                 }
             }
@@ -109,13 +109,13 @@ impl<'a> TryFrom<&'a [u8]> for U24 {
     }
 }
 
-impl Into<Vec<u8>> for U24 {
+impl From<U24> for Vec<u8> {
     #[inline]
-    fn into(self) -> Vec<u8> {
+    fn from(val: U24) -> Self {
         vec![
-            ((self.0 & 0xFF0000) >> 16) as u8,
-            ((self.0 & 0x00FF00) >> 8) as u8,
-            (self.0 & 0x0000FF) as u8
+            ((val.0 & 0xFF0000) >> 16) as u8,
+            ((val.0 & 0x00FF00) >> 8) as u8,
+            (val.0 & 0x0000FF) as u8
         ]
     }
 }
@@ -127,10 +127,10 @@ impl From<u32> for U24 {
     }
 }
 
-impl Into<u32> for U24 {
+impl From<U24> for u32 {
     #[inline]
-    fn into(self) -> u32 {
-        self.0
+    fn from(val: U24) -> Self {
+        val.0
     }
 }
 

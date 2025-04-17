@@ -25,17 +25,17 @@ impl TryFrom<u16> for DynamicallyDID {
     }
 }
 
-impl Into<u16> for DynamicallyDID {
+impl From<DynamicallyDID> for u16 {
     #[inline]
-    fn into(self) -> u16 {
-        self.0
+    fn from(val: DynamicallyDID) -> Self {
+        val.0
     }
 }
 
-impl Into<Vec<u8>> for DynamicallyDID {
+impl From<DynamicallyDID> for Vec<u8> {
     #[inline]
-    fn into(self) -> Vec<u8> {
-        self.0.to_be_bytes().to_vec()
+    fn from(val: DynamicallyDID) -> Self {
+        val.0.to_be_bytes().to_vec()
     }
 }
 
@@ -63,11 +63,11 @@ impl<'a> TryFrom<&'a [u8]> for DynamicallyMemAddr {
     }
 }
 
-impl Into<Vec<u8>> for DynamicallyMemAddr {
-    fn into(self) -> Vec<u8> {
-        let mut result = self.did.to_be_bytes().to_vec();
-        result.push(self.position);
-        result.push(self.mem_size);
+impl From<DynamicallyMemAddr> for Vec<u8> {
+    fn from(val: DynamicallyMemAddr) -> Self {
+        let mut result = val.did.to_be_bytes().to_vec();
+        result.push(val.position);
+        result.push(val.mem_size);
         result
     }
 }

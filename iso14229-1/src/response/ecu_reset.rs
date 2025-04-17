@@ -20,9 +20,9 @@ pub struct ECUReset {
     pub second: Option<u8>,
 }
 
-impl Into<Vec<u8>> for ECUReset {
-    fn into(self) -> Vec<u8> {
-        match self.second {
+impl From<ECUReset> for Vec<u8> {
+    fn from(val: ECUReset) -> Self {
+        match val.second {
             Some(v) => vec![v, ],
             None => vec![],
         }
