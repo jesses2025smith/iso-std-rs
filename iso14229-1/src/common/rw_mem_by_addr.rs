@@ -1,6 +1,6 @@
 //! Commons of Service 23|3D
 
-use commty::ByteOrder;
+use rsutil::types::ByteOrder;
 use crate::{AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, utils};
 
 #[derive(Debug, Clone, Eq, PartialEq)]

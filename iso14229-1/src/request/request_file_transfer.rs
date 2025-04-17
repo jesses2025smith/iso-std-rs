@@ -1,6 +1,6 @@
 //! response of Service 38
 
-use commty::ByteOrder;
+use rsutil::types::ByteOrder;
 use crate::{Configuration, error::Iso14229Error, DataFormatIdentifier, ModeOfOperation, request::{Request, SubFunction}, RequestData, utils, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]

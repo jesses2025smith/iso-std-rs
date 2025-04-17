@@ -1,6 +1,6 @@
 //! response of Service 35
 
-use commty::ByteOrder;
+use rsutil::types::ByteOrder;
 use std::collections::HashSet;
 use lazy_static::lazy_static;
 use crate::{Configuration, error::Iso14229Error, LengthFormatIdentifier, response::{Code, Response, SubFunction}, ResponseData, utils, Service};

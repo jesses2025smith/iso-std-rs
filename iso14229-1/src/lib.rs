@@ -8,7 +8,7 @@ pub use constant::*;
 mod error;
 pub use error::*;
 
-use commty::ByteOrder;
+use rsutil::types::ByteOrder;
 use std::{collections::HashMap, fmt::{Display, Formatter}};
 
 enum_extend! (

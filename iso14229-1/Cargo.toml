@@ -15,13 +15,13 @@ keywords = [
 ]
 
 [dependencies]
-commty = { workspace = true }
 log = { workspace = true }
 thiserror = { workspace = true }
 lazy_static = { workspace = true }
 bitflags = { workspace = true }
 bitfield-struct = { workspace = true }
 hex = { workspace = true }
+rsutil = { workspace = true, features = ["types"] }
 
 [dev-dependencies]
 anyhow = { workspace = true }

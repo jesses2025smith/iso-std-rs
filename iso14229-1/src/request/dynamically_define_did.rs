@@ -1,6 +1,6 @@
 //! request of Service 2C
 
-use commty::ByteOrder;
+use rsutil::types::ByteOrder;
 use crate::{DynamicallyDID, DefinitionType, DynamicallyMemAddr, Iso14229Error, request::{Request, SubFunction}, RequestData, Configuration, utils, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
