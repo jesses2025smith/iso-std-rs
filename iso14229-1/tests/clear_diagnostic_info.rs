@@ -1,4 +1,5 @@
 //! Service 14
+#![allow(clippy::non_minimal_cfg)]
 
 #[cfg(test)]
 mod tests {

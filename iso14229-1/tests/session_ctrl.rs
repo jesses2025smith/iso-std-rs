@@ -13,13 +13,13 @@ mod tests {
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(sub_func.function::<SessionType>()?, SessionType::Default);
-        assert_eq!(sub_func.is_suppress_positive(), false);
+        assert!(sub_func.is_suppress_positive());
 
         let source = hex::decode("1081")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(sub_func.function::<SessionType>()?, SessionType::Default);
-        assert_eq!(sub_func.is_suppress_positive(), true);
+        assert!(sub_func.is_suppress_positive());
 
         let source = hex::decode("100100")?;
         let err = request::Request::try_from_cfg(source, &cfg).unwrap_err();
@@ -42,7 +42,7 @@ mod tests {
         let response = response::Response::try_from_cfg(source, &cfg)?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(sub_func.function::<SessionType>()?, SessionType::Extended);
-        assert_eq!(response.is_negative(), false);
+        assert!(!response.is_negative());
 
         let cfg = Configuration::default();
         let session = response.data::<response::SessionCtrl>(&cfg)?;

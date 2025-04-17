@@ -1,4 +1,5 @@
 //! Service 29
+#![allow(clippy::non_minimal_cfg)]
 
 #[cfg(any(feature = "std2020"))]
 #[cfg(test)]
