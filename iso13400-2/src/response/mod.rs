@@ -95,7 +95,7 @@ impl TryFrom<&[u8]> for VehicleID {
         let vin = match String::from_utf8(data[offset..offset+LENGTH_OF_VIN].to_vec()) {
             Ok(v) => v,
             Err(_) => {
-                log::warn!("invalid UTF-8 string: {}", hex::encode(data));
+                rsutil::warn!("invalid UTF-8 string: {}", hex::encode(data));
                 "-".repeat(data_len)
             }
         };
@@ -396,7 +396,7 @@ impl DiagnosticPositive {
         pre_diag_data: Vec<u8>,
     ) -> Self {
         if code != DiagnosticPositiveCode::Confirm {
-            log::warn!("Diagnostic Positive code: {:?}", code);
+            rsutil::warn!("Diagnostic Positive code: {:?}", code);
         }
         Self { src_addr, dst_addr, code, pre_diag_data }
     }

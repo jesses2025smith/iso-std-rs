@@ -15,13 +15,13 @@ keywords = [
 ]
 
 [dependencies]
-log = { workspace = true }
-thiserror = { workspace = true }
-lazy_static = { workspace = true }
-bitflags = { workspace = true }
 bitfield-struct = { workspace = true }
+bitflags = { workspace = true }
 hex = { workspace = true }
-rsutil = { workspace = true, features = ["types"] }
+lazy_static = { workspace = true }
+log = { workspace = true }
+rsutil = { workspace = true, features = ["log", "types"] }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }

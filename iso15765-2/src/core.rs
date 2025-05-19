@@ -168,7 +168,7 @@ impl FlowControlContext {
             0xFA..=0xFF => {
                 // should not enter
                 let message = format!("ISO 15765-2 - got an invalid st_min: {}", self.st_min);
-                log::error!("{}", message);
+                rsutil::error!("{}", message);
                 unreachable!("{}", message)   // panic is dangerous
             },
             0xF1..=0xF9 => 100 * (self.st_min & 0x0F) as u32,

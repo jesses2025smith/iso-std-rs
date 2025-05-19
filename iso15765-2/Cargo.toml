@@ -18,6 +18,7 @@ keywords = [
 bitflags = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
+rsutil = { workspace = true, features = ["log"] }
 thiserror = { workspace = true }
 
 [dependencies.rs-can]

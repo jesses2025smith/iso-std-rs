@@ -61,7 +61,7 @@ impl From<u8> for AuthReturnValue {
             0xA0..=0xCF => Self::VehicleManufacturerSpecific(value),
             0xD0..=0xFE => Self::SystemSupplierSpecific(value),
             _ => {
-                log::warn!("ISO 14229-1 used reserved value: {}", value);
+                rsutil::warn!("ISO 14229-1 used reserved value: {}", value);
                 Self::Reserved(value)
             }
         }

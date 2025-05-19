@@ -15,10 +15,11 @@ keywords = [
 ]
 
 [dependencies]
-log = { workspace = true }
-thiserror = { workspace = true }
-hex = { workspace = true }
 getset = { workspace = true }
+hex = { workspace = true }
+log = { workspace = true }
+rsutil = { workspace = true, features = ["log"] }
+thiserror = { workspace = true }
 
 [dev-dependencies]
 anyhow = { workspace = true }

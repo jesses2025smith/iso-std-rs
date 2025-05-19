@@ -41,28 +41,28 @@ where
 
     #[inline]
     pub fn register_listener(&self, name: String, listener: Box<dyn CanListener<C, F>>) -> bool {
-        log::trace!("SyncISO-TP - register listener {}", name);
+        rsutil::trace!("SyncISO-TP - register listener {}", name);
         match self.listeners.lock() {
             Ok(mut listeners) => {
                 listeners.insert(name, listener);
                 true
             },
             Err(e) => {
-                log::warn!("SyncISO-TP - listener error {} when registering listener {}", e, name);
+                rsutil::warn!("SyncISO-TP - listener error {} when registering listener {}", e, name);
                 false
             },
         }
     }
 
     pub fn unregister_listener(&self, name: &str) -> bool {
-        log::trace!("SyncISO-TP - unregister listener {}", name);
+        rsutil::trace!("SyncISO-TP - unregister listener {}", name);
         match self.listeners.lock() {
             Ok(mut listeners) => {
                 listeners.remove(name);
                 true
             }
             Err(e) => {
-                log::warn!("SyncISO-TP - listener error {} when unregistering listener {}", e, name);
+                rsutil::warn!("SyncISO-TP - listener error {} when unregistering listener {}", e, name);
                 false
             }
         }
@@ -75,7 +75,7 @@ where
                 true
             },
             Err(e) => {
-                log::warn!("SyncISO-TP - listener error {} when unregistering all listeners", e);
+                rsutil::warn!("SyncISO-TP - listener error {} when unregistering all listeners", e);
                 false
             }
         }
@@ -89,7 +89,7 @@ where
                     .collect()
             },
             Err(e) => {
-                log::warn!("SyncISO-TP - listener error {} when get all listener names", e);
+                rsutil::warn!("SyncISO-TP - listener error {} when get all listener names", e);
                 vec![]
             },
         }
@@ -103,7 +103,7 @@ where
                 }
             },
             Err(e) => {
-                log::warn!("SyncISO-TP - listener error {} when trying to callback", e);
+                rsutil::warn!("SyncISO-TP - listener error {} when trying to callback", e);
             }
         }
     }
@@ -137,22 +137,22 @@ where
     }
 
     pub fn stop(&mut self) {
-        log::info!("SyncISO-TP - stopping adapter");
+        rsutil::info!("SyncISO-TP - stopping adapter");
         if let Err(e) = self.stop_tx.send(()) {
-            log::warn!("SyncISO-TP - error {} when stopping transmit", e);
+            rsutil::warn!("SyncISO-TP - error {} when stopping transmit", e);
         }
 
         thread::sleep(Duration::from_micros(2 * self.interval.unwrap_or(50 * 1000)));
 
         if let Some(task) = self.send_task.upgrade() {
             if !task.is_finished() {
-                log::warn!("SyncISO-TP - transmit task is running after stop signal");
+                rsutil::warn!("SyncISO-TP - transmit task is running after stop signal");
             }
         }
 
         if let Some(task) = self.receive_task.upgrade() {
             if !task.is_finished() {
-                log::warn!("SyncISO-TP - receive task is running after stop signal");
+                rsutil::warn!("SyncISO-TP - receive task is running after stop signal");
             }
         }
 
@@ -180,7 +180,7 @@ where
     fn transmit_callback(receiver: &Arc<Mutex<Receiver<F>>>, device: &D, listeners: &Listeners<C, F>, timeout: Option<u32>) {
         if let Ok(receiver) = receiver.lock() {
             if let Ok(msg) = receiver.try_recv() {
-                log::trace!("SyncISO-TP - transmitting: {}", msg);
+                rsutil::trace!("SyncISO-TP - transmitting: {}", msg);
                 let id = msg.id();
                 let chl = msg.channel();
                 match listeners.lock() {
@@ -189,7 +189,7 @@ where
                             .for_each(|l| l.on_frame_transmitting(chl.clone(), &msg));
                     },
                     Err(e) => {
-                        log::warn!("SyncISO-TP - listener error {} when notify transmitting listeners", e);
+                        rsutil::warn!("SyncISO-TP - listener error {} when notify transmitting listeners", e);
                     }
                 }
 
@@ -200,11 +200,11 @@ where
                                 .for_each(|l| l.on_frame_transmitted(chl.clone(), id));
                         },
                         Err(e) => {
-                            log::warn!("SyncISO-TP - listener error {:?} when notify transmitted listeners", e);
+                            rsutil::warn!("SyncISO-TP - listener error {:?} when notify transmitted listeners", e);
                         }
                     },
                     Err(e) => {
-                        log::warn!("SyncISO-TP - error {} when transmitting message", e);
+                        rsutil::warn!("SyncISO-TP - error {} when transmitting message", e);
                     }
                 }
             }
@@ -223,7 +223,7 @@ where
                                     .for_each(|l| l.on_frame_received(c.clone(), &messages));
                             }
                             Err(e) => {
-                                log::warn!("SyncISO-TP - listener error {:?} when notify received listeners", e);
+                                rsutil::warn!("SyncISO-TP - listener error {:?} when notify received listeners", e);
                             }
                         }
                     }
@@ -234,7 +234,7 @@ where
     fn loop_util(device: MutexGuard<Self>, interval: u64, stopper: Arc<Mutex<Receiver<()>>>, callback: fn(&MutexGuard<Self>)) {
         loop {
             if device.device.is_closed() {
-                log::info!("SyncISO-TP - device closed");
+                rsutil::info!("SyncISO-TP - device closed");
                 break;
             }
 
@@ -242,7 +242,7 @@ where
 
             if let Ok(stopper) = stopper.try_lock() {
                 if let Ok(()) = stopper.try_recv() {
-                    log::info!("SyncISO-TP - stop sync");
+                    rsutil::info!("SyncISO-TP - stop sync");
                     break;
                 }
             }

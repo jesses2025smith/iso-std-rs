@@ -100,7 +100,7 @@ impl TryFrom<&[u8]> for VehicleIDWithVIN {
         let vin = match String::from_utf8(data[offset..].to_vec()) {
             Ok(v) => v,
             Err(_) => {
-                log::warn!("invalid UTF-8 string: {}", hex::encode(data));
+                rsutil::warn!("invalid UTF-8 string: {}", hex::encode(data));
                 "-".repeat(Self::length())
             }
         };

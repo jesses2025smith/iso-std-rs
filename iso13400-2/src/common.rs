@@ -41,7 +41,7 @@ impl From<u8> for Version {
             0x03 => Self::ISO13400_2_2019,
             0xFF => Self::Default,
             _ => {
-                log::warn!("ISO 13400-2 - used reserved version: {}", version);
+                rsutil::warn!("ISO 13400-2 - used reserved version: {}", version);
                 Self::Reserved(version)
             },
         }
@@ -100,7 +100,7 @@ impl From<u8> for HeaderNegativeCode {
             0x03 => Self::OutOfMemory,
             0x04 => Self::InvalidPayloadLength,
             _ => {
-                log::warn!("ISO 13400-2 - used reserved header negative code: {}", code);
+                rsutil::warn!("ISO 13400-2 - used reserved header negative code: {}", code);
                 Self::Reserved(code)
             },
         }
@@ -154,7 +154,7 @@ impl From<u16> for LogicAddress {
             0x0E00..=0x0FFF => Self::Client(value),
             0xE400..=0xEFFF => Self::VMSpecificFunctional(value),
             _ => {
-                log::warn!("ISO 13400-2 - used reserved logic address: {}", value);
+                rsutil::warn!("ISO 13400-2 - used reserved logic address: {}", value);
                 Self::Reserved(value)
             },
         }
@@ -204,7 +204,7 @@ impl From<u8> for NodeType {
             0x00 => Self::Gateway,
             0x01 => Self::Node,
             _ => {
-                log::warn!("ISO 13400-2 - used reserved entity: {}", value);
+                rsutil::warn!("ISO 13400-2 - used reserved entity: {}", value);
                 Self::Reserved(value)
             },
         }
@@ -247,7 +247,7 @@ impl From<u8> for FurtherAction {
         match value {
             0x00 => Self::NoAction,
             0x01..=0x0F => {
-                log::warn!("ISO 13400-2 - used reserved further action: {}", value);
+                rsutil::warn!("ISO 13400-2 - used reserved further action: {}", value);
                 Self::Reserved(value)
             },
             0x10 => Self::CentralSecurity,
@@ -281,7 +281,7 @@ impl From<u8> for SyncStatus {
             0x00 => Self::VINorGIDSync,
             0x10 => Self::VINorGIDNotSync,
             _ => {
-                log::warn!("ISO 13400-2 - used reserved VIN/GID sync. status: {}", value);
+                rsutil::warn!("ISO 13400-2 - used reserved VIN/GID sync. status: {}", value);
                 Self::Reserved(value)
             },
         }
@@ -341,7 +341,7 @@ impl From<u8> for ActiveCode {
             0x11 => Self::NeedConfirm,
             0xE0..=0xFE => Self::VMSpecific(v),
             _ => {
-                log::warn!("ISO 13400-2 - used reserved active code: {}", v);
+                rsutil::warn!("ISO 13400-2 - used reserved active code: {}", v);
                 Self::Reserved(v)
             },
         }
@@ -376,7 +376,7 @@ impl From<u8> for PowerMode {
             0x01 => Self::Ready,
             0x02 => Self::NotSupported,
             _ => {
-                log::warn!("ISO 13400-2 - used reserved power mode: {}", value);
+                rsutil::warn!("ISO 13400-2 - used reserved power mode: {}", value);
                 Self::Reserved(value)
             },
         }
@@ -413,7 +413,7 @@ impl From<u8> for RoutingActiveType {
             0x00 => Self::Default,
             0x01 => Self::WWHODB,
             0x02..=0xDF => {
-                log::warn!("ISO 13400-2 - used reserved routing active type: {}", value);
+                rsutil::warn!("ISO 13400-2 - used reserved routing active type: {}", value);
                 Self::Reserved(value)
             },
             0xE0 => Self::CentralSecurity,
@@ -445,7 +445,7 @@ impl From<u8> for DiagnosticPositiveCode {
         match value {
             0x00 => Self::Confirm,
             _ => {
-                log::warn!("ISO 13400-2 - used reserved diagnostic positive code: {}", value);
+                rsutil::warn!("ISO 13400-2 - used reserved diagnostic positive code: {}", value);
                 Self::Reserved(value)
             },
         }
@@ -501,7 +501,7 @@ impl From<u8> for DiagnosticNegativeCode {
             0x07 => Self::UnknownNetwork,
             0x08 => Self::TransportProtocolError,
             _ => {
-                log::warn!("ISO 13400-2 - used reserved diagnostic negative code: {}", value);
+                rsutil::warn!("ISO 13400-2 - used reserved diagnostic negative code: {}", value);
                 Self::Reserved(value)
             },
         }
@@ -663,7 +663,7 @@ impl From<Message> for Vec<u8> {
 impl TryFrom<&[u8]> for Message {
     type Error = Iso13400Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        log::debug!("ISO 13400-2 - parsing data: {}", hex::encode(data));
+        rsutil::debug!("ISO 13400-2 - parsing data: {}", hex::encode(data));
         let data_len = data.len();
         let expected = SIZE_OF_VERSION + SIZE_OF_DATA_TYPE + SIZE_OF_LENGTH;
         if data_len < expected {

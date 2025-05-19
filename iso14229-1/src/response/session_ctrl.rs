@@ -67,7 +67,7 @@ impl<'a> TryFrom<&'a [u8]> for SessionTiming {
 
         #[cfg(not(feature = "session_data_check"))]
         if p2 > P2_MAX || p2_star > P2_STAR_MAX {
-            log::warn!("UDS - invalid session data P2: {}, P2*: {}", p2, p2_star);
+            rsutil::warn!("UDS - invalid session data P2: {}, P2*: {}", p2, p2_star);
             if p2 > P2_MAX { p2 = P2_MAX; }
             if p2_star > P2_STAR_MAX { p2_star = P2_STAR_MAX; }
         }
