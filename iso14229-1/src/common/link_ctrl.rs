@@ -52,16 +52,16 @@ impl TryFrom<u8> for LinkCtrlType {
     }
 }
 
-impl Into<u8> for LinkCtrlType {
-    fn into(self) -> u8 {
-        match self {
-            Self::VerifyModeTransitionWithFixedParameter => 0x01,
-            Self::VerifyModeTransitionWithSpecificParameter => 0x02,
-            Self::TransitionMode => 0x03,
+impl From<LinkCtrlType> for u8 {
+    fn from(val: LinkCtrlType) -> Self {
+        match val {
+            LinkCtrlType::VerifyModeTransitionWithFixedParameter => 0x01,
+            LinkCtrlType::VerifyModeTransitionWithSpecificParameter => 0x02,
+            LinkCtrlType::TransitionMode => 0x03,
 
-            Self::VehicleManufacturerSpecific(v) => v,
-            Self::SystemSupplierSpecific(v) => v,
-            Self::Reserved(v) => v,
+            LinkCtrlType::VehicleManufacturerSpecific(v) => v,
+            LinkCtrlType::SystemSupplierSpecific(v) => v,
+            LinkCtrlType::Reserved(v) => v,
         }
     }
 }

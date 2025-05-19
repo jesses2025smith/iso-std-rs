@@ -11,13 +11,13 @@ mod tests {
         let source = hex::decode("3E00")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
-        assert_eq!(sub_func.is_suppress_positive(), false);
+        assert!(!sub_func.is_suppress_positive());
         assert_eq!(sub_func.function::<TesterPresentType>()?, TesterPresentType::Zero);
 
         let source = hex::decode("3E80")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
-        assert_eq!(sub_func.is_suppress_positive(), true);
+        assert!(sub_func.is_suppress_positive());
         assert_eq!(sub_func.function::<TesterPresentType>()?, TesterPresentType::Zero);
 
         Ok(())

@@ -71,21 +71,21 @@ impl From<u8> for Formula {
     }
 }
 
-impl Into<u8> for Formula {
-    fn into(self) -> u8 {
-        match self {
-            Self::Formula0 => 0x00,
-            Self::Formula1 => 0x01,
-            Self::Formula2 => 0x02,
-            Self::Formula3 => 0x03,
-            Self::Formula4 => 0x04,
-            Self::Formula5 => 0x05,
-            Self::Formula6 => 0x06,
-            Self::Formula7 => 0x07,
-            Self::Formula8 => 0x08,
-            Self::Formula9 => 0x09,
-            Self::VehicleManufacturerSpecific(v) => v,
-            Self::Reserved(v) => v,
+impl From<Formula> for u8 {
+    fn from(val: Formula) -> Self {
+        match val {
+            Formula::Formula0 => 0x00,
+            Formula::Formula1 => 0x01,
+            Formula::Formula2 => 0x02,
+            Formula::Formula3 => 0x03,
+            Formula::Formula4 => 0x04,
+            Formula::Formula5 => 0x05,
+            Formula::Formula6 => 0x06,
+            Formula::Formula7 => 0x07,
+            Formula::Formula8 => 0x08,
+            Formula::Formula9 => 0x09,
+            Formula::VehicleManufacturerSpecific(v) => v,
+            Formula::Reserved(v) => v,
         }
     }
 }

@@ -24,18 +24,6 @@ bitflags! {
     }
 }
 
-/// byte order define.
-#[derive(Debug, Default, Copy, Clone, Eq, PartialEq)]
-pub enum ByteOrder {
-    /// Motorola byte order
-    Big,
-    /// Intel byte order
-    #[default]
-    Little,
-    /// The native byte order depends on your CPU
-    Native,
-}
-
 impl Display for State {
     #[allow(deprecated)]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -47,37 +35,37 @@ impl Display for State {
             first = false;
         }
         if self.contains(State::WaitFirst) {
-            write!(f, "{}", format!("{}WaitFirst", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}WaitFirst", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitFlowCtrl) {
-            write!(f, "{}", format!("{}WaitFlowCtrl", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}WaitFlowCtrl", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitData) {
-            write!(f, "{}", format!("{}WaitData", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}WaitData", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitBusy) {
-            write!(f, "{}", format!("{}WaitBusy", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}WaitBusy", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::ResponsePending) {
-            write!(f, "{}", format!("{}ResponsePending", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}ResponsePending", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::Sending) {
-            write!(f, "{}", format!("{}Sending", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}Sending", if first { "" } else { " | " }))?;
             idle = false;
             first = false;
         }
         if self.contains(State::Error) {
-            write!(f, "{}", format!("{}Error", if first { "" } else { " | " }))?;
+            write!(f, "{}", format_args!("{}Error", if first { "" } else { " | " }))?;
             idle = false;
         }
         if idle {
@@ -124,10 +112,10 @@ impl TryFrom<u8> for FlowControlState {
     }
 }
 
-impl Into<u8> for FlowControlState {
+impl From<FlowControlState> for u8 {
     #[inline]
-    fn into(self) -> u8 {
-        self as u8
+    fn from(val: FlowControlState) -> Self {
+        val as u8
     }
 }
 
@@ -180,7 +168,7 @@ impl FlowControlContext {
             0xFA..=0xFF => {
                 // should not enter
                 let message = format!("ISO 15765-2 - got an invalid st_min: {}", self.st_min);
-                log::error!("{}", message);
+                rsutil::error!("{}", message);
                 unreachable!("{}", message)   // panic is dangerous
             },
             0xF1..=0xF9 => 100 * (self.st_min & 0x0F) as u32,

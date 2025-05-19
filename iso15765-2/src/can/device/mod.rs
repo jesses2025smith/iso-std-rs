@@ -45,7 +45,7 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
                 ctx.p2.update(p2_ms, p2_star_ms);
             },
             Err(e) =>
-                log::warn!("CanIsoTp::set_p2_context: {}", e),
+                rsutil::warn!("CanIsoTp::set_p2_context: {}", e),
         }
     }
 
@@ -59,7 +59,7 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
     pub fn write(&self, addr_type: AddressType, data: Vec<u8>) -> Result<(), Error> {
         self.state_append(State::Idle);
         self.context_reset();
-        log::trace!("ISO-TP - Sending: {}", hex::encode(&data));
+        rsutil::trace!("ISO-TP - Sending: {}", hex::encode(&data));
 
         let frames = Frame::from_data(data)?;
         let frame_len = frames.len();
@@ -70,7 +70,7 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
                 AddressType::Functional => Ok(address.fid)
             },
             Err(_) => {
-                log::warn!("can't get address context");
+                rsutil::warn!("can't get address context");
                 Err(Error::DeviceError)
             },
         }?;
@@ -80,7 +80,7 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
             let data = iso_tp_frame.encode(None);
             let mut frame = F::new(CanId::from_bits(can_id, None), data.as_slice())
                 .ok_or({
-                    log::warn!("fail to convert iso-tp frame to can frame");
+                    rsutil::warn!("fail to convert iso-tp frame to can frame");
                     Error::DeviceError
                 })?;
             frame.set_channel(self.channel.clone());
@@ -95,7 +95,7 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
             }
             self.sender.send(frame)
                 .map_err(|e| {
-                    log::warn!("ISO-TP - transmit failed: {:?}", e);
+                    rsutil::warn!("ISO-TP - transmit failed: {:?}", e);
                     Error::DeviceError
                 })?;
         }
@@ -124,14 +124,14 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
                         self.iso_tp_event(Event::FirstFrameReceived);
                     },
                     Err(e) => {
-                        log::warn!("ISO-TP - transmit failed: {:?}", e);
+                        rsutil::warn!("ISO-TP - transmit failed: {:?}", e);
                         self.state_append(State::Error);
 
                         self.iso_tp_event(Event::ErrorOccurred(Error::DeviceError));
                     },
                 }
             },
-            None => log::error!("ISO-TP - convert `iso-tp frame` to `can-frame` error"),
+            None => rsutil::error!("ISO-TP - convert `iso-tp frame` to `can-frame` error"),
         }
     }
 
@@ -175,15 +175,15 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
                 // println!("ISO-TP - Sending iso-tp event: {:?}", event);
                 match &event {
                     Event::DataReceived(data) => {
-                        log::debug!("ISO-TP - Received: {}", hex::encode(data));
+                        rsutil::debug!("ISO-TP - Received: {}", hex::encode(data));
                     },
                     Event::ErrorOccurred(_) =>
-                        log::warn!("ISO-TP - Sending iso-tp event: {:?}", event),
-                    _ => log::trace!("ISO-TP - Sending iso-tp event: {:?}", event),
+                        rsutil::warn!("ISO-TP - Sending iso-tp event: {:?}", event),
+                    _ => rsutil::trace!("ISO-TP - Sending iso-tp event: {:?}", event),
                 }
                 listener.on_iso_tp_event(event);
             },
-            Err(_) => log::warn!("ISO-TP(CAN async): Sending event failed"),
+            Err(_) => rsutil::warn!("ISO-TP(CAN async): Sending event failed"),
         }
     }
 
@@ -206,7 +206,7 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
                 Ok(())
             },
             Err(_) => {
-                log::warn!("can't get `context`");
+                rsutil::warn!("can't get `context`");
                 Err(Error::DeviceError)
             }
         }?;
@@ -252,7 +252,7 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
                 context.append_consecutive(sequence, data)
             },
             Err(_) => {
-                log::warn!("can't get `context`");
+                rsutil::warn!("can't get `context`");
                 Err(Error::DeviceError)
             }
         }
@@ -274,11 +274,11 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
     fn state_contains(&self, flags: State) -> bool {
         match self.state.lock() {
             Ok(v) => {
-                // log::debug!("ISO-TP - current state(state contains): {} contains: {}", *v, flags);
+                // rsutil::debug!("ISO-TP - current state(state contains): {} contains: {}", *v, flags);
                 *v & flags != State::Idle
             },
             Err(_) => {
-                log::warn!("ISO-TP - state mutex is poisoned");
+                rsutil::warn!("ISO-TP - state mutex is poisoned");
                 false
             },
         }
@@ -297,9 +297,9 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
                     *v |= flags;
                 }
 
-                log::trace!("ISO-TP - current state(state append): {}", *v);
+                rsutil::trace!("ISO-TP - current state(state append): {}", *v);
             }
-            Err(_) => log::warn!("ISO-TP - state mutex is poisoned when appending"),
+            Err(_) => rsutil::warn!("ISO-TP - state mutex is poisoned when appending"),
         }
     }
 
@@ -308,9 +308,9 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
         match self.state.lock() {
             Ok(mut v) => {
                 v.remove(flags);
-                log::trace!("ISO-TP - current state(state remove): {}", *v);
+                rsutil::trace!("ISO-TP - current state(state remove): {}", *v);
             },
-            Err(_) =>log::warn!("ISO-TP - state mutex is poisoned when removing"),
+            Err(_) =>rsutil::warn!("ISO-TP - state mutex is poisoned when removing"),
         }
     }
 }
@@ -331,7 +331,7 @@ where
 
     fn on_frame_transmitted(&self, channel: C, id: CanId) {
         let id = id.into_bits();
-        log::trace!("ISO-TP transmitted: {:04X} from {}", id, channel);
+        rsutil::trace!("ISO-TP transmitted: {:04X} from {}", id, channel);
         if channel != self.channel {
             return;
         }
@@ -360,7 +360,7 @@ where
         if let Some(address) = address_id {
             for frame in frames {
                 if frame.id().into_bits() == address.1 {
-                    log::debug!("ISO-TP received: {}", frame);
+                    rsutil::debug!("ISO-TP received: {}", frame);
 
                     match Frame::decode(frame.data()) {
                         Ok(frame) => match frame {
@@ -378,7 +378,7 @@ where
                             },
                         },
                         Err(e) => {
-                            log::warn!("ISO-TP - data convert to frame failed: {}", e);
+                            rsutil::warn!("ISO-TP - data convert to frame failed: {}", e);
                             self.state_append(State::Error);
                             self.iso_tp_event(Event::ErrorOccurred(e));
 

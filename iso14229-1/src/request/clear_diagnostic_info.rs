@@ -1,4 +1,5 @@
 //! request of Service 14
+#![allow(clippy::non_minimal_cfg)]
 
 
 use crate::{Configuration, Iso14229Error, request::{Request, SubFunction}, RequestData, utils, Service};
@@ -63,7 +64,7 @@ impl RequestData for ClearDiagnosticInfo {
         let data = &request.data;
         let data_len = data.len();
         let mut offset = 0;
-        let group = utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]]);
+        let group = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
         offset += 3;
 
         let mem_selection = if data_len > offset {
@@ -86,7 +87,7 @@ impl RequestData for ClearDiagnosticInfo {
         }
 
         let data = &request.data;
-        let group = utils::U24::from_be_bytes([0, data[0], data[1], data[2]]);
+        let group = utils::U24::from_be_bytes([data[0], data[1], data[2]]);
 
         Ok(Self::new(group))
     }

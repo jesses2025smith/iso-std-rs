@@ -8,25 +8,22 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0-alpha3"
+version = "0.1.0-alpha7"
 edition = "2021"
 license = "MIT OR GPL-3.0"
-authors = ["Jesse Smith <zhuyu4839@gmail.com>"]
-repository = "https://github.com/zhuyu4839/ecu-proto-rs"
+authors = ["Jesse Smith <jesses2025smith@gmail.com>"]
+repository = "https://github.com/jesses2025smith/ecu-proto-rs"
 
 [workspace.dependencies]
 bitflags = "2.6"
-bitfield-struct = "0.10"
+bitfield-struct = "0.11"
 getset = "0.1"
 hex = "0.4"
 lazy_static = "1"
-log = "0"
+log = "0.4"
+rsutil = "0.1"
+rs-can = "0.2"
 thiserror = "2"
 
 # dev-dependencies
 anyhow = "1"
-
-[workspace.dependencies.rs-can]
-git = "https://github.com/zhuyu4839/rust-can.git"
-branch = "develop"
-package = "rs-can"

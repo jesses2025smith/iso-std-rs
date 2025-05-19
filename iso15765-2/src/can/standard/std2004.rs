@@ -47,7 +47,7 @@ pub(crate) fn decode_first(
         return Err(Error::InvalidDataLength { actual: length, expect: MAX_FD_FRAME_SIZE })
     }
 
-    let pdu_len = (byte0 as u16 & 0x0F) << 8 | data[1] as u16;
+    let pdu_len = ((byte0 as u16 & 0x0F) << 8) | data[1] as u16;
     Ok(Frame::FirstFrame { length: pdu_len as u32, data: Vec::from(&data[2..]) })
 }
 

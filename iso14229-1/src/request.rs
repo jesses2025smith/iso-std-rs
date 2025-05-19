@@ -1,4 +1,4 @@
-#![allow(unused_imports)]
+#![allow(unused_imports, clippy::non_minimal_cfg)]
 
 /* - Diagnostic and communication management functional unit - */
 mod session_ctrl;           // 0x10
@@ -102,10 +102,10 @@ impl SubFunction {
     }
 }
 
-impl Into<u8> for SubFunction {
-    fn into(self) -> u8 {
-        let mut result = self.function;
-        if self.suppress_positive {
+impl From<SubFunction> for u8 {
+    fn from(val: SubFunction) -> Self {
+        let mut result = val.function;
+        if val.suppress_positive {
             result |= SUPPRESS_POSITIVE;
         }
 
@@ -182,7 +182,7 @@ impl Request {
     where
         T: RequestData,
     {
-        T::try_parse(&self, cfg)
+        T::try_parse(self, cfg)
     }
 
     #[inline]
@@ -202,14 +202,14 @@ impl Request {
     }
 }
 
-impl Into<Vec<u8>> for Request {
-    fn into(mut self) -> Vec<u8> {
-        let mut result = vec![self.service.into(), ];
-        if let Some(sub_func) = self.sub_func {
+impl From<Request> for Vec<u8> {
+    fn from(mut val: Request) -> Self {
+        let mut result = vec![val.service.into(), ];
+        if let Some(sub_func) = val.sub_func {
             result.push(sub_func.into());
         }
 
-        result.append(&mut self.data);
+        result.append(&mut val.data);
 
         result
     }

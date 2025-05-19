@@ -1,9 +1,8 @@
-# ISO-TP
-
 [![Latest version](https://img.shields.io/crates/v/iso15765-2.svg)](https://crates.io/crates/iso15765-2)
 [![Documentation](https://docs.rs/bleasy/badge.svg)](https://docs.rs/iso15765-2)
 ![LGPL](https://img.shields.io/badge/license-LGPL-green.svg)
 ![MIT](https://img.shields.io/badge/license-MIT-yellow.svg)
+![Downloads](https://img.shields.io/crates/d/iso15765-2)
 
 ## Overview
 

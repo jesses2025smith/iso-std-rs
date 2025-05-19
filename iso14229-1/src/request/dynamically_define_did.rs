@@ -1,7 +1,7 @@
 //! request of Service 2C
 
-
-use crate::{DynamicallyDID, DefinitionType, DynamicallyMemAddr, Iso14229Error, request::{Request, SubFunction}, RequestData, Configuration, utils, Service, ByteOrder};
+use rsutil::types::ByteOrder;
+use crate::{DynamicallyDID, DefinitionType, DynamicallyMemAddr, Iso14229Error, request::{Request, SubFunction}, RequestData, Configuration, utils, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum DynamicallyDefineDID {
@@ -143,9 +143,9 @@ impl RequestData for DynamicallyDefineDID {
                 let mut max_addr = memory.0;
                 let mut max_size = memory.1;
                 others.iter()
-                    .for_each(|v| {
-                        let curr_addr = (*v).0;
-                        let curr_size = (*v).1;
+                    .for_each(|&v| {
+                        let curr_addr = v.0;
+                        let curr_size = v.1;
                         if curr_addr > max_addr {
                             max_addr = curr_addr;
                         }

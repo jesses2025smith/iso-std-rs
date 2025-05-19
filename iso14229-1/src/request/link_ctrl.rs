@@ -56,7 +56,7 @@ impl RequestData for LinkCtrl {
             },
             LinkCtrlType::VerifyModeTransitionWithSpecificParameter => {
                 Ok(Self::VerifyModeTransitionWithSpecificParameter(
-                    utils::U24::from_be_bytes([0, data[offset], data[offset + 1], data[offset + 2]])
+                    utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]])
                 ))
             },
             LinkCtrlType::TransitionMode => {

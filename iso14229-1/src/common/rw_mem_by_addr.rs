@@ -1,6 +1,7 @@
 //! Commons of Service 23|3D
 
-use crate::{AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, utils, ByteOrder};
+use rsutil::types::ByteOrder;
+use crate::{AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, utils};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MemoryLocation {
@@ -10,6 +11,7 @@ pub struct MemoryLocation {
 }
 
 impl MemoryLocation {
+    #[allow(clippy::len_without_is_empty)]
     #[inline]
     pub const fn len(&self) -> usize {
         self.alfi.length_of_memory_size() + self.alfi.length_of_memory_address() + 1

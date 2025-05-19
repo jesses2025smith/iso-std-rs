@@ -16,9 +16,9 @@ impl TryFrom<u16> for NodeId {
     }
 }
 
-impl Into<u16> for NodeId {
-    fn into(self) -> u16 {
-        self.0
+impl From<NodeId> for u16 {
+    fn from(val: NodeId) -> Self {
+        val.0
     }
 }
 

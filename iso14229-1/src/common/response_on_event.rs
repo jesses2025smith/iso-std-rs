@@ -59,11 +59,11 @@ impl EventType {
     }
 }
 
-impl Into<u8> for EventType {
+impl From<EventType> for u8 {
     #[inline]
-    fn into(self) -> u8 {
-        let mut result: u8 = self.event_type.into();
-        if self.store_event {
+    fn from(val: EventType) -> Self {
+        let mut result: u8 = val.event_type.into();
+        if val.store_event {
             result |= POSITIVE_OFFSET;
         }
 

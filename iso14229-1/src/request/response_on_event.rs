@@ -111,8 +111,8 @@ pub struct ResponseOnEvent {
     pub param: EventTypeParameter,
 }
 
-impl Into<Vec<u8>> for ResponseOnEvent {
-    fn into(self) -> Vec<u8> {
+impl From<ResponseOnEvent> for Vec<u8> {
+    fn from(_: ResponseOnEvent) -> Self {
         panic!("This library does not yet support");
     }
 }

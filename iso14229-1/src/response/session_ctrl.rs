@@ -67,7 +67,7 @@ impl<'a> TryFrom<&'a [u8]> for SessionTiming {
 
         #[cfg(not(feature = "session_data_check"))]
         if p2 > P2_MAX || p2_star > P2_STAR_MAX {
-            log::warn!("UDS - invalid session data P2: {}, P2*: {}", p2, p2_star);
+            rsutil::warn!("UDS - invalid session data P2: {}, P2*: {}", p2, p2_star);
             if p2 > P2_MAX { p2 = P2_MAX; }
             if p2_star > P2_STAR_MAX { p2_star = P2_STAR_MAX; }
         }
@@ -80,11 +80,11 @@ impl<'a> TryFrom<&'a [u8]> for SessionTiming {
     }
 }
 
-impl Into<Vec<u8>> for SessionTiming {
+impl From<SessionTiming> for Vec<u8> {
     #[inline]
-    fn into(self) -> Vec<u8> {
-        let mut result = self.p2.to_be_bytes().to_vec();
-        result.extend(self.p2_star.to_be_bytes());
+    fn from(val: SessionTiming) -> Self {
+        let mut result = val.p2.to_be_bytes().to_vec();
+        result.extend(val.p2_star.to_be_bytes());
         result
     }
 }

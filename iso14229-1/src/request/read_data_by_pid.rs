@@ -32,7 +32,7 @@ impl ReadDataByPeriodId {
 
     #[inline]
     pub fn transmission_mode(&self) -> TransmissionMode {
-        self.mode.clone()
+        self.mode
     }
 
     #[inline]

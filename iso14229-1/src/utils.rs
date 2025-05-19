@@ -44,13 +44,13 @@ macro_rules! enum_extend {
             )*
         }
 
-        impl Into<$value_type> for $enum_name {
+        impl From<$enum_name> for $value_type {
             #[inline]
-            fn into(self) -> $value_type {
-                match self {
+            fn from(val: $enum_name) -> Self {
+                match val {
                     $(
                         $(#[$variant_meta])*
-                        Self::$variant => $value,
+                        $enum_name::$variant => $value,
                     )*
                 }
             }
@@ -76,24 +76,25 @@ macro_rules! enum_extend {
 pub struct U24(pub(crate) u32);
 
 impl U24 {
+    pub const MAX: Self = Self(0x00FF_FFFF);
     #[inline]
     pub fn new(val: u32) -> Self {
-        Self(val)
+        Self (val & Self::MAX.0)
     }
     #[inline]
-    pub fn from_be_bytes(data: [u8; 4]) -> Self {
-        U24(u32::from_be_bytes(data))
+    pub fn from_be_bytes(data: [u8; 3]) -> Self {
+        U24(u32::from_be_bytes([0x00, data[0], data[1], data[2]]))
     }
 
-    #[inline]
-    pub fn from_le_bytes(data: [u8; 4]) -> Self {
-        U24(u32::from_le_bytes(data))
-    }
-
-    #[inline]
-    pub fn from_ne_bytes(data: [u8; 4]) -> Self {
-        U24(u32::from_ne_bytes(data))
-    }
+    // #[inline]
+    // pub fn from_le_bytes(data: [u8; 4]) -> Self {
+    //     U24(u32::from_le_bytes(data))
+    // }
+    //
+    // #[inline]
+    // pub fn from_ne_bytes(data: [u8; 4]) -> Self {
+    //     U24(u32::from_ne_bytes(data))
+    // }
 }
 
 impl<'a> TryFrom<&'a [u8]> for U24 {
@@ -108,13 +109,13 @@ impl<'a> TryFrom<&'a [u8]> for U24 {
     }
 }
 
-impl Into<Vec<u8>> for U24 {
+impl From<U24> for Vec<u8> {
     #[inline]
-    fn into(self) -> Vec<u8> {
+    fn from(val: U24) -> Self {
         vec![
-            ((self.0 & 0xFF0000) >> 16) as u8,
-            ((self.0 & 0x00FF00) >> 8) as u8,
-            (self.0 & 0x0000FF) as u8
+            ((val.0 & 0xFF0000) >> 16) as u8,
+            ((val.0 & 0x00FF00) >> 8) as u8,
+            (val.0 & 0x0000FF) as u8
         ]
     }
 }
@@ -122,14 +123,14 @@ impl Into<Vec<u8>> for U24 {
 impl From<u32> for U24 {
     #[inline]
     fn from(value: u32) -> Self {
-        Self (value & 0xFFFFFF)
+        Self::new(value)
     }
 }
 
-impl Into<u32> for U24 {
+impl From<U24> for u32 {
     #[inline]
-    fn into(self) -> u32 {
-        self.0
+    fn from(val: U24) -> Self {
+        val.0
     }
 }
 
@@ -162,12 +163,8 @@ pub(crate) fn u128_to_vec_fix(value: u128, bo: ByteOrder) -> Vec<u8> {
 
     result.resize(count, Default::default());
 
-    match bo {
-        ByteOrder::Big => result.reverse(),
-        ByteOrder::Little => {},
-        ByteOrder::Native => if !bo.is_little_endian() {
-            result.reverse();
-        },
+    if bo.is_big() {
+        result.reverse();
     }
 
     result
@@ -177,12 +174,8 @@ pub(crate) fn u128_to_vec(value: u128, len: usize, bo: ByteOrder) -> Vec<u8> {
     let mut result = value.to_le_bytes().to_vec();
     result.resize(len, Default::default());
 
-    match bo {
-        ByteOrder::Big => result.reverse(),
-        ByteOrder::Little => {},
-        ByteOrder::Native => if !bo.is_little_endian() {
-            result.reverse();
-        },
+    if bo.is_big() {
+        result.reverse();
     }
 
     result
@@ -191,12 +184,8 @@ pub(crate) fn u128_to_vec(value: u128, len: usize, bo: ByteOrder) -> Vec<u8> {
 #[inline]
 pub(crate) fn slice_to_u128(slice: &[u8], bo: ByteOrder) -> u128 {
     let mut data = slice.to_vec();
-    match bo {
-        ByteOrder::Big => data.reverse(),
-        ByteOrder::Little => {},
-        ByteOrder::Native => if !bo.is_little_endian() {
-            data.reverse();
-        },
+    if bo.is_big() {
+        data.reverse();
     }
 
     data.resize(std::mem::size_of::<u128>(), Default::default());

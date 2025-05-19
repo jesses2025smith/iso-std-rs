@@ -1,4 +1,5 @@
 //! Service 14
+#![allow(clippy::non_minimal_cfg)]
 
 #[cfg(test)]
 mod tests {
@@ -17,7 +18,7 @@ mod tests {
 
         let data = request.data::<request::ClearDiagnosticInfo>(&cfg)?;
         assert_eq!(data, request::ClearDiagnosticInfo::new(
-            U24::from_be_bytes([0x00, 0xFF, 0xFF, 0x33]),
+            U24::from_be_bytes([0xFF, 0xFF, 0x33]),
         ));
 
         Ok(())
@@ -35,7 +36,7 @@ mod tests {
 
         let data = request.data::<request::ClearDiagnosticInfo>(&cfg)?;
         assert_eq!(data, request::ClearDiagnosticInfo::new(
-            U24::from_be_bytes([0x00, 0xFF, 0xFF, 0x33]),
+            U24::from_be_bytes([0xFF, 0xFF, 0x33]),
             Some(0x01)
         ));
 
