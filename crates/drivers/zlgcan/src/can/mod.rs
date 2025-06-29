@@ -187,32 +187,23 @@ impl TryFrom<&CanChlCfg> for ZCanChlCfgV1 {
         let cfg = binding.get(&dev_type.to_string())
             .ok_or(CanError::DeviceConfigError(format!("device: {:?} is not configured in file!", dev_type)))?;
         let dev_type = value.device_type()?;
-        match dev_type {
-            ZCanDeviceType::ZCAN_USBCANFD_800U => {
-                let ext = &value.extra;
-                let (aset, dset) = get_fd_set(value, cfg, ext.dbitrate)?;
-                let timing0 = aset.get_timing();    // 4458527 = 0x44081f
-                let timing1 = dset.get_timing();    // 4260357 = 0x410205
-                return ZCanChlCfgV1::new(
-                    value.can_type,
-                    ZCanChlCfgV1Union::from(
-                        ZCanFdChlCfgV1::new(
-                            value.mode,
-                            timing0,
-                            timing1,
-                            ext.filter, ext.acc_code, ext.acc_mask, ext.brp,
-                    )?)
-                );
-            },
-            _ => {},
-        }
+
         if dev_type.canfd_support() {      // the device supported canfd can't set CAN type to CAN
             let ext = &value.extra;
+            let (timing0, timing1) = match dev_type {
+                ZCanDeviceType::ZCAN_USBCANFD_800U => {
+                    let (aset, dset) = get_fd_set(value, cfg, ext.dbitrate)?;
+                    let timing0 = aset.get_timing();    // 4458527 = 0x44081f
+                    let timing1 = dset.get_timing();    // 4260357 = 0x410205
+                    (timing0, timing1)
+                },
+                _ => (0, 0)
+            };
             ZCanChlCfgV1::new(
                 value.can_type,
                 ZCanChlCfgV1Union::from(
                     ZCanFdChlCfgV1::new(
-                        value.mode, 0, 0, ext.filter, ext.acc_code, ext.acc_mask, ext.brp  // TODO timing0 and timing1 ignored
+                        value.mode, timing0, timing1, ext.filter, ext.acc_code, ext.acc_mask, ext.brp  // TODO timing0 and timing1 ignored
                     )?
                 )
             )
