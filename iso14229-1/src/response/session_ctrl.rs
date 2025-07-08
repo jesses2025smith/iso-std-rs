@@ -1,21 +1,25 @@
 //! response of Service 10
 
-
-use std::collections::HashSet;
+use crate::{
+    constant::{P2_MAX, P2_STAR_MAX},
+    error::Iso14229Error,
+    response::{Code, Response, SubFunction},
+    utils, Configuration, ResponseData, Service, SessionType,
+};
 use lazy_static::lazy_static;
-use crate::{Configuration, constant::{P2_MAX, P2_STAR_MAX}, error::Iso14229Error, response::{Code, Response, SubFunction}, ResponseData, SessionType, utils, Service};
+use std::collections::HashSet;
 
-lazy_static!(
+lazy_static! {
     pub static ref SESSION_CTRL_NEGATIVES: HashSet<Code> = HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
     ]);
-);
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SessionTiming {
-    pub p2:      u16,
+    pub p2: u16,
     pub p2_star: u16,
 }
 
@@ -68,12 +72,19 @@ impl<'a> TryFrom<&'a [u8]> for SessionTiming {
         #[cfg(not(feature = "session_data_check"))]
         if p2 > P2_MAX || p2_star > P2_STAR_MAX {
             rsutil::warn!("UDS - invalid session data P2: {}, P2*: {}", p2, p2_star);
-            if p2 > P2_MAX { p2 = P2_MAX; }
-            if p2_star > P2_STAR_MAX { p2_star = P2_STAR_MAX; }
+            if p2 > P2_MAX {
+                p2 = P2_MAX;
+            }
+            if p2_star > P2_STAR_MAX {
+                p2_star = P2_STAR_MAX;
+            }
         }
         #[cfg(feature = "session_data_check")]
         if p2 > P2_MAX || p2_star > P2_STAR_MAX {
-            return Err(Iso14229Error::InvalidSessionData(format!("P2: {}, P2*: {}", p2, p2_star)));
+            return Err(Iso14229Error::InvalidSessionData(format!(
+                "P2: {}, P2*: {}",
+                p2, p2_star
+            )));
         }
 
         Ok(Self { p2, p2_star })
@@ -93,7 +104,11 @@ impl From<SessionTiming> for Vec<u8> {
 pub struct SessionCtrl(pub SessionTiming);
 
 impl ResponseData for SessionCtrl {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
                 let _ = SessionType::try_from(sub_func)?;
@@ -106,16 +121,15 @@ impl ResponseData for SessionCtrl {
                     sub_func: Some(SubFunction::new(sub_func)),
                     data: data.to_vec(),
                 })
-            },
+            }
             None => Err(Iso14229Error::SubFunctionError(Service::SessionCtrl)),
         }
     }
 
     fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = response.service();
-        if service != Service::SessionCtrl
-            || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::SessionCtrl || response.sub_func.is_none() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         let timing = SessionTiming::try_from(response.data.as_slice())?;

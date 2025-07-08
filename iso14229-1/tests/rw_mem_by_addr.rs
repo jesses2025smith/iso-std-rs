@@ -2,7 +2,10 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, AddressAndLengthFormatIdentifier, Configuration, MemoryLocation, Service, TryFromWithCfg};
+    use iso14229_1::{
+        request, response, AddressAndLengthFormatIdentifier, Configuration, MemoryLocation,
+        Service, TryFromWithCfg,
+    };
 
     #[test]
     fn test_read_request() -> anyhow::Result<()> {
@@ -12,13 +15,23 @@ mod tests {
         let request = request::Request::try_from_cfg(source, &cfg)?;
         assert_eq!(request.sub_function(), None);
         let data = request.data::<request::ReadMemByAddr>(&cfg)?;
-        assert_eq!(data.0, MemoryLocation::new(AddressAndLengthFormatIdentifier::new(2, 1)?, 0x4813,0x05,)?);
+        assert_eq!(
+            data.0,
+            MemoryLocation::new(AddressAndLengthFormatIdentifier::new(2, 1)?, 0x4813, 0x05,)?
+        );
 
         let source = hex::decode("2324204813920103")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         assert_eq!(request.sub_function(), None);
         let data = request.data::<request::ReadMemByAddr>(&cfg)?;
-        assert_eq!(data.0, MemoryLocation::new(AddressAndLengthFormatIdentifier::new(4, 2)?,0x20481392,0x0103,)?);
+        assert_eq!(
+            data.0,
+            MemoryLocation::new(
+                AddressAndLengthFormatIdentifier::new(4, 2)?,
+                0x20481392,
+                0x0103,
+            )?
+        );
 
         Ok(())
     }
@@ -45,13 +58,19 @@ mod tests {
         assert_eq!(response.service(), Service::ReadMemByAddr);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x23, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::ReadMemByAddr);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }
@@ -64,12 +83,15 @@ mod tests {
         let request = request::Request::try_from_cfg(source, &cfg)?;
         assert_eq!(request.sub_function(), None);
         let data = request.data::<request::WriteMemByAddr>(&cfg)?;
-        assert_eq!(data, request::WriteMemByAddr::new(
-            AddressAndLengthFormatIdentifier::new(4, 4)?,
-            0x20481213,
-            0x05,
-            hex::decode("1122334455")?,
-        )?);
+        assert_eq!(
+            data,
+            request::WriteMemByAddr::new(
+                AddressAndLengthFormatIdentifier::new(4, 4)?,
+                0x20481213,
+                0x05,
+                hex::decode("1122334455")?,
+            )?
+        );
 
         Ok(())
     }
@@ -82,7 +104,10 @@ mod tests {
         let response = response::Response::try_from_cfg(source, &cfg)?;
         assert_eq!(response.sub_function(), None);
         let data = response.data::<response::WriteMemByAddr>(&cfg)?;
-        assert_eq!(data.0, MemoryLocation::new(AddressAndLengthFormatIdentifier::new(2, 1)?, 0x4813,0x05,)?);
+        assert_eq!(
+            data.0,
+            MemoryLocation::new(AddressAndLengthFormatIdentifier::new(2, 1)?, 0x4813, 0x05,)?
+        );
 
         Ok(())
     }
@@ -96,13 +121,19 @@ mod tests {
         assert_eq!(response.service(), Service::WriteMemByAddr);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x3D, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::WriteMemByAddr);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }

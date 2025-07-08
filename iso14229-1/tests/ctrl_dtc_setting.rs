@@ -51,13 +51,19 @@ mod tests {
         assert_eq!(response.service(), Service::CtrlDTCSetting);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x85, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::CtrlDTCSetting);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }

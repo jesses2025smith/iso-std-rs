@@ -79,7 +79,7 @@ impl U24 {
     pub const MAX: Self = Self(0x00FF_FFFF);
     #[inline]
     pub fn new(val: u32) -> Self {
-        Self (val & Self::MAX.0)
+        Self(val & Self::MAX.0)
     }
     #[inline]
     pub fn from_be_bytes(data: [u8; 3]) -> Self {
@@ -115,7 +115,7 @@ impl From<U24> for Vec<u8> {
         vec![
             ((val.0 & 0xFF0000) >> 16) as u8,
             ((val.0 & 0x00FF00) >> 8) as u8,
-            (val.0 & 0x0000FF) as u8
+            (val.0 & 0x0000FF) as u8,
         ]
     }
 }
@@ -135,13 +135,21 @@ impl From<U24> for u32 {
 }
 
 #[inline]
-pub(crate) fn data_length_check(actual: usize, expect: usize, equal: bool) -> Result<(), Iso14229Error> {
+pub(crate) fn data_length_check(
+    actual: usize,
+    expect: usize,
+    equal: bool,
+) -> Result<(), Iso14229Error> {
     match equal {
-        true => if actual != expect {
-            return Err(Iso14229Error::InvalidDataLength { expect, actual });
+        true => {
+            if actual != expect {
+                return Err(Iso14229Error::InvalidDataLength { expect, actual });
+            }
         }
-        false => if actual < expect {
-            return Err(Iso14229Error::InvalidDataLength { expect, actual });
+        false => {
+            if actual < expect {
+                return Err(Iso14229Error::InvalidDataLength { expect, actual });
+            }
         }
     }
 
@@ -196,7 +204,8 @@ pub(crate) fn slice_to_u128(slice: &[u8], bo: ByteOrder) -> u128 {
 #[inline]
 pub(crate) fn length_of_u_type<T>(mut value: T) -> usize
 where
-    T: std::ops::ShrAssign + std::cmp::PartialOrd + From<u8> {
+    T: std::ops::ShrAssign + std::cmp::PartialOrd + From<u8>,
+{
     let mut result = 0;
 
     while value > 0.into() {
@@ -209,5 +218,8 @@ where
 
 #[inline]
 pub fn peel_suppress_positive(value: u8) -> (bool, u8) {
-    ((value & SUPPRESS_POSITIVE) == SUPPRESS_POSITIVE, value & 0x7F)
+    (
+        (value & SUPPRESS_POSITIVE) == SUPPRESS_POSITIVE,
+        value & 0x7F,
+    )
 }

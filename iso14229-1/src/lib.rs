@@ -2,18 +2,21 @@
 
 mod common;
 pub use common::*;
+mod constant;
 pub mod request;
 pub mod response;
 pub mod utils;
-mod constant;
 pub use constant::*;
 mod error;
 pub use error::*;
 
 use rsutil::types::ByteOrder;
-use std::{collections::HashMap, fmt::{Display, Formatter}};
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter},
+};
 
-enum_extend! (
+enum_extend!(
     /// the service marked with `✅` is completed.
     ///
     /// the service marked with `⭕` is partially completed.
@@ -30,7 +33,7 @@ enum_extend! (
         SecurityAccess = 0x27,      // ✅
         CommunicationCtrl = 0x28,   // ✅
         #[cfg(any(feature = "std2020"))]
-        Authentication = 0x29,      // ✅
+        Authentication = 0x29, // ✅
         ReadDataByPeriodId = 0x2A,  // ✅
         DynamicalDefineDID = 0x2C,  // ✅
         WriteDID = 0x2E,            // ✅
@@ -45,13 +48,15 @@ enum_extend! (
         WriteMemByAddr = 0x3D,      // ✅
         TesterPresent = 0x3E,       // ✅
         #[cfg(any(feature = "std2006", feature = "std2013"))]
-        AccessTimingParam = 0x83,   // ✅
+        AccessTimingParam = 0x83, // ✅
         SecuredDataTrans = 0x84,    // ✅
         CtrlDTCSetting = 0x85,      // ✅
         ResponseOnEvent = 0x86,     // ❌
         LinkCtrl = 0x87,            // ✅
         NRC = 0x7F,
-    }, u8);
+    },
+    u8
+);
 
 impl Display for Service {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -110,7 +115,11 @@ impl Default for Configuration {
 }
 
 pub trait RequestData {
-    fn request(data: &[u8], sub_func: Option<u8>, cfg: &Configuration) -> Result<request::Request, Iso14229Error>;
+    fn request(
+        data: &[u8],
+        sub_func: Option<u8>,
+        cfg: &Configuration,
+    ) -> Result<request::Request, Iso14229Error>;
     fn try_parse(request: &request::Request, cfg: &Configuration) -> Result<Self, Iso14229Error>
     where
         Self: Sized;
@@ -118,7 +127,11 @@ pub trait RequestData {
 }
 
 pub trait ResponseData {
-    fn response(data: &[u8], sub_func: Option<u8>, cfg: &Configuration) -> Result<response::Response, Iso14229Error>;
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        cfg: &Configuration,
+    ) -> Result<response::Response, Iso14229Error>;
     fn try_parse(response: &response::Response, cfg: &Configuration) -> Result<Self, Iso14229Error>
     where
         Self: Sized;

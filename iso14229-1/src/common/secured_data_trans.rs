@@ -1,10 +1,8 @@
 //! Commons of Service 84
 
-
-use std::ops::{BitAnd, BitXorAssign};
+use crate::{utils, Iso14229Error};
 use bitfield_struct::bitfield;
-use crate::{Iso14229Error, utils};
-
+use std::ops::{BitAnd, BitXorAssign};
 
 /// Table 490 — Definition of Administrative Parameter
 ///
@@ -42,7 +40,6 @@ impl From<AdministrativeParameter> for Vec<u8> {
 }
 
 impl AdministrativeParameter {
-
     #[inline]
     pub const fn is_request(&self) -> bool {
         self.request()
@@ -102,8 +99,8 @@ impl AdministrativeParameter {
 /// Table 491 — Definition of Signature/Encryption calculation parameter
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum SignatureEncryptionCalculation {
-    VehicleManufacturerSpecific(u8),    // 00 to 7F
-    SystemSupplier(u8),                 // 80 to 8F
+    VehicleManufacturerSpecific(u8), // 00 to 7F
+    SystemSupplier(u8),              // 80 to 8F
 }
 
 impl TryFrom<u8> for SignatureEncryptionCalculation {
@@ -122,8 +119,8 @@ impl From<SignatureEncryptionCalculation> for u8 {
     #[inline]
     fn from(val: SignatureEncryptionCalculation) -> Self {
         match val {
-            SignatureEncryptionCalculation::VehicleManufacturerSpecific(v) |
-            SignatureEncryptionCalculation::SystemSupplier(v) => v,
+            SignatureEncryptionCalculation::VehicleManufacturerSpecific(v)
+            | SignatureEncryptionCalculation::SystemSupplier(v) => v,
         }
     }
 }

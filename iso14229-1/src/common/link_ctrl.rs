@@ -1,6 +1,6 @@
 //! Commons of Service 87
 
-use crate::{enum_extend, Iso14229Error, utils};
+use crate::{enum_extend, utils, Iso14229Error};
 
 enum_extend!(
     pub enum LinkCtrlMode {
@@ -16,8 +16,9 @@ enum_extend!(
         CAN1MBaud = 0x13,
 
         ProgrammingSetup = 0x20,
-    }, u8);
-
+    },
+    u8
+);
 
 /// Different name in ISO-14229(2006).
 /// VerifyBaudrateTransitionWithFixedBaudrate
@@ -65,7 +66,3 @@ impl From<LinkCtrlType> for u8 {
         }
     }
 }
-
-
-
-

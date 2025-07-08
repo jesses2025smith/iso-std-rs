@@ -1,8 +1,11 @@
 //! request of Service 86
 
-
+use crate::{
+    enum_extend,
+    request::{Request, SubFunction},
+    Configuration, EventType, Iso14229Error, RequestData, ResponseOnEventType, Service,
+};
 use bitfield_struct::bitfield;
-use crate::{Configuration, Iso14229Error, enum_extend, EventType, request::{Request, SubFunction}, RequestData, ResponseOnEventType, Service};
 
 enum_extend!(
     /// Table 142 — Comparison logic parameter definition
@@ -11,7 +14,9 @@ enum_extend!(
         LargerThan = 0x02,
         Equal = 0x03,
         NotEqual = 0x04,
-    }, u8);
+    },
+    u8
+);
 
 /// Table 143 — Localization of value 16 bit bitfield parameter definition
 ///
@@ -78,13 +83,13 @@ pub enum EventTypeParameter {
         service: Service,
         sub_func: u8,
         dtc_status_mask: u8,
-    } = 0x01,   // Comparison Parameter < Measured Value
+    } = 0x01, // Comparison Parameter < Measured Value
     OnChangeOfDataIdentifier {
         did: u16,
         service: Service,
-    } = 0x03,   // Comparison Parameter > Measured Value
+    } = 0x03, // Comparison Parameter > Measured Value
     ReportActivatedEvents = 0x04,
-    StartResponseOnEvent = 0x05,        //
+    StartResponseOnEvent = 0x05, //
     ClearResponseOnEvent = 0x06,
     OnComparisonOfValues {
         did: u16,
@@ -93,11 +98,11 @@ pub enum EventTypeParameter {
         hysteresis_value: u8,
         localization: Localization,
         service: Service,
-        response_did: u16,      //
-    } = 0x07,        // C2
+        response_did: u16, //
+    } = 0x07, // C2
     ReportMostRecentDtcOnStatusChange {
         report_type: u8,
-    } = 0x08,   // C2
+    } = 0x08, // C2
     ReportDTCRecordInformationOnDtcStatusChange {
         dtc_status_mask: u8,
         dtc_sub_func: u8,
@@ -107,7 +112,7 @@ pub enum EventTypeParameter {
 
 #[derive(Debug, Clone)]
 pub struct ResponseOnEvent {
-    pub window_time: u8,            // unit of window time is `s`(seconds)
+    pub window_time: u8, // unit of window time is `s`(seconds)
     pub param: EventTypeParameter,
 }
 
@@ -118,21 +123,25 @@ impl From<ResponseOnEvent> for Vec<u8> {
 }
 
 impl RequestData for ResponseOnEvent {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn request(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::ResponseOnEvent)),
-            None => {
-
-                Ok(Request { service: Service::ResponseOnEvent, sub_func: None, data: data.to_vec(), })
-            }
+            None => Ok(Request {
+                service: Service::ResponseOnEvent,
+                sub_func: None,
+                data: data.to_vec(),
+            }),
         }
     }
 
     fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = request.service();
-        if service != Service::ResponseOnEvent
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::ResponseOnEvent || request.sub_func.is_some() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         Err(Iso14229Error::NotImplement)

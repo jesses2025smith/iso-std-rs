@@ -1,6 +1,6 @@
 //! Commons of Service 85
 
-use crate::{Iso14229Error, utils};
+use crate::{utils, Iso14229Error};
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -18,9 +18,9 @@ impl TryFrom<u8> for DTCSettingType {
         match value {
             0x01 => Ok(Self::On),
             0x02 => Ok(Self::Off),
-            0x03..=0x3F => Ok(Self::Reserved(value)),                               // ISOSAEReserved
-            0x40..=0x5F => Ok(Self::VehicleManufacturerSpecific(value)),            // vehicleManufacturerSpecific
-            0x60..=0x7E => Ok(Self::SystemSupplierSpecific(value)),                 // systemSupplierSpecific
+            0x03..=0x3F => Ok(Self::Reserved(value)), // ISOSAEReserved
+            0x40..=0x5F => Ok(Self::VehicleManufacturerSpecific(value)), // vehicleManufacturerSpecific
+            0x60..=0x7E => Ok(Self::SystemSupplierSpecific(value)),      // systemSupplierSpecific
             0x7F => Ok(Self::Reserved(value)),
             v => Err(Iso14229Error::ReservedError(v.to_string())),
         }

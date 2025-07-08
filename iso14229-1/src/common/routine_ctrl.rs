@@ -1,15 +1,16 @@
 //! Commons of Service 31
 
-
-use crate::{constant::ISO_SAE_RESERVED, error::Iso14229Error, Service, utils};
 use crate::enum_extend;
+use crate::{constant::ISO_SAE_RESERVED, error::Iso14229Error, utils, Service};
 
-enum_extend! (
+enum_extend!(
     pub enum RoutineCtrlType {
         StartRoutine = 1,
         StopRoutine = 2,
         RequestRoutineResults = 3,
-    }, u8);
+    },
+    u8
+);
 
 #[allow(non_upper_case_globals)]
 pub const TachographTestIds: RoutineId = RoutineId(0xE200);

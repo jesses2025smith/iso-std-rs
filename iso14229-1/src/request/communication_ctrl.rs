@@ -1,7 +1,10 @@
 //! request of Service 28
 
-
-use crate::{CommunicationCtrlType, CommunicationType, Configuration, Iso14229Error, request::{Request, SubFunction}, RequestData, utils, Service};
+use crate::{
+    request::{Request, SubFunction},
+    utils, CommunicationCtrlType, CommunicationType, Configuration, Iso14229Error, RequestData,
+    Service,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct NodeId(u16);
@@ -35,29 +38,39 @@ impl CommunicationCtrl {
         node_id: Option<NodeId>,
     ) -> Result<Self, Iso14229Error> {
         match ctrl_type {
-            CommunicationCtrlType::EnableRxAndDisableTxWithEnhancedAddressInformation |
-            CommunicationCtrlType::EnableRxAndTxWithEnhancedAddressInformation => {
-                match node_id {
-                    Some(v) => Ok(Self { comm_type, node_id: Some(v), }),
-                    None => Err(Iso14229Error::InvalidParam("`nodeIdentificationNumber` is required".to_string())),
-                }
+            CommunicationCtrlType::EnableRxAndDisableTxWithEnhancedAddressInformation
+            | CommunicationCtrlType::EnableRxAndTxWithEnhancedAddressInformation => match node_id {
+                Some(v) => Ok(Self {
+                    comm_type,
+                    node_id: Some(v),
+                }),
+                None => Err(Iso14229Error::InvalidParam(
+                    "`nodeIdentificationNumber` is required".to_string(),
+                )),
             },
-            _ => Ok(Self {  comm_type, node_id: None, })
+            _ => Ok(Self {
+                comm_type,
+                node_id: None,
+            }),
         }
     }
 }
 
 impl RequestData for CommunicationCtrl {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn request(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
                 let data_len = data.len();
                 match CommunicationCtrlType::try_from(sub_func)? {
-                    CommunicationCtrlType::EnableRxAndDisableTxWithEnhancedAddressInformation |
-                    CommunicationCtrlType::EnableRxAndTxWithEnhancedAddressInformation => {
+                    CommunicationCtrlType::EnableRxAndDisableTxWithEnhancedAddressInformation
+                    | CommunicationCtrlType::EnableRxAndTxWithEnhancedAddressInformation => {
                         utils::data_length_check(data_len, 3, true)?;
-                    },
+                    }
                     _ => utils::data_length_check(data_len, 1, true)?,
                 };
 
@@ -66,15 +79,14 @@ impl RequestData for CommunicationCtrl {
                     sub_func: Some(SubFunction::new(sub_func, suppress_positive)),
                     data: data.to_vec(),
                 })
-            },
-            None => Err(Iso14229Error::SubFunctionError(Service::CommunicationCtrl))
+            }
+            None => Err(Iso14229Error::SubFunctionError(Service::CommunicationCtrl)),
         }
     }
 
     fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = request.service;
-        if service != Service::CommunicationCtrl
-            || request.sub_func.is_none() {
+        if service != Service::CommunicationCtrl || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
         }
 
@@ -87,15 +99,15 @@ impl RequestData for CommunicationCtrl {
         let comm_type = data[offset];
         offset += 1;
         let node_id = match sub_func {
-            CommunicationCtrlType::EnableRxAndDisableTxWithEnhancedAddressInformation |
-            CommunicationCtrlType::EnableRxAndTxWithEnhancedAddressInformation => {
-
+            CommunicationCtrlType::EnableRxAndDisableTxWithEnhancedAddressInformation
+            | CommunicationCtrlType::EnableRxAndTxWithEnhancedAddressInformation => {
                 utils::data_length_check(data_len, offset + 2, true)?;
 
-                Some(NodeId::try_from(
-                    u16::from_be_bytes([data[offset], data[offset + 1]])
-                )?)
-            },
+                Some(NodeId::try_from(u16::from_be_bytes([
+                    data[offset],
+                    data[offset + 1],
+                ]))?)
+            }
             _ => None,
         };
 

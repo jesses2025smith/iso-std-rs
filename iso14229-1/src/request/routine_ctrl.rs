@@ -1,7 +1,9 @@
 //! request of Service 31
 
-
-use crate::{Configuration, Iso14229Error, request::{Request, SubFunction}, RequestData, RoutineCtrlType, RoutineId, Service, utils};
+use crate::{
+    request::{Request, SubFunction},
+    utils, Configuration, Iso14229Error, RequestData, RoutineCtrlType, RoutineId, Service,
+};
 
 #[derive(Debug, Clone)]
 pub struct RoutineCtrl {
@@ -10,7 +12,11 @@ pub struct RoutineCtrl {
 }
 
 impl RequestData for RoutineCtrl {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn request(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -23,16 +29,15 @@ impl RequestData for RoutineCtrl {
                     sub_func: Some(SubFunction::new(sub_func, suppress_positive)),
                     data: data.to_vec(),
                 })
-            },
+            }
             None => Err(Iso14229Error::SubFunctionError(Service::RoutineCtrl)),
         }
     }
 
     fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = request.service();
-        if service != Service::RoutineCtrl
-            || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::RoutineCtrl || request.sub_func.is_none() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         // let sub_func: RoutineCtrlType = request.sub_function().unwrap().function()?;
@@ -43,7 +48,10 @@ impl RequestData for RoutineCtrl {
         offset += 2;
         let routine_id = RoutineId::from(routine_id);
 
-        Ok(Self { routine_id, option_record: data[offset..].to_vec() })
+        Ok(Self {
+            routine_id,
+            option_record: data[offset..].to_vec(),
+        })
     }
     #[inline]
     fn to_vec(mut self, _: &Configuration) -> Vec<u8> {

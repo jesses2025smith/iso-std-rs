@@ -3,34 +3,49 @@
 #[cfg(any(feature = "std2006", feature = "std2013"))]
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, Configuration, Service, TimingParameterAccessType, TryFromWithCfg};
+    use iso14229_1::{
+        request, response, Configuration, Service, TimingParameterAccessType, TryFromWithCfg,
+    };
 
     /// The TimingParameterRequestRecord is only present if timingParameterAccessType = setTimingParametersToGivenValues.
     /// The structure and content of the TimingParameterRequestRecord is data-link-layer-dependent and therefore defined in the
     /// implementation specification(s) of ISO 14229.
     #[test]
-    fn test_request() -> anyhow::Result<()> {   // TODO
+    fn test_request() -> anyhow::Result<()> {
+        // TODO
         let cfg = Configuration::default();
 
         let source = hex::decode("8301")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
-        assert_eq!(sub_func.function::<TimingParameterAccessType>()?, TimingParameterAccessType::ReadExtendedTimingParameterSet);
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::ReadExtendedTimingParameterSet
+        );
 
         let source = hex::decode("8302")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
-        assert_eq!(sub_func.function::<TimingParameterAccessType>()?, TimingParameterAccessType::SetTimingParametersToDefaultValues);
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::SetTimingParametersToDefaultValues
+        );
 
         let source = hex::decode("8303")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
-        assert_eq!(sub_func.function::<TimingParameterAccessType>()?, TimingParameterAccessType::ReadCurrentlyActiveTimingParameters);
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::ReadCurrentlyActiveTimingParameters
+        );
 
         let source = hex::decode("830400")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
-        assert_eq!(sub_func.function::<TimingParameterAccessType>()?, TimingParameterAccessType::SetTimingParametersToGivenValues);
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::SetTimingParametersToGivenValues
+        );
         let data = request.data::<request::AccessTimingParameter>(&cfg)?;
         assert_eq!(data, request::AccessTimingParameter { data: vec![0x00] });
 
@@ -48,24 +63,36 @@ mod tests {
         let source = hex::decode("C30100")?;
         let response = response::Response::try_from_cfg(source, &cfg)?;
         let sub_func = response.sub_function().unwrap();
-        assert_eq!(sub_func.function::<TimingParameterAccessType>()?, TimingParameterAccessType::ReadExtendedTimingParameterSet);
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::ReadExtendedTimingParameterSet
+        );
         let data = response.data::<response::AccessTimingParameter>(&cfg)?;
         assert_eq!(data, response::AccessTimingParameter { data: vec![0x00] });
 
         let source = hex::decode("C302")?;
         let response = response::Response::try_from_cfg(source, &cfg)?;
         let sub_func = response.sub_function().unwrap();
-        assert_eq!(sub_func.function::<TimingParameterAccessType>()?, TimingParameterAccessType::SetTimingParametersToDefaultValues);
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::SetTimingParametersToDefaultValues
+        );
 
         let source = hex::decode("C303")?;
         let response = response::Response::try_from_cfg(source, &cfg)?;
         let sub_func = response.sub_function().unwrap();
-        assert_eq!(sub_func.function::<TimingParameterAccessType>()?, TimingParameterAccessType::ReadCurrentlyActiveTimingParameters);
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::ReadCurrentlyActiveTimingParameters
+        );
 
         let source = hex::decode("C304")?;
         let response = response::Response::try_from_cfg(source, &cfg)?;
         let sub_func = response.sub_function().unwrap();
-        assert_eq!(sub_func.function::<TimingParameterAccessType>()?, TimingParameterAccessType::SetTimingParametersToGivenValues);
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::SetTimingParametersToGivenValues
+        );
 
         Ok(())
     }
@@ -79,13 +106,19 @@ mod tests {
         assert_eq!(response.service(), Service::AccessTimingParam);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x83, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::AccessTimingParam);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }

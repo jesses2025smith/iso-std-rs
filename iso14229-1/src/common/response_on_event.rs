@@ -1,10 +1,9 @@
 //! Commons of Service 86
 
-
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{constant::POSITIVE_OFFSET, error::Iso14229Error, Service};
 use crate::enum_extend;
+use crate::{constant::POSITIVE_OFFSET, error::Iso14229Error, Service};
+use lazy_static::lazy_static;
+use std::collections::HashSet;
 
 lazy_static!(
     /// Table 91 — Recommended services to be used with the ResponseOnEvent service(2006)
@@ -31,7 +30,9 @@ enum_extend!(
         OnComparisonOfValues = 0x07,
         ReportMostRecentDtcOnStatusChange = 0x08,
         ReportDTCRecordInformationOnDtcStatusChange = 0x09,
-    }, u8);
+    },
+    u8
+);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct EventType {
@@ -41,11 +42,11 @@ pub struct EventType {
 
 impl EventType {
     #[inline]
-    pub fn new(
-        store_event: bool,
-        event_type: ResponseOnEventType
-    ) -> Self {
-        Self { store_event, event_type }
+    pub fn new(store_event: bool, event_type: ResponseOnEventType) -> Self {
+        Self {
+            store_event,
+            event_type,
+        }
     }
 
     #[inline]
@@ -70,4 +71,3 @@ impl From<EventType> for u8 {
         result
     }
 }
-

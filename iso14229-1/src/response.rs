@@ -1,74 +1,74 @@
 #![allow(unused_imports, clippy::non_minimal_cfg)]
 
 /* - Diagnostic and communication management functional unit - */
-mod session_ctrl;           // 0x10
+mod session_ctrl; // 0x10
 pub use session_ctrl::*;
-mod ecu_reset;              // 0x11
+mod ecu_reset; // 0x11
 pub use ecu_reset::*;
-mod security_access;        // 0x27
+mod security_access; // 0x27
 pub use security_access::*;
-mod communication_ctrl;     // 0x28
+mod communication_ctrl; // 0x28
 pub use communication_ctrl::*;
 #[cfg(any(feature = "std2020"))]
-mod authentication;         // 0x29
+mod authentication; // 0x29
 #[cfg(any(feature = "std2020"))]
 pub use authentication::*;
-mod tester_present;         // 0x3E
+mod tester_present; // 0x3E
 pub use tester_present::*;
-#[cfg(any(feature = "std2006", feature = "std2013"))]   // std2004
-mod access_timing_param;    // 0x83
-#[cfg(any(feature = "std2006", feature = "std2013"))]   // std2004
+#[cfg(any(feature = "std2006", feature = "std2013"))] // std2004
+mod access_timing_param; // 0x83
+#[cfg(any(feature = "std2006", feature = "std2013"))] // std2004
 pub use access_timing_param::*;
-mod secured_data_trans;     // 0x84
+mod secured_data_trans; // 0x84
 pub use secured_data_trans::*;
-mod ctrl_dtc_setting;       // 0x85
+mod ctrl_dtc_setting; // 0x85
 pub use ctrl_dtc_setting::*;
-mod response_on_event;      // 0x86
+mod response_on_event; // 0x86
 pub use response_on_event::*;
-mod link_ctrl;              // 0x87
+mod link_ctrl; // 0x87
 pub use link_ctrl::*;
 
 /* - Data transmission functional unit - */
-mod read_did;               // 0x22
+mod read_did; // 0x22
 pub use read_did::*;
-mod read_mem_by_addr;       // 0x23
+mod read_mem_by_addr; // 0x23
 pub use read_mem_by_addr::*;
-mod read_scaling_did;       // 0x24
+mod read_scaling_did; // 0x24
 pub use read_scaling_did::*;
-mod read_data_by_pid;       // 0x2A
+mod read_data_by_pid; // 0x2A
 pub use read_data_by_pid::*;
 mod dynamically_define_did; // 0x2C
 pub use dynamically_define_did::*;
-mod write_did;              // 0x2E
+mod write_did; // 0x2E
 pub use write_did::*;
-mod write_mem_by_addr;      // 0x3D
+mod write_mem_by_addr; // 0x3D
 pub use write_mem_by_addr::*;
 
 /* - Stored data transmission functional unit - */
-mod clear_diagnostic_info;  // 0x14
+mod clear_diagnostic_info; // 0x14
 pub use clear_diagnostic_info::*;
-mod read_dtc_info;          // 0x19
+mod read_dtc_info; // 0x19
 pub use read_dtc_info::*;
 
 /* - InputOutput control functional unit - */
-mod io_ctrl;                // 0x2F
+mod io_ctrl; // 0x2F
 pub use io_ctrl::*;
 
 /* - Remote activation of routine functional unit - */
-mod routine_ctrl;           // 0x31
+mod routine_ctrl; // 0x31
 pub use routine_ctrl::*;
 
 /* - Upload download functional unit - */
-mod request_download;       // 0x34
+mod request_download; // 0x34
 pub use request_download::*;
-mod request_upload;         // 0x35
+mod request_upload; // 0x35
 pub use request_upload::*;
-mod transfer_data;          // 0x36
+mod transfer_data; // 0x36
 pub use transfer_data::*;
-mod request_transfer_exit;  // 0x37
+mod request_transfer_exit; // 0x37
 pub use request_transfer_exit::*;
 #[cfg(any(feature = "std2013", feature = "std2020"))]
-mod request_file_transfer;  // 0x38
+mod request_file_transfer; // 0x38
 #[cfg(any(feature = "std2013", feature = "std2020"))]
 pub use request_file_transfer::*;
 
@@ -106,7 +106,10 @@ pub use code::Code;
 // pub(crate) use crate:response::WriteDID::WRITE_DID_NEGATIVES;
 // pub(crate) use crate:response::WriteMemByAddr::WRITE_MEM_BY_ADDR_NEGATIVES;
 
-use crate::{Configuration, constant::POSITIVE_OFFSET, Iso14229Error, ResponseData, Service, utils, ECUResetType, response, TryFromWithCfg};
+use crate::{
+    constant::POSITIVE_OFFSET, response, utils, Configuration, ECUResetType, Iso14229Error,
+    ResponseData, Service, TryFromWithCfg,
+};
 
 // enum_to_vec! (
 //     /// Defined by ISO-15764. Offset of 0x38 is defined within UDS standard (ISO-14229)
@@ -127,9 +130,7 @@ use crate::{Configuration, constant::POSITIVE_OFFSET, Iso14229Error, ResponseDat
 pub struct SubFunction(u8);
 
 impl SubFunction {
-    pub fn new(
-        function: u8,
-    ) -> Self {
+    pub fn new(function: u8) -> Self {
         Self(function)
     }
 
@@ -139,7 +140,7 @@ impl SubFunction {
     }
 
     #[inline]
-    pub fn function<T: TryFrom<u8, Error =Iso14229Error>>(&self) -> Result<T, Iso14229Error> {
+    pub fn function<T: TryFrom<u8, Error = Iso14229Error>>(&self) -> Result<T, Iso14229Error> {
         T::try_from(self.0)
     }
 }
@@ -156,7 +157,7 @@ pub struct Response {
     service: Service,
     negative: bool,
     sub_func: Option<SubFunction>,
-    data: Vec<u8>,  // the NRC code when negative is true
+    data: Vec<u8>, // the NRC code when negative is true
 }
 
 impl Response {
@@ -206,8 +207,13 @@ impl Response {
                 let nrc_service = Service::try_from(data[0])?;
                 let data = data[1..].to_vec();
 
-                Ok(Self { service: nrc_service, negative: true, sub_func: None, data })
-            },
+                Ok(Self {
+                    service: nrc_service,
+                    negative: true,
+                    sub_func: None,
+                    data,
+                })
+            }
         }
     }
 
@@ -233,7 +239,9 @@ impl Response {
         }
 
         if self.data.len() != 1 {
-            return Err(Iso14229Error::OtherError("invalid data length when getting NRC".into()));
+            return Err(Iso14229Error::OtherError(
+                "invalid data length when getting NRC".into(),
+            ));
         }
 
         Ok(Code::from(self.data[0]))
@@ -258,7 +266,7 @@ impl Response {
         data_len: usize,
         mut offset: usize,
         service: Service,
-        cfg: &Configuration
+        cfg: &Configuration,
     ) -> Result<Self, Iso14229Error> {
         utils::data_length_check(data_len, offset + 1, false)?;
 
@@ -273,7 +281,7 @@ impl Response {
 impl Into<Vec<u8>> for Response {
     fn into(mut self) -> Vec<u8> {
         let mut result = match self.negative {
-            true => vec![Service::NRC.into(), ],
+            true => vec![Service::NRC.into()],
             false => vec![],
         };
 
@@ -300,42 +308,41 @@ impl TryFromWithCfg<Vec<u8>> for Response {
         let service = data[offset];
         let service = if service == Service::NRC.into() {
             Ok(Service::NRC)
-        }
-        else {
+        } else {
             Service::try_from(service & !POSITIVE_OFFSET)
         }?;
         offset += 1;
         match service {
-            Service::SessionCtrl |
-            Service::ECUReset |
-            Service::SecurityAccess |
-            Service::CommunicationCtrl |
-            Service::ReadDTCInfo |
-            Service::RoutineCtrl |
-            Service::CtrlDTCSetting |
-            Service::TesterPresent |
-            Service::LinkCtrl |
-            Service::DynamicalDefineDID => Self::inner_new(&data, data_len, offset, service, cfg),
+            Service::SessionCtrl
+            | Service::ECUReset
+            | Service::SecurityAccess
+            | Service::CommunicationCtrl
+            | Service::ReadDTCInfo
+            | Service::RoutineCtrl
+            | Service::CtrlDTCSetting
+            | Service::TesterPresent
+            | Service::LinkCtrl
+            | Service::DynamicalDefineDID => Self::inner_new(&data, data_len, offset, service, cfg),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
             Service::AccessTimingParam => Self::inner_new(&data, data_len, offset, service, cfg),
             #[cfg(any(feature = "std2020"))]
             Service::Authentication => Self::inner_new(&data, data_len, offset, service, cfg),
             #[cfg(any(feature = "std2013", feature = "std2020"))]
             Service::RequestFileTransfer => Self::inner_new(&data, data_len, offset, service, cfg),
-            Service::ClearDiagnosticInfo |
-            Service::ReadDID |
-            Service::ReadMemByAddr |
-            Service::ReadScalingDID |
-            Service::ReadDataByPeriodId |
-            Service::WriteDID |
-            Service::IOCtrl |
-            Service::RequestDownload |
-            Service::RequestUpload |
-            Service::TransferData |
-            Service::RequestTransferExit |
-            Service::WriteMemByAddr |
-            Service::SecuredDataTrans |
-            Service::ResponseOnEvent => Self::new(service, None, data[offset..].to_vec(), cfg),
+            Service::ClearDiagnosticInfo
+            | Service::ReadDID
+            | Service::ReadMemByAddr
+            | Service::ReadScalingDID
+            | Service::ReadDataByPeriodId
+            | Service::WriteDID
+            | Service::IOCtrl
+            | Service::RequestDownload
+            | Service::RequestUpload
+            | Service::TransferData
+            | Service::RequestTransferExit
+            | Service::WriteMemByAddr
+            | Service::SecuredDataTrans
+            | Service::ResponseOnEvent => Self::new(service, None, data[offset..].to_vec(), cfg),
             Service::NRC => {
                 utils::data_length_check(data_len, offset + 2, true)?;
                 let nrc_service = Service::try_from(data[offset])?;
@@ -343,8 +350,13 @@ impl TryFromWithCfg<Vec<u8>> for Response {
 
                 let data = data[offset..].to_vec();
 
-                Ok(Self { service: nrc_service, negative: true, sub_func: None, data })
-            },
+                Ok(Self {
+                    service: nrc_service,
+                    negative: true,
+                    sub_func: None,
+                    data,
+                })
+            }
         }
     }
 }

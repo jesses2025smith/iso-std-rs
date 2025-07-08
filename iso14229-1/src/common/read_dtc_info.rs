@@ -1,7 +1,7 @@
 //! Commons of Service 19
 
-use bitflags::bitflags;
 use crate::{enum_extend, Iso14229Error};
+use bitflags::bitflags;
 
 bitflags! {
     #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -26,8 +26,8 @@ enum_extend!(
         ReportDTCSnapshotRecordByDTCNumber = 0x04,
         ReportDTCStoredDataByRecordNumber = 0x05,
         ReportDTCExtDataRecordByDTCNumber = 0x06,
-        ReportNumberOfDTCBySeverityMaskRecord = 0x07,  // (((statusOfDTC & DTCStatusMask) != 0) && ((severity & DTCSeverityMask) != 0)) == TRUE
-        ReportDTCBySeverityMaskRecord = 0x08,  // (((statusOfDTC & DTCStatusMask) !=0) && ((severity & DTCSeverityMask) != 0)) == TRUE
+        ReportNumberOfDTCBySeverityMaskRecord = 0x07, // (((statusOfDTC & DTCStatusMask) != 0) && ((severity & DTCSeverityMask) != 0)) == TRUE
+        ReportDTCBySeverityMaskRecord = 0x08, // (((statusOfDTC & DTCStatusMask) !=0) && ((severity & DTCSeverityMask) != 0)) == TRUE
         ReportSeverityInformationOfDTC = 0x09,
         ReportSupportedDTC = 0x0A,
         ReportFirstTestFailedDTC = 0x0B,
@@ -47,7 +47,7 @@ enum_extend!(
         ReportDTCFaultDetectionCounter = 0x14,
         ReportDTCWithPermanentStatus = 0x15,
         #[cfg(any(feature = "std2013", feature = "std2020"))]
-        ReportDTCExtDataRecordByRecordNumber = 0x16,    // DTCExtDataRecordNumber 00 to EF
+        ReportDTCExtDataRecordByRecordNumber = 0x16, // DTCExtDataRecordNumber 00 to EF
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         ReportUserDefMemoryDTCByStatusMask = 0x17,
         #[cfg(any(feature = "std2013", feature = "std2020"))]
@@ -62,6 +62,6 @@ enum_extend!(
         ReportWWHOBDDTCWithPermanentStatus = 0x55,
         #[cfg(any(feature = "std2020"))]
         ReportDTCInformationByDTCReadinessGroupIdentifier = 0x56,
-    }, u8);
-
-
+    },
+    u8
+);

@@ -2,7 +2,9 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, Configuration, DataIdentifier, IOCtrlParameter, Service, TryFromWithCfg};
+    use iso14229_1::{
+        request, response, Configuration, DataIdentifier, IOCtrlParameter, Service, TryFromWithCfg,
+    };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
@@ -15,13 +17,16 @@ mod tests {
         let sub_func = request.sub_function();
         assert_eq!(sub_func, None);
         let data = request.data::<request::IOCtrl>(&cfg)?;
-        assert_eq!(data, request::IOCtrl::new(
-            did,
-            IOCtrlParameter::ShortTermAdjustment,
-            hex::decode("0040")?,
-            hex::decode("ffff")?,
-            &cfg
-        )?);
+        assert_eq!(
+            data,
+            request::IOCtrl::new(
+                did,
+                IOCtrlParameter::ShortTermAdjustment,
+                hex::decode("0040")?,
+                hex::decode("ffff")?,
+                &cfg
+            )?
+        );
 
         Ok(())
     }
@@ -37,11 +42,14 @@ mod tests {
         let sub_func = response.sub_function();
         assert_eq!(sub_func, None);
         let data = response.data::<response::IOCtrl>(&cfg)?;
-        assert_eq!(data, response::IOCtrl::new(
-            did,
-            IOCtrlParameter::ShortTermAdjustment,
-            hex::decode("0040")?,
-        ));
+        assert_eq!(
+            data,
+            response::IOCtrl::new(
+                did,
+                IOCtrlParameter::ShortTermAdjustment,
+                hex::decode("0040")?,
+            )
+        );
 
         Ok(())
     }
@@ -55,15 +63,20 @@ mod tests {
         assert_eq!(response.service(), Service::IOCtrl);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x2F, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::IOCtrl);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }
 }
-

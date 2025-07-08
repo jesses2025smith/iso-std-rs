@@ -1,12 +1,14 @@
 //! response of Service 31
 
-
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, error::Iso14229Error, response::Code, ResponseData, RoutineCtrlType, RoutineId, utils, Service};
 use crate::response::{Response, SubFunction};
+use crate::{
+    error::Iso14229Error, response::Code, utils, Configuration, ResponseData, RoutineCtrlType,
+    RoutineId, Service,
+};
+use lazy_static::lazy_static;
+use std::collections::HashSet;
 
-lazy_static!(
+lazy_static! {
     pub static ref ROUTINE_CTRL_NEGATIVES: HashSet<Code> = HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
@@ -16,7 +18,7 @@ lazy_static!(
         Code::SecurityAccessDenied,
         Code::GeneralProgrammingFailure,
     ]);
-);
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RoutineCtrl {
@@ -33,16 +35,24 @@ impl RoutineCtrl {
     ) -> Result<Self, Iso14229Error> {
         if routine_info.is_none() && !routine_status.is_empty() {
             return Err(Iso14229Error::InvalidData(
-                "`routineStatusRecord` mut be empty when `routineInfo` is None".to_string()
+                "`routineStatusRecord` mut be empty when `routineInfo` is None".to_string(),
             ));
         }
 
-        Ok(Self { routine_id, routine_info, routine_status })
+        Ok(Self {
+            routine_id,
+            routine_info,
+            routine_status,
+        })
     }
 }
 
 impl ResponseData for RoutineCtrl {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
                 utils::data_length_check(data.len(), 2, false)?;
@@ -55,15 +65,14 @@ impl ResponseData for RoutineCtrl {
                     sub_func: Some(SubFunction::new(sub_func)),
                     data: data.to_vec(),
                 })
-            },
+            }
             None => Err(Iso14229Error::SubFunctionError(Service::RoutineCtrl)),
         }
     }
 
     fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = response.service;
-        if service != Service::RoutineCtrl
-            || response.sub_func.is_none() {
+        if service != Service::RoutineCtrl || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
         }
         // let sub_func: RoutineCtrlType = response.sub_function().unwrap().function()?;
@@ -80,12 +89,15 @@ impl ResponseData for RoutineCtrl {
             offset += 1;
             let routine_status = data[offset..].to_vec();
             (Some(routine_info), routine_status)
-        }
-        else {
+        } else {
             (None, vec![])
         };
 
-        Ok(Self { routine_id, routine_info, routine_status })
+        Ok(Self {
+            routine_id,
+            routine_info,
+            routine_status,
+        })
     }
 
     #[inline]

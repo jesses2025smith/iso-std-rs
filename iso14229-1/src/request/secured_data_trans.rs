@@ -1,7 +1,10 @@
 //! request of Service 84
 
-
-use crate::{AdministrativeParameter, Configuration, Iso14229Error, request::{Request, SubFunction}, RequestData, SignatureEncryptionCalculation, utils, Service};
+use crate::{
+    request::{Request, SubFunction},
+    utils, AdministrativeParameter, Configuration, Iso14229Error, RequestData, Service,
+    SignatureEncryptionCalculation,
+};
 
 #[derive(Debug, Clone)]
 pub struct SecuredDataTrans {
@@ -24,7 +27,9 @@ impl SecuredDataTrans {
         signature_data: Vec<u8>,
     ) -> Result<Self, Iso14229Error> {
         if signature_data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam("length of `Signature/MAC Byte` is out of range".to_string()));
+            return Err(Iso14229Error::InvalidParam(
+                "length of `Signature/MAC Byte` is out of range".to_string(),
+            ));
         }
 
         if !apar.is_request() {
@@ -44,7 +49,11 @@ impl SecuredDataTrans {
 }
 
 impl RequestData for SecuredDataTrans {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn request(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::SecuredDataTrans)),
             None => {
@@ -61,15 +70,15 @@ impl RequestData for SecuredDataTrans {
 
     fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = request.service();
-        if service != Service::SecuredDataTrans
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::SecuredDataTrans || request.sub_func.is_some() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         let data = &request.data;
         let data_len = data.len();
         let mut offset = 0;
-        let apar = AdministrativeParameter::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
+        let apar =
+            AdministrativeParameter::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
         if !apar.is_request() {
             return Err(Iso14229Error::InvalidData(hex::encode(data)));

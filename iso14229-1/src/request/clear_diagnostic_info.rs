@@ -1,8 +1,10 @@
 //! request of Service 14
 #![allow(clippy::non_minimal_cfg)]
 
-
-use crate::{Configuration, Iso14229Error, request::{Request, SubFunction}, RequestData, utils, Service};
+use crate::{
+    request::{Request, SubFunction},
+    utils, Configuration, Iso14229Error, RequestData, Service,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ClearDiagnosticInfo {
@@ -13,17 +15,12 @@ pub struct ClearDiagnosticInfo {
 
 impl ClearDiagnosticInfo {
     #[cfg(any(feature = "std2020"))]
-    pub fn new(
-        group: utils::U24,
-        mem_sel: Option<u8>,
-    ) -> Self {
+    pub fn new(group: utils::U24, mem_sel: Option<u8>) -> Self {
         Self { group, mem_sel }
     }
 
     #[cfg(any(feature = "std2006", feature = "std2013"))]
-    pub fn new(
-        group: utils::U24,
-    ) -> Self {
+    pub fn new(group: utils::U24) -> Self {
         Self { group }
     }
 
@@ -39,16 +36,26 @@ impl ClearDiagnosticInfo {
 
 impl RequestData for ClearDiagnosticInfo {
     #[inline]
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn request(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Request, Iso14229Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ClearDiagnosticInfo)),
+            Some(_) => Err(Iso14229Error::SubFunctionError(
+                Service::ClearDiagnosticInfo,
+            )),
             None => {
                 #[cfg(any(feature = "std2020"))]
                 utils::data_length_check(data.len(), 3, false)?;
                 #[cfg(any(feature = "std2006", feature = "std2013"))]
                 utils::data_length_check(data.len(), 3, true)?;
 
-                Ok(Request { service: Service::ClearDiagnosticInfo, sub_func: None,  data: data.to_vec(), })
+                Ok(Request {
+                    service: Service::ClearDiagnosticInfo,
+                    sub_func: None,
+                    data: data.to_vec(),
+                })
             }
         }
     }
@@ -56,9 +63,8 @@ impl RequestData for ClearDiagnosticInfo {
     #[cfg(any(feature = "std2020"))]
     fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = request.service();
-        if service != Service::ClearDiagnosticInfo
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::ClearDiagnosticInfo || request.sub_func.is_some() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         let data = &request.data;
@@ -70,8 +76,7 @@ impl RequestData for ClearDiagnosticInfo {
         let mem_selection = if data_len > offset {
             utils::data_length_check(data_len, 4, true)?;
             Some(data[offset])
-        }
-        else {
+        } else {
             None
         };
 
@@ -81,9 +86,8 @@ impl RequestData for ClearDiagnosticInfo {
     #[cfg(any(feature = "std2006", feature = "std2013"))]
     fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = request.service();
-        if service != Service::ClearDiagnosticInfo
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::ClearDiagnosticInfo || request.sub_func.is_some() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         let data = &request.data;

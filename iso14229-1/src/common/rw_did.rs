@@ -1,7 +1,6 @@
 //! Commons of Service 22|2E
 
-
-use crate::{error::Iso14229Error, Service, utils, Configuration};
+use crate::{error::Iso14229Error, utils, Configuration, Service};
 
 /// Table C.1 — DID data-parameter definitions
 #[repr(u16)]
@@ -64,15 +63,16 @@ pub enum DataIdentifier {
 impl From<u16> for DataIdentifier {
     fn from(value: u16) -> Self {
         match value {
-            0x0100..=0xA5FF |
-            0xA800..=0xACFF |
-            0xB000..=0xB1FF |
-            0xC000..=0xC2FF |
-            0xCF00..=0xEFFF |
-            0xF010..=0xF0FF => Self::VehicleManufacturerSpecific(value),
+            0x0100..=0xA5FF
+            | 0xA800..=0xACFF
+            | 0xB000..=0xB1FF
+            | 0xC000..=0xC2FF
+            | 0xCF00..=0xEFFF
+            | 0xF010..=0xF0FF => Self::VehicleManufacturerSpecific(value),
             0xF000..=0xF00F => Self::NetworkConfigurationDataForTractorTrailerApplication(value),
-            0xF100..=0xF17F |
-            0xF1A0..=0xF1EF => Self::IdentificationOptionVehicleManufacturerSpecific(value),
+            0xF100..=0xF17F | 0xF1A0..=0xF1EF => {
+                Self::IdentificationOptionVehicleManufacturerSpecific(value)
+            }
             0xF180 => Self::BootSoftwareIdentification,
             0xF181 => Self::ApplicationSoftwareIdentification,
             0xF182 => Self::ApplicationDataIdentification,
@@ -108,8 +108,7 @@ impl From<u16> for DataIdentifier {
             0xF1F0..=0xF1FF => Self::IdentificationOptionSystemSupplierSpecific(value),
             0xF200..=0xF2FF => Self::Periodic(value),
             0xF300..=0xF3FF => Self::DynamicallyDefined(value),
-            0xF400..=0xF5FF |
-            0xF700..=0xF7FF => Self::OBD(value),
+            0xF400..=0xF5FF | 0xF700..=0xF7FF => Self::OBD(value),
             0xF600..=0xF6FF => Self::OBDMonitor(value),
             0xF800..=0xF8FF => Self::OBDInfoType(value),
             0xF900..=0xF9FF => Self::Tachograph(value),
@@ -161,20 +160,20 @@ impl From<DataIdentifier> for u16 {
             DataIdentifier::ECUInstallationDate => 0xF19D,
             DataIdentifier::ODXFile => 0xF19E,
             DataIdentifier::Entity => 0xF19F,
-            DataIdentifier::VehicleManufacturerSpecific(v) |
-            DataIdentifier::NetworkConfigurationDataForTractorTrailerApplication(v) |
-            DataIdentifier::IdentificationOptionVehicleManufacturerSpecific(v) |
-            DataIdentifier::IdentificationOptionSystemSupplierSpecific(v) |
-            DataIdentifier::Periodic(v) |
-            DataIdentifier::DynamicallyDefined(v) |
-            DataIdentifier::OBD(v) |
-            DataIdentifier::OBDMonitor(v) |
-            DataIdentifier::OBDInfoType(v) |
-            DataIdentifier::Tachograph(v) |
-            DataIdentifier::AirbagDeployment(v) |
-            DataIdentifier::EDREntries(v) |
-            DataIdentifier::SafetySystem(v) |
-            DataIdentifier::SystemSupplierSpecific(v) => v,
+            DataIdentifier::VehicleManufacturerSpecific(v)
+            | DataIdentifier::NetworkConfigurationDataForTractorTrailerApplication(v)
+            | DataIdentifier::IdentificationOptionVehicleManufacturerSpecific(v)
+            | DataIdentifier::IdentificationOptionSystemSupplierSpecific(v)
+            | DataIdentifier::Periodic(v)
+            | DataIdentifier::DynamicallyDefined(v)
+            | DataIdentifier::OBD(v)
+            | DataIdentifier::OBDMonitor(v)
+            | DataIdentifier::OBDInfoType(v)
+            | DataIdentifier::Tachograph(v)
+            | DataIdentifier::AirbagDeployment(v)
+            | DataIdentifier::EDREntries(v)
+            | DataIdentifier::SafetySystem(v)
+            | DataIdentifier::SystemSupplierSpecific(v) => v,
             DataIdentifier::NumberOfEDRDevices => 0xFA10,
             DataIdentifier::EDRIdentification => 0xFA11,
             DataIdentifier::EDRDeviceAddressInformation => 0xFA12,
@@ -196,7 +195,9 @@ impl DIDData {
         data: Vec<u8>,
         cfg: &Configuration,
     ) -> Result<Self, Iso14229Error> {
-        let &did_len = cfg.did_cfg.get(&did)
+        let &did_len = cfg
+            .did_cfg
+            .get(&did)
             .ok_or(Iso14229Error::DidNotSupported(did))?;
         utils::data_length_check(data.len(), did_len, true)?;
 
@@ -229,5 +230,3 @@ impl From<DIDData> for Vec<u8> {
         result
     }
 }
-
-

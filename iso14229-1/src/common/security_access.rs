@@ -1,7 +1,6 @@
 //! Commons of Service 27
 
-
-use crate::{Configuration, Iso14229Error, RequestData, ResponseData, utils, Service};
+use crate::{utils, Configuration, Iso14229Error, RequestData, ResponseData, Service};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SecurityAccessLevel(pub(crate) u8);
@@ -9,7 +8,10 @@ pub struct SecurityAccessLevel(pub(crate) u8);
 impl SecurityAccessLevel {
     pub fn new(level: u8) -> Result<Self, Iso14229Error> {
         if !(1..=0x7D).contains(&level) {
-            return Err(Iso14229Error::InvalidParam(format!("access level: {}", level)));
+            return Err(Iso14229Error::InvalidParam(format!(
+                "access level: {}",
+                level
+            )));
         }
 
         Ok(Self(level))

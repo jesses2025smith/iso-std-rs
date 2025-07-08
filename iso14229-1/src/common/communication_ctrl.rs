@@ -1,6 +1,6 @@
 //! Commons of Service 28
 
-use crate::{Iso14229Error, utils};
+use crate::{utils, Iso14229Error};
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
@@ -51,7 +51,6 @@ impl From<CommunicationCtrlType> for u8 {
     }
 }
 
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct CommunicationType(pub(crate) u8);
 
@@ -64,10 +63,7 @@ bitflags::bitflags! {
 
 impl CommunicationType {
     #[inline]
-    pub fn new(
-        comm_type: CommunicationType,
-        subnet: u8,
-    ) -> Result<Self, Iso14229Error> {
+    pub fn new(comm_type: CommunicationType, subnet: u8) -> Result<Self, Iso14229Error> {
         if subnet > 0x0F {
             return Err(Iso14229Error::ReservedError(subnet.to_string()));
         }
@@ -83,4 +79,3 @@ impl CommunicationType {
         self.0
     }
 }
-

@@ -1,9 +1,14 @@
 //! response of Service 38
 
+use crate::{
+    error::Iso14229Error,
+    response::{Code, Response, SubFunction},
+    utils, Configuration, DataFormatIdentifier, LengthFormatIdentifier, ModeOfOperation,
+    ResponseData, Service,
+};
+use lazy_static::lazy_static;
 use rsutil::types::ByteOrder;
 use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, DataFormatIdentifier, error::Iso14229Error, LengthFormatIdentifier, ModeOfOperation, response::{Code, Response, SubFunction}, ResponseData, utils, Service};
 
 lazy_static!(
     pub static ref REQUEST_FILE_TRANSFER_NEGATIVES: HashSet<Code> = HashSet::from([
@@ -80,18 +85,21 @@ or 05 (ReadDir) this parameter shall not be included in the request.
 // filePosition
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RequestFileTransfer {
-    AddFile {       // 1 modeOfOperation
+    AddFile {
+        // 1 modeOfOperation
         lfi: u8,
         max_block_len: u128,
         dfi: DataFormatIdentifier,
     },
-    DeleteFile,     // 2 modeOfOperation
-    ReplaceFile {   // 3 modeOfOperation
+    DeleteFile, // 2 modeOfOperation
+    ReplaceFile {
+        // 3 modeOfOperation
         lfi: u8,
         max_block_len: u128,
         dfi: DataFormatIdentifier,
     },
-    ReadFile {      // 4 modeOfOperation
+    ReadFile {
+        // 4 modeOfOperation
         lfi: u8,
         max_block_len: u128,
         dfi: DataFormatIdentifier,
@@ -99,14 +107,16 @@ pub enum RequestFileTransfer {
         uncompressed_size_or_dir_len: u128,
         compressed_size: u128,
     },
-    ReadDir {       // 5 modeOfOperation
+    ReadDir {
+        // 5 modeOfOperation
         lfi: u8,
         max_block_len: u128,
-        dfi: DataFormatIdentifier,  // always 0x00
+        dfi: DataFormatIdentifier, // always 0x00
         filesize_or_dir_param_len: u16,
         uncompressed_size_or_dir_len: u128,
     },
-    ResumeFile {    // 6 modeOfOperation
+    ResumeFile {
+        // 6 modeOfOperation
         lfi: u8,
         max_block_len: u128,
         dfi: DataFormatIdentifier,
@@ -115,7 +125,11 @@ pub enum RequestFileTransfer {
 }
 
 impl ResponseData for RequestFileTransfer {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
                 let data_len = data.len();
@@ -135,15 +149,16 @@ impl ResponseData for RequestFileTransfer {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::RequestFileTransfer)),
+            None => Err(Iso14229Error::SubFunctionError(
+                Service::RequestFileTransfer,
+            )),
         }
     }
 
     fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = response.service();
-        if service != Service::RequestFileTransfer
-            || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::RequestFileTransfer || response.sub_func.is_none() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         let sub_func: ModeOfOperation = response.sub_function().unwrap().function()?;
@@ -158,13 +173,16 @@ impl ResponseData for RequestFileTransfer {
                 offset += 1;
                 utils::data_length_check(data_len, offset + lfi as usize + 1, false)?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
                 offset += lfi as usize;
                 let dfi = DataFormatIdentifier::from(data[offset]);
                 Ok(Self::AddFile {
-                    lfi, max_block_len, dfi
+                    lfi,
+                    max_block_len,
+                    dfi,
                 })
-            },
+            }
             ModeOfOperation::DeleteFile => Ok(Self::DeleteFile),
             ModeOfOperation::ReplaceFile => {
                 utils::data_length_check(data_len, offset + 1, false)?;
@@ -173,13 +191,16 @@ impl ResponseData for RequestFileTransfer {
                 offset += 1;
                 utils::data_length_check(data_len, offset + lfi as usize + 1, false)?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
                 offset += lfi as usize;
                 let dfi = DataFormatIdentifier::from(data[offset]);
                 Ok(Self::ReplaceFile {
-                    lfi, max_block_len, dfi
+                    lfi,
+                    max_block_len,
+                    dfi,
                 })
-            },
+            }
             ModeOfOperation::ReadFile => {
                 utils::data_length_check(data_len, offset + 1, false)?;
 
@@ -187,20 +208,26 @@ impl ResponseData for RequestFileTransfer {
                 offset += 1;
                 utils::data_length_check(data_len, offset + lfi as usize + 4, false)?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
                 offset += lfi as usize;
 
                 let dfi = DataFormatIdentifier::from(data[offset]);
                 offset += 1;
 
-                let filesize_or_dir_param_len = u16::from_be_bytes([data[offset], data[offset + 1]]);
+                let filesize_or_dir_param_len =
+                    u16::from_be_bytes([data[offset], data[offset + 1]]);
                 offset += 2;
 
-                utils::data_length_check(data_len, offset + filesize_or_dir_param_len as usize + 1, false)?;
+                utils::data_length_check(
+                    data_len,
+                    offset + filesize_or_dir_param_len as usize + 1,
+                    false,
+                )?;
 
                 let uncompressed_size_or_dir_len = utils::slice_to_u128(
                     &data[offset..offset + filesize_or_dir_param_len as usize],
-                    ByteOrder::Big
+                    ByteOrder::Big,
                 );
                 offset += filesize_or_dir_param_len as usize;
 
@@ -214,7 +241,7 @@ impl ResponseData for RequestFileTransfer {
                     uncompressed_size_or_dir_len,
                     compressed_size,
                 })
-            },
+            }
             ModeOfOperation::ReadDir => {
                 utils::data_length_check(data_len, offset + 1, false)?;
 
@@ -222,7 +249,8 @@ impl ResponseData for RequestFileTransfer {
                 offset += 1;
                 utils::data_length_check(data_len, offset + lfi as usize + 4, false)?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
                 offset += lfi as usize;
 
                 let dfi = data[offset];
@@ -232,11 +260,12 @@ impl ResponseData for RequestFileTransfer {
                 }
                 let dfi = DataFormatIdentifier(dfi);
 
-                let filesize_or_dir_param_len = u16::from_be_bytes([data[offset], data[offset + 1]]);
+                let filesize_or_dir_param_len =
+                    u16::from_be_bytes([data[offset], data[offset + 1]]);
                 offset += 2;
                 let uncompressed_size_or_dir_len = utils::slice_to_u128(
                     &data[offset..offset + filesize_or_dir_param_len as usize],
-                    ByteOrder::Big
+                    ByteOrder::Big,
                 );
 
                 Ok(Self::ReadDir {
@@ -246,7 +275,7 @@ impl ResponseData for RequestFileTransfer {
                     filesize_or_dir_param_len,
                     uncompressed_size_or_dir_len,
                 })
-            },
+            }
             ModeOfOperation::ResumeFile => {
                 utils::data_length_check(data_len, offset + 1, false)?;
 
@@ -254,7 +283,8 @@ impl ResponseData for RequestFileTransfer {
                 offset += 1;
                 utils::data_length_check(data_len, offset + lfi as usize + 9, false)?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi as usize], ByteOrder::Big);
                 offset += lfi as usize;
                 let dfi = DataFormatIdentifier::from(data[offset]);
                 offset += 1;
@@ -267,41 +297,51 @@ impl ResponseData for RequestFileTransfer {
                     dfi,
                     file_pos,
                 })
-            },
+            }
         }
     }
 
     #[inline]
     fn to_vec(self, _: &Configuration) -> Vec<u8> {
-
         let mut result = Vec::new();
         match self {
-            Self::AddFile { lfi, max_block_len, dfi } => {
+            Self::AddFile {
+                lfi,
+                max_block_len,
+                dfi,
+            } => {
                 result.push(lfi);
                 result.extend(utils::u128_to_vec_fix(max_block_len, ByteOrder::Big));
                 result.push(dfi.into());
-            },
-            Self::DeleteFile => {},
-            Self::ReplaceFile { lfi, max_block_len, dfi } => {
+            }
+            Self::DeleteFile => {}
+            Self::ReplaceFile {
+                lfi,
+                max_block_len,
+                dfi,
+            } => {
                 result.push(lfi);
                 result.extend(utils::u128_to_vec_fix(max_block_len, ByteOrder::Big));
                 result.push(dfi.into());
-            },
+            }
             Self::ReadFile {
                 lfi,
                 max_block_len,
                 dfi,
                 filesize_or_dir_param_len,
                 uncompressed_size_or_dir_len,
-                compressed_size
+                compressed_size,
             } => {
                 result.push(lfi);
                 result.extend(utils::u128_to_vec_fix(max_block_len, ByteOrder::Big));
                 result.push(dfi.into());
                 result.extend(filesize_or_dir_param_len.to_be_bytes());
-                result.extend(utils::u128_to_vec_fix(uncompressed_size_or_dir_len, ByteOrder::Big));
+                result.extend(utils::u128_to_vec_fix(
+                    uncompressed_size_or_dir_len,
+                    ByteOrder::Big,
+                ));
                 result.extend(utils::u128_to_vec_fix(compressed_size, ByteOrder::Big));
-            },
+            }
             Self::ReadDir {
                 lfi,
                 max_block_len,
@@ -313,8 +353,11 @@ impl ResponseData for RequestFileTransfer {
                 result.extend(utils::u128_to_vec_fix(max_block_len, ByteOrder::Big));
                 result.push(dfi.into());
                 result.extend(filesize_or_dir_param_len.to_be_bytes());
-                result.extend(utils::u128_to_vec_fix(uncompressed_size_or_dir_len, ByteOrder::Big));
-            },
+                result.extend(utils::u128_to_vec_fix(
+                    uncompressed_size_or_dir_len,
+                    ByteOrder::Big,
+                ));
+            }
             Self::ResumeFile {
                 lfi,
                 max_block_len,
@@ -325,7 +368,7 @@ impl ResponseData for RequestFileTransfer {
                 result.extend(utils::u128_to_vec_fix(max_block_len, ByteOrder::Big));
                 result.push(dfi.into());
                 result.extend(file_pos);
-            },
+            }
         }
 
         result

@@ -1,6 +1,6 @@
 //! Commons of Service 29
 
-use crate::{enum_extend, Iso14229Error, utils};
+use crate::{enum_extend, utils, Iso14229Error};
 
 pub(crate) const ALGORITHM_INDICATOR_LENGTH: usize = 16;
 
@@ -15,16 +15,16 @@ enum_extend!(
         VerifyProofOfOwnershipUnidirectional = 0x06,
         VerifyProofOfOwnershipBidirectional = 0x07,
         AuthenticationConfiguration = 0x08,
-    }, u8);
+    },
+    u8
+);
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NotNullableData(pub(crate) Vec<u8>);
 
 impl NotNullableData {
     #[inline]
-    pub fn new(
-        data: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    pub fn new(data: Vec<u8>) -> Result<Self, Iso14229Error> {
         if data.is_empty() || data.len() > u16::MAX as usize {
             return Err(Iso14229Error::InvalidParam("Data must not be empty, and the length of the data must be less than or equal to 0xFFFF".to_string()));
         }
@@ -49,11 +49,11 @@ pub struct NullableData(pub(crate) Vec<u8>);
 
 impl NullableData {
     #[inline]
-    pub fn new(
-        data: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    pub fn new(data: Vec<u8>) -> Result<Self, Iso14229Error> {
         if data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam("the length of data must be less than or equal to 0xFFFF!".to_string()));
+            return Err(Iso14229Error::InvalidParam(
+                "the length of data must be less than or equal to 0xFFFF!".to_string(),
+            ));
         }
 
         Ok(Self(data))
@@ -121,10 +121,7 @@ pub(crate) fn parse_not_nullable(
 }
 
 #[inline]
-pub(crate) fn parse_algo_indicator(
-    data: &[u8],
-    offset: &mut usize,
-) -> AlgorithmIndicator {
+pub(crate) fn parse_algo_indicator(data: &[u8], offset: &mut usize) -> AlgorithmIndicator {
     let result = &data[*offset..*offset + ALGORITHM_INDICATOR_LENGTH];
     *offset += ALGORITHM_INDICATOR_LENGTH;
 

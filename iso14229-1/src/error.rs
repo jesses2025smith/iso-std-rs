@@ -46,7 +46,6 @@ pub enum Iso14229Error {
 
     // #[error("{0}")]
     // IsoTpError(IsoTpError),
-
     #[error("ISO 14229-1 - other error: {0}")]
     OtherError(String),
 

@@ -2,7 +2,10 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, Configuration, Iso14229Error, Service, SessionType, TryFromWithCfg, P2_STAR_MAX};
+    use iso14229_1::{
+        request, response, Configuration, Iso14229Error, Service, SessionType, TryFromWithCfg,
+        P2_STAR_MAX,
+    };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
@@ -27,7 +30,7 @@ mod tests {
             Iso14229Error::InvalidDataLength { expect, actual } => {
                 assert_eq!(expect, 0);
                 assert_eq!(actual, 1);
-            },
+            }
             _ => panic!("Expected Error::InvalidData"),
         }
 
@@ -61,13 +64,19 @@ mod tests {
         assert_eq!(response.service(), Service::SessionCtrl);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x10, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::SessionCtrl);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }

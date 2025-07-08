@@ -1,6 +1,5 @@
 //! Commons of Service 34|35
 
-
 use crate::Iso14229Error;
 
 /// This parameter is a one-byte value with each nibble encoded separately:
@@ -13,9 +12,11 @@ pub struct LengthFormatIdentifier(pub(crate) u8);
 
 impl LengthFormatIdentifier {
     #[inline]
-    pub fn new(value: u8) -> Result<Self, Iso14229Error>{
+    pub fn new(value: u8) -> Result<Self, Iso14229Error> {
         if value > 0x0F {
-            return Err(Iso14229Error::InvalidParam("`LengthFormatIdentifier` must be between 0x00 and 0xF0".to_string()));
+            return Err(Iso14229Error::InvalidParam(
+                "`LengthFormatIdentifier` must be between 0x00 and 0xF0".to_string(),
+            ));
         }
 
         Ok(Self(value << 4))
@@ -37,7 +38,9 @@ impl TryFrom<u8> for LengthFormatIdentifier {
     type Error = Iso14229Error;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         if value > 0xF0 {
-            return Err(Iso14229Error::InvalidParam("`LengthFormatIdentifier` must be between 0x00 and 0xF0".to_string()));
+            return Err(Iso14229Error::InvalidParam(
+                "`LengthFormatIdentifier` must be between 0x00 and 0xF0".to_string(),
+            ));
         }
 
         Ok(Self(value))
@@ -109,9 +112,10 @@ impl From<AddressAndLengthFormatIdentifier> for u8 {
 impl TryFrom<u8> for AddressAndLengthFormatIdentifier {
     type Error = Iso14229Error;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
-        if value & 0x0F == 0
-            || value & 0xF0 == 0 {
-            return Err(Iso14229Error::InvalidParam("all field of `AddressAndLengthFormatIdentifier` must be rather than 0".into()));
+        if value & 0x0F == 0 || value & 0xF0 == 0 {
+            return Err(Iso14229Error::InvalidParam(
+                "all field of `AddressAndLengthFormatIdentifier` must be rather than 0".into(),
+            ));
         }
 
         Ok(Self(value))

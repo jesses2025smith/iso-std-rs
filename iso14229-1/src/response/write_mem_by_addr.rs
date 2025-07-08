@@ -1,11 +1,14 @@
 //! response of Service 3D
 
-
-use std::collections::HashSet;
+use crate::{
+    error::Iso14229Error,
+    response::{Code, Response, SubFunction},
+    utils, Configuration, MemoryLocation, ResponseData, Service,
+};
 use lazy_static::lazy_static;
-use crate::{Configuration, error::Iso14229Error, MemoryLocation, response::{Code, Response, SubFunction}, ResponseData, Service, utils};
+use std::collections::HashSet;
 
-lazy_static!(
+lazy_static! {
     pub static ref WRITE_MEM_BY_ADDR_NEGATIVES: HashSet<Code> = HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
@@ -14,13 +17,17 @@ lazy_static!(
         Code::AuthenticationRequired,
         Code::GeneralProgrammingFailure,
     ]);
-);
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WriteMemByAddr(pub MemoryLocation);
 
 impl ResponseData for WriteMemByAddr {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteMemByAddr)),
             None => {
@@ -38,9 +45,8 @@ impl ResponseData for WriteMemByAddr {
 
     fn try_parse(response: &Response, cfg: &Configuration) -> Result<Self, Iso14229Error> {
         let service = response.service();
-        if service != Service::WriteMemByAddr
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::WriteMemByAddr || response.sub_func.is_some() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         Ok(Self(MemoryLocation::from_slice(&response.data, cfg)?))

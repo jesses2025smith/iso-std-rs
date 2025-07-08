@@ -1,18 +1,21 @@
 //! response of Service 2A
 
-
-use std::collections::HashSet;
+use crate::{
+    error::Iso14229Error,
+    response::{Code, Response, SubFunction},
+    utils, Configuration, ResponseData, Service,
+};
 use lazy_static::lazy_static;
-use crate::{Configuration, error::Iso14229Error, response::{Code, Response, SubFunction}, ResponseData, utils, Service};
+use std::collections::HashSet;
 
-lazy_static!(
+lazy_static! {
     pub static ref READ_DATA_BY_PERIOD_ID_NEGATIVES: HashSet<Code> = HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
     ]);
-);
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadDataByPeriodId {
@@ -21,7 +24,11 @@ pub struct ReadDataByPeriodId {
 }
 
 impl ResponseData for ReadDataByPeriodId {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDataByPeriodId)),
             None => {
@@ -40,9 +47,8 @@ impl ResponseData for ReadDataByPeriodId {
 
     fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = response.service();
-        if service != Service::ReadDataByPeriodId
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::ReadDataByPeriodId || response.sub_func.is_some() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         let data = &response.data;

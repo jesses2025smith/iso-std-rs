@@ -1,11 +1,15 @@
 //! response of Service 29
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{AlgorithmIndicator, ALGORITHM_INDICATOR_LENGTH, AuthenticationTask, Configuration, Iso14229Error, NotNullableData, NullableData, parse_not_nullable, parse_nullable, parse_algo_indicator, ResponseData, response::Code, utils, Service};
 use crate::response::{Response, SubFunction};
+use crate::{
+    parse_algo_indicator, parse_not_nullable, parse_nullable, response::Code, utils,
+    AlgorithmIndicator, AuthenticationTask, Configuration, Iso14229Error, NotNullableData,
+    NullableData, ResponseData, Service, ALGORITHM_INDICATOR_LENGTH,
+};
+use lazy_static::lazy_static;
+use std::collections::HashSet;
 
-lazy_static!(
+lazy_static! {
     pub static ref AUTH_NEGATIVES: HashSet<Code> = HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
@@ -26,7 +30,7 @@ lazy_static!(
         Code::ConfigurationDataUsageFailed,
         Code::DeAuthenticationFailed,
     ]);
-);
+};
 
 /// Table B.5 — authenticationReturnParameter definitions
 #[repr(u8)]
@@ -81,8 +85,8 @@ impl From<AuthReturnValue> for u8 {
             AuthReturnValue::CertificateVerifiedOrOwnershipVerificationNecessary => 0x11,
             AuthReturnValue::OwnershipVerifiedOrAuthenticationComplete => 0x12,
             AuthReturnValue::CertificateVerified => 0x13,
-            AuthReturnValue::VehicleManufacturerSpecific(v) |
-            AuthReturnValue::SystemSupplierSpecific(v) => v,
+            AuthReturnValue::VehicleManufacturerSpecific(v)
+            | AuthReturnValue::SystemSupplierSpecific(v) => v,
             AuthReturnValue::Reserved(v) => v,
         }
     }
@@ -142,7 +146,7 @@ impl From<Authentication> for Vec<u8> {
                 result.push(value.into());
                 result.append(&mut challenge.into());
                 result.append(&mut ephemeral_public_key.into());
-            },
+            }
             Authentication::VerifyCertificateBidirectional {
                 value,
                 challenge,
@@ -155,14 +159,14 @@ impl From<Authentication> for Vec<u8> {
                 result.append(&mut ephemeral_public_key.into());
                 result.append(&mut certificate.into());
                 result.append(&mut proof_of_ownership.into());
-            },
+            }
             Authentication::ProofOfOwnership {
                 value,
                 session_keyinfo,
             } => {
                 result.push(value.into());
                 result.append(&mut session_keyinfo.into());
-            },
+            }
             Authentication::TransmitCertificate(v) => result.push(v.into()),
             Authentication::RequestChallengeForAuthentication {
                 value,
@@ -174,7 +178,7 @@ impl From<Authentication> for Vec<u8> {
                 result.append(&mut algo_indicator.into());
                 result.append(&mut challenge.into());
                 result.append(&mut additional.into());
-            },
+            }
             Authentication::VerifyProofOfOwnershipUnidirectional {
                 value,
                 algo_indicator,
@@ -183,7 +187,7 @@ impl From<Authentication> for Vec<u8> {
                 result.push(value.into());
                 result.append(&mut algo_indicator.into());
                 result.append(&mut session_keyinfo.into());
-            },
+            }
             Authentication::VerifyProofOfOwnershipBidirectional {
                 value,
                 algo_indicator,
@@ -194,7 +198,7 @@ impl From<Authentication> for Vec<u8> {
                 result.append(&mut algo_indicator.into());
                 result.append(&mut proof_of_ownership.into());
                 result.append(&mut session_keyinfo.into());
-            },
+            }
             Authentication::AuthenticationConfiguration(v) => result.push(v.into()),
         }
 
@@ -203,20 +207,42 @@ impl From<Authentication> for Vec<u8> {
 }
 
 impl ResponseData for Authentication {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
                 let data_len = data.len();
                 match AuthenticationTask::try_from(sub_func)? {
-                    AuthenticationTask::DeAuthenticate => utils::data_length_check(data_len, 1, true)?,
-                    AuthenticationTask::VerifyCertificateUnidirectional => utils::data_length_check(data_len, 4, false)?,
-                    AuthenticationTask::VerifyCertificateBidirectional => utils::data_length_check(data_len, 6, false)?,
-                    AuthenticationTask::ProofOfOwnership => utils::data_length_check(data_len, 2, false)?,
-                    AuthenticationTask::TransmitCertificate => utils::data_length_check(data_len, 1, true)?,
-                    AuthenticationTask::RequestChallengeForAuthentication => utils::data_length_check(data_len, ALGORITHM_INDICATOR_LENGTH + 4, false)?,
-                    AuthenticationTask::VerifyProofOfOwnershipUnidirectional => utils::data_length_check(data_len, ALGORITHM_INDICATOR_LENGTH + 4, false)?,
-                    AuthenticationTask::VerifyProofOfOwnershipBidirectional => utils::data_length_check(data_len, ALGORITHM_INDICATOR_LENGTH + 6, false)?,
-                    AuthenticationTask::AuthenticationConfiguration => utils::data_length_check(data_len, 1, true)?,
+                    AuthenticationTask::DeAuthenticate => {
+                        utils::data_length_check(data_len, 1, true)?
+                    }
+                    AuthenticationTask::VerifyCertificateUnidirectional => {
+                        utils::data_length_check(data_len, 4, false)?
+                    }
+                    AuthenticationTask::VerifyCertificateBidirectional => {
+                        utils::data_length_check(data_len, 6, false)?
+                    }
+                    AuthenticationTask::ProofOfOwnership => {
+                        utils::data_length_check(data_len, 2, false)?
+                    }
+                    AuthenticationTask::TransmitCertificate => {
+                        utils::data_length_check(data_len, 1, true)?
+                    }
+                    AuthenticationTask::RequestChallengeForAuthentication => {
+                        utils::data_length_check(data_len, ALGORITHM_INDICATOR_LENGTH + 4, false)?
+                    }
+                    AuthenticationTask::VerifyProofOfOwnershipUnidirectional => {
+                        utils::data_length_check(data_len, ALGORITHM_INDICATOR_LENGTH + 4, false)?
+                    }
+                    AuthenticationTask::VerifyProofOfOwnershipBidirectional => {
+                        utils::data_length_check(data_len, ALGORITHM_INDICATOR_LENGTH + 6, false)?
+                    }
+                    AuthenticationTask::AuthenticationConfiguration => {
+                        utils::data_length_check(data_len, 1, true)?
+                    }
                 }
 
                 Ok(Response {
@@ -225,15 +251,14 @@ impl ResponseData for Authentication {
                     sub_func: Some(SubFunction::new(sub_func)),
                     data: data.to_vec(),
                 })
-            },
+            }
             None => Err(Iso14229Error::SubFunctionError(Service::Authentication)),
         }
     }
 
     fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = response.service;
-        if service != Service::Authentication
-            || response.sub_func.is_none() {
+        if service != Service::Authentication || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
         }
         let sub_func: AuthenticationTask = response.sub_function().unwrap().function()?;
@@ -244,9 +269,7 @@ impl ResponseData for Authentication {
         let value = AuthReturnValue::from(data[offset]);
         offset += 1;
         match sub_func {
-            AuthenticationTask::DeAuthenticate => {
-                Ok(Self::DeAuthenticate(value))
-            },
+            AuthenticationTask::DeAuthenticate => Ok(Self::DeAuthenticate(value)),
             AuthenticationTask::VerifyCertificateUnidirectional => {
                 let challenge = parse_not_nullable(data, data_len, &mut offset)?;
                 let ephemeral_public_key = parse_nullable(data, data_len, &mut offset)?;
@@ -254,9 +277,9 @@ impl ResponseData for Authentication {
                 Ok(Self::VerifyCertificateUnidirectional {
                     value,
                     challenge,
-                    ephemeral_public_key
+                    ephemeral_public_key,
                 })
-            },
+            }
             AuthenticationTask::VerifyCertificateBidirectional => {
                 let challenge = parse_not_nullable(data, data_len, &mut offset)?;
                 let certificate = parse_not_nullable(data, data_len, &mut offset)?;
@@ -268,9 +291,9 @@ impl ResponseData for Authentication {
                     challenge,
                     certificate,
                     proof_of_ownership,
-                    ephemeral_public_key
+                    ephemeral_public_key,
                 })
-            },
+            }
             AuthenticationTask::ProofOfOwnership => {
                 let session_keyinfo = parse_nullable(data, data_len, &mut offset)?;
 
@@ -278,10 +301,8 @@ impl ResponseData for Authentication {
                     value,
                     session_keyinfo,
                 })
-            },
-            AuthenticationTask::TransmitCertificate => {
-                Ok(Self::TransmitCertificate(value))
-            },
+            }
+            AuthenticationTask::TransmitCertificate => Ok(Self::TransmitCertificate(value)),
             AuthenticationTask::RequestChallengeForAuthentication => {
                 let algo_indicator = parse_algo_indicator(data, &mut offset);
                 let challenge = parse_not_nullable(data, data_len, &mut offset)?;
@@ -291,9 +312,9 @@ impl ResponseData for Authentication {
                     value,
                     algo_indicator,
                     challenge,
-                    additional
+                    additional,
                 })
-            },
+            }
             AuthenticationTask::VerifyProofOfOwnershipUnidirectional => {
                 let algo_indicator = parse_algo_indicator(data, &mut offset);
                 let session_keyinfo = parse_nullable(data, data_len, &mut offset)
@@ -304,7 +325,7 @@ impl ResponseData for Authentication {
                     algo_indicator,
                     session_keyinfo,
                 })
-            },
+            }
             AuthenticationTask::VerifyProofOfOwnershipBidirectional => {
                 let algo_indicator = parse_algo_indicator(data, &mut offset);
                 let proof_of_ownership = parse_not_nullable(data, data_len, &mut offset)?;
@@ -316,11 +337,11 @@ impl ResponseData for Authentication {
                     proof_of_ownership,
                     session_keyinfo,
                 })
-            },
+            }
             AuthenticationTask::AuthenticationConfiguration => {
                 utils::data_length_check(data_len, 1, true)?;
                 Ok(Self::AuthenticationConfiguration(value))
-            },
+            }
         }
     }
 

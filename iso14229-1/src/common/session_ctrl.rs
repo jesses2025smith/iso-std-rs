@@ -1,7 +1,6 @@
 //! Commons of Service 10
 
-
-use crate::{Iso14229Error, utils};
+use crate::{utils, Iso14229Error};
 
 #[repr(u8)]
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]

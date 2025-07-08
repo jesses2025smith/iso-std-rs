@@ -1,7 +1,7 @@
 //! Commons of Service 23|3D
 
+use crate::{utils, AddressAndLengthFormatIdentifier, Configuration, Iso14229Error};
 use rsutil::types::ByteOrder;
-use crate::{AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, utils};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MemoryLocation {
@@ -26,15 +26,25 @@ impl MemoryLocation {
         mem_size: u128,
     ) -> Result<Self, Iso14229Error> {
         if mem_addr == 0 || mem_size == 0 {
-            return Err(Iso14229Error::InvalidParam("invalid memory address or size".into()));
+            return Err(Iso14229Error::InvalidParam(
+                "invalid memory address or size".into(),
+            ));
         }
 
-        Ok(Self { alfi, mem_addr, mem_size })
+        Ok(Self {
+            alfi,
+            mem_addr,
+            mem_size,
+        })
     }
     #[inline]
-    pub fn memory_address(&self) -> u128 { self.mem_addr }
+    pub fn memory_address(&self) -> u128 {
+        self.mem_addr
+    }
     #[inline]
-    pub fn memory_size(&self) -> u128 {self.mem_size}
+    pub fn memory_size(&self) -> u128 {
+        self.mem_size
+    }
 
     pub fn from_slice(data: &[u8], _: &Configuration) -> Result<Self, Iso14229Error> {
         let data_len = data.len();
@@ -60,10 +70,18 @@ impl MemoryLocation {
     /// bit 7 - 4: Length (number of bytes) of the memorySize parameter
     /// bit 3 - 0: Length (number of bytes) of the memoryAddress parameter
     pub fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let mut mem_addr = utils::u128_to_vec(self.mem_addr, self.alfi.length_of_memory_address(), ByteOrder::Big);
-        let mut mem_size = utils::u128_to_vec(self.mem_size, self.alfi.length_of_memory_size(), ByteOrder::Big);
+        let mut mem_addr = utils::u128_to_vec(
+            self.mem_addr,
+            self.alfi.length_of_memory_address(),
+            ByteOrder::Big,
+        );
+        let mut mem_size = utils::u128_to_vec(
+            self.mem_size,
+            self.alfi.length_of_memory_size(),
+            ByteOrder::Big,
+        );
 
-        let mut result = vec![self.alfi.into(), ];
+        let mut result = vec![self.alfi.into()];
         result.append(&mut mem_addr);
         result.append(&mut mem_size);
         result

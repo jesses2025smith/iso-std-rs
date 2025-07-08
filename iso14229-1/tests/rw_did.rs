@@ -2,7 +2,9 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, Configuration, DIDData, DataIdentifier, Service, TryFromWithCfg};
+    use iso14229_1::{
+        request, response, Configuration, DIDData, DataIdentifier, Service, TryFromWithCfg,
+    };
 
     #[test]
     fn test_read_request() -> anyhow::Result<()> {
@@ -13,26 +15,34 @@ mod tests {
         assert_eq!(request.sub_function(), None);
         let data = request.data::<request::ReadDID>(&cfg)?;
         assert_eq!(data.did, DataIdentifier::VIN);
-        assert_eq!(data.others, vec![DataIdentifier::BootSoftwareIdentification, ]);
+        assert_eq!(
+            data.others,
+            vec![DataIdentifier::BootSoftwareIdentification,]
+        );
 
-        let source = hex::decode("22F190F180\
-        F181F182F183F184F185F186F187F188F189")?;
+        let source = hex::decode(
+            "22F190F180\
+        F181F182F183F184F185F186F187F188F189",
+        )?;
         let request = request::Request::try_from_cfg(source, &cfg)?;
         assert_eq!(request.sub_function(), None);
         let data = request.data::<request::ReadDID>(&cfg)?;
         assert_eq!(data.did, DataIdentifier::VIN);
-        assert_eq!(data.others, vec![
-            DataIdentifier::BootSoftwareIdentification,
-            DataIdentifier::ApplicationSoftwareIdentification,
-            DataIdentifier::ApplicationDataIdentification,
-            DataIdentifier::BootSoftwareFingerprint,
-            DataIdentifier::ApplicationSoftwareFingerprint,
-            DataIdentifier::ApplicationDataFingerprint,
-            DataIdentifier::ActiveDiagnosticSession,
-            DataIdentifier::VehicleManufacturerSparePartNumber,
-            DataIdentifier::VehicleManufacturerECUSoftwareNumber,
-            DataIdentifier::VehicleManufacturerECUSoftwareVersionNumber,
-        ]);
+        assert_eq!(
+            data.others,
+            vec![
+                DataIdentifier::BootSoftwareIdentification,
+                DataIdentifier::ApplicationSoftwareIdentification,
+                DataIdentifier::ApplicationDataIdentification,
+                DataIdentifier::BootSoftwareFingerprint,
+                DataIdentifier::ApplicationSoftwareFingerprint,
+                DataIdentifier::ApplicationDataFingerprint,
+                DataIdentifier::ActiveDiagnosticSession,
+                DataIdentifier::VehicleManufacturerSparePartNumber,
+                DataIdentifier::VehicleManufacturerECUSoftwareNumber,
+                DataIdentifier::VehicleManufacturerECUSoftwareVersionNumber,
+            ]
+        );
 
         Ok(())
     }
@@ -41,26 +51,31 @@ mod tests {
     fn test_read_did_response() -> anyhow::Result<()> {
         let mut cfg = Configuration::default();
         cfg.did_cfg.insert(DataIdentifier::VIN, 17);
-        cfg.did_cfg.insert(DataIdentifier::VehicleManufacturerSparePartNumber, 12);
+        cfg.did_cfg
+            .insert(DataIdentifier::VehicleManufacturerSparePartNumber, 12);
 
         let source = hex::decode(
             "62\
             f1904441564443313030394e544c5036313338\
-            F187445643374532303030303037"
+            F187445643374532303030303037",
         )?;
         let response = response::Response::try_from_cfg(source, &cfg)?;
         assert_eq!(response.sub_function(), None);
         let data = response.data::<response::ReadDID>(&cfg)?;
-        assert_eq!(data.data, DIDData {
+        assert_eq!(
+            data.data,
+            DIDData {
                 did: DataIdentifier::VIN,
                 data: hex::decode("4441564443313030394e544c5036313338")?
-            },);
-        assert_eq!(data.others,  vec![
-            DIDData {
+            },
+        );
+        assert_eq!(
+            data.others,
+            vec![DIDData {
                 did: DataIdentifier::VehicleManufacturerSparePartNumber,
                 data: hex::decode("445643374532303030303037")?
-            },
-        ]);
+            },]
+        );
 
         Ok(())
     }
@@ -74,13 +89,19 @@ mod tests {
         assert_eq!(response.service(), Service::ReadDID);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x22, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::ReadDID);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }
@@ -94,10 +115,13 @@ mod tests {
         let request = request::Request::try_from_cfg(source, &cfg)?;
         assert_eq!(request.sub_function(), None);
         let data = request.data::<request::WriteDID>(&cfg)?;
-        assert_eq!(data.0, DIDData {
-            did: DataIdentifier::VIN,
-            data: hex::decode("4441564443313030394e544c5036313338")?,  // 17 bytes
-        });
+        assert_eq!(
+            data.0,
+            DIDData {
+                did: DataIdentifier::VIN,
+                data: hex::decode("4441564443313030394e544c5036313338")?, // 17 bytes
+            }
+        );
 
         Ok(())
     }
@@ -125,13 +149,19 @@ mod tests {
         assert_eq!(response.service(), Service::WriteDID);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x2E, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::WriteDID);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }

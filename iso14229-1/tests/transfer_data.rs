@@ -13,7 +13,10 @@ mod tests {
         assert_eq!(request.sub_function(), None);
         let data = request.data::<request::TransferData>(&cfg)?;
         assert_eq!(data.sequence, 0x01);
-        assert_eq!(data.data, vec![0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99]);
+        assert_eq!(
+            data.data,
+            vec![0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99]
+        );
 
         Ok(())
     }
@@ -27,7 +30,10 @@ mod tests {
         assert_eq!(response.sub_function(), None);
         let data = response.data::<response::TransferData>(&cfg)?;
         assert_eq!(data.sequence, 0x01);
-        assert_eq!(data.data, vec![0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99]);
+        assert_eq!(
+            data.data,
+            vec![0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99]
+        );
 
         Ok(())
     }
@@ -41,13 +47,19 @@ mod tests {
         assert_eq!(response.service(), Service::TransferData);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         let response = response::Response::new(Service::NRC, None, vec![0x36, 0x12], &cfg)?;
         assert_eq!(response.service(), Service::TransferData);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());
-        assert_eq!(response.nrc_code()?, response::Code::SubFunctionNotSupported);
+        assert_eq!(
+            response.nrc_code()?,
+            response::Code::SubFunctionNotSupported
+        );
 
         Ok(())
     }

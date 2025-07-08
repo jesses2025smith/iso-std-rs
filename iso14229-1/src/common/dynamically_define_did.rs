@@ -1,13 +1,15 @@
 //! Commons of Service 2C
 
-use crate::{DataIdentifier, enum_extend, Iso14229Error, utils};
+use crate::{enum_extend, utils, DataIdentifier, Iso14229Error};
 
 enum_extend!(
     pub enum DefinitionType {
         DefineByIdentifier = 0x01,
         DefineByMemoryAddress = 0x02,
         ClearDynamicallyDefinedDataIdentifier = 0x03,
-    }, u8);
+    },
+    u8
+);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct DynamicallyDID(pub(crate) u16);
@@ -16,11 +18,8 @@ impl TryFrom<u16> for DynamicallyDID {
     type Error = Iso14229Error;
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match DataIdentifier::from(value) {
-            DataIdentifier::Periodic(_) |
-            DataIdentifier::DynamicallyDefined(_) => {
-                Ok(Self(value))
-            },
-            _ => Err(Iso14229Error::InvalidDynamicallyDefinedDID(value))
+            DataIdentifier::Periodic(_) | DataIdentifier::DynamicallyDefined(_) => Ok(Self(value)),
+            _ => Err(Iso14229Error::InvalidDynamicallyDefinedDID(value)),
         }
     }
 }
@@ -59,7 +58,11 @@ impl<'a> TryFrom<&'a [u8]> for DynamicallyMemAddr {
         offset += 1;
         let mem_size = data[offset];
 
-        Ok(Self { did, position, mem_size })
+        Ok(Self {
+            did,
+            position,
+            mem_size,
+        })
     }
 }
 

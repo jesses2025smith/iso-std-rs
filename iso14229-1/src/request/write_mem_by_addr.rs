@@ -1,7 +1,10 @@
 //! request of Service 3D
 
-
-use crate::{AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, MemoryLocation, request::{Request, SubFunction}, RequestData, utils, Service};
+use crate::{
+    request::{Request, SubFunction},
+    utils, AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, MemoryLocation,
+    RequestData, Service,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WriteMemByAddr {
@@ -18,7 +21,10 @@ impl WriteMemByAddr {
         data: Vec<u8>,
     ) -> Result<Self, Iso14229Error> {
         if data.len() != mem_size as usize {
-            return Err(Iso14229Error::InvalidParam("the length of data must be equal to mem_size and the mem_size must rather than 0".to_string()));
+            return Err(Iso14229Error::InvalidParam(
+                "the length of data must be equal to mem_size and the mem_size must rather than 0"
+                    .to_string(),
+            ));
         }
 
         Ok(Self {
@@ -39,22 +45,29 @@ impl WriteMemByAddr {
 }
 
 impl RequestData for WriteMemByAddr {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn request(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteMemByAddr)),
             None => {
                 utils::data_length_check(data.len(), 5, false)?;
 
-                Ok(Request { service: Service::WriteMemByAddr, sub_func: None, data: data.to_vec(), })
+                Ok(Request {
+                    service: Service::WriteMemByAddr,
+                    sub_func: None,
+                    data: data.to_vec(),
+                })
             }
         }
     }
 
     fn try_parse(request: &Request, cfg: &Configuration) -> Result<Self, Iso14229Error> {
         let service = request.service();
-        if service != Service::WriteMemByAddr
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+        if service != Service::WriteMemByAddr || request.sub_func.is_some() {
+            return Err(Iso14229Error::ServiceError(service));
         }
 
         let data = &request.data;

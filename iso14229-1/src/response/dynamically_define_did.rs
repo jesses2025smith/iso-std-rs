@@ -1,10 +1,13 @@
 //! response of Service 2C
 
-use std::collections::HashSet;
+use crate::{
+    response::{Code, Response, SubFunction},
+    Configuration, DefinitionType, DynamicallyDID, Iso14229Error, ResponseData, Service,
+};
 use lazy_static::lazy_static;
-use crate::{Configuration, DefinitionType, DynamicallyDID, Iso14229Error, response::{Code, Response, SubFunction}, ResponseData, Service};
+use std::collections::HashSet;
 
-lazy_static!(
+lazy_static! {
     pub static ref DYNAMICAL_DID_NEGATIVES: HashSet<Code> = HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
@@ -12,21 +15,30 @@ lazy_static!(
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
     ]);
-);
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DynamicallyDefineDID(pub Option<DynamicallyDID>);
 
 impl ResponseData for DynamicallyDefineDID {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
                 let _ = DefinitionType::try_from(sub_func)?;
 
                 let data_len = data.len();
                 match data_len {
-                    0 | 2 => {},
-                    _ => return Err(Iso14229Error::InvalidDataLength { expect: 0, actual: data_len }),
+                    0 | 2 => {}
+                    _ => {
+                        return Err(Iso14229Error::InvalidDataLength {
+                            expect: 0,
+                            actual: data_len,
+                        })
+                    }
                 }
 
                 Ok(Response {
@@ -42,8 +54,7 @@ impl ResponseData for DynamicallyDefineDID {
 
     fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = response.service;
-        if service != Service::DynamicalDefineDID
-            || response.sub_func.is_none() {
+        if service != Service::DynamicalDefineDID || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
         }
 
@@ -53,10 +64,14 @@ impl ResponseData for DynamicallyDefineDID {
 
         let dynamic = match data_len {
             0 => Ok(None),
-            2 => Ok(Some(DynamicallyDID::try_from(
-                u16::from_be_bytes([data[offset], data[offset + 1]])
-            )?)),
-            v => Err(Iso14229Error::InvalidDataLength { expect: 2, actual: v })
+            2 => Ok(Some(DynamicallyDID::try_from(u16::from_be_bytes([
+                data[offset],
+                data[offset + 1],
+            ]))?)),
+            v => Err(Iso14229Error::InvalidDataLength {
+                expect: 2,
+                actual: v,
+            }),
         }?;
 
         Ok(Self(dynamic))

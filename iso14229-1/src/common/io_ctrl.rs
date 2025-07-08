@@ -8,7 +8,9 @@ enum_extend!(
         ResetToDefault = 0x01,
         FreezeCurrentState = 0x02,
         ShortTermAdjustment = 0x03,
-    }, u8);
+    },
+    u8
+);
 
 // #[repr(u8)]
 // #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -46,9 +48,8 @@ enum_extend!(
 //     }
 // }
 
-#[derive(Debug, Clone,  Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct IOCtrlOption {
     pub param: IOCtrlParameter,
     pub state: Vec<u8>,
 }
-

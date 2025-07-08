@@ -1,9 +1,13 @@
 //! response of Service 84
 
-
-use std::collections::HashSet;
+use crate::{
+    error::Iso14229Error,
+    response::{Code, Response, SubFunction},
+    utils, AdministrativeParameter, Configuration, ResponseData, Service,
+    SignatureEncryptionCalculation,
+};
 use lazy_static::lazy_static;
-use crate::{AdministrativeParameter, Configuration, error::Iso14229Error, response::{Code, Response, SubFunction}, ResponseData, Service, SignatureEncryptionCalculation, utils};
+use std::collections::HashSet;
 
 lazy_static!(
     pub static ref SECURED_DATA_TRANS_NEGATIVES: HashSet<Code>
@@ -26,19 +30,19 @@ lazy_static!(
 
 /// Table 492 — Positive response message definition(successful)
 #[derive(Debug, Clone)]
-pub struct SecuredDataTransPositive {   // min_len 9
+pub struct SecuredDataTransPositive {
+    // min_len 9
     pub apar: AdministrativeParameter,
     pub signature: SignatureEncryptionCalculation,
     // pub signature_len: u16,
     pub anti_replay_cnt: u16,
 
-    pub response: u8,   // Internal Message Service Response ID
+    pub response: u8, // Internal Message Service Response ID
     pub response_params: Vec<u8>,
     pub signature_data: Vec<u8>,
 }
 
 impl SecuredDataTransPositive {
-
     pub fn new(
         mut apar: AdministrativeParameter,
         signature: SignatureEncryptionCalculation,
@@ -48,7 +52,9 @@ impl SecuredDataTransPositive {
         signature_data: Vec<u8>,
     ) -> Result<Self, Iso14229Error> {
         if signature_data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam("length of `Signature/MAC Byte` is out of range".to_string()));
+            return Err(Iso14229Error::InvalidParam(
+                "length of `Signature/MAC Byte` is out of range".to_string(),
+            ));
         }
 
         if apar.is_request() {
@@ -68,15 +74,16 @@ impl SecuredDataTransPositive {
 
 /// Table 494 — Positive response message definition(unsuccessful)
 #[derive(Debug, Clone)]
-pub struct SecuredDataTransNegative {   // min_len 11
+pub struct SecuredDataTransNegative {
+    // min_len 11
     pub apar: AdministrativeParameter,
     pub signature: SignatureEncryptionCalculation,
     // pub signature_len: u16,
     pub anti_replay_cnt: u16,
 
     // pub nrc: Service,           // always Service::NRC
-    pub service: u8,            // Internal Message Service Request ID
-    pub response: u8,           // Internal Message responseCode
+    pub service: u8,  // Internal Message Service Request ID
+    pub response: u8, // Internal Message responseCode
     pub signature_data: Vec<u8>,
 }
 
@@ -90,7 +97,9 @@ impl SecuredDataTransNegative {
         signature_data: Vec<u8>,
     ) -> Result<Self, Iso14229Error> {
         if signature_data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam("length of `Signature/MAC Byte` is out of range".to_string()));
+            return Err(Iso14229Error::InvalidParam(
+                "length of `Signature/MAC Byte` is out of range".to_string(),
+            ));
         }
 
         if apar.is_request() {
@@ -115,7 +124,11 @@ pub enum SecuredDataTrans {
 }
 
 impl ResponseData for SecuredDataTrans {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn response(
+        data: &[u8],
+        sub_func: Option<u8>,
+        _: &Configuration,
+    ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::SecuredDataTrans)),
             None => {
@@ -133,15 +146,15 @@ impl ResponseData for SecuredDataTrans {
 
     fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
         let service = response.service;
-        if service != Service::SecuredDataTrans
-            || response.sub_func.is_some() {
+        if service != Service::SecuredDataTrans || response.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
         }
 
         let data = &response.data;
         let data_len = data.len();
         let mut offset = 0;
-        let apar = AdministrativeParameter::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
+        let apar =
+            AdministrativeParameter::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
         if apar.is_request() {
             return Err(Iso14229Error::InvalidData(hex::encode(data)));
@@ -157,7 +170,7 @@ impl ResponseData for SecuredDataTrans {
         let code = data[offset];
         offset += 1;
         if code == Service::NRC.into() {
-            utils::data_length_check(data_len,offset + signature_len as usize + 2, false)?;
+            utils::data_length_check(data_len, offset + signature_len as usize + 2, false)?;
 
             let service = data[offset];
             offset += 1;
@@ -165,35 +178,30 @@ impl ResponseData for SecuredDataTrans {
             offset += 1;
             let signature_data = data[offset..].to_vec();
 
-            Ok(Self::Unsuccessful(
-                SecuredDataTransNegative::new(
-                    apar,
-                    signature,
-                    anti_replay_cnt,
-                    service,
-                    response,
-                    signature_data,
-                )?
-            ))
-        }
-        else {
-            utils::data_length_check(data_len,offset + signature_len as usize, false)?;
+            Ok(Self::Unsuccessful(SecuredDataTransNegative::new(
+                apar,
+                signature,
+                anti_replay_cnt,
+                service,
+                response,
+                signature_data,
+            )?))
+        } else {
+            utils::data_length_check(data_len, offset + signature_len as usize, false)?;
 
             let curr_offset = data_len - offset - signature_len as usize;
             let response_params = data[offset..offset + curr_offset].to_vec();
             offset += curr_offset;
 
             let signature_data = data[offset..].to_vec();
-            Ok(Self::Successful(
-                SecuredDataTransPositive::new(
-                    apar,
-                    signature,
-                    anti_replay_cnt,
-                    code,
-                    response_params,
-                    signature_data,
-                )?
-            ))
+            Ok(Self::Successful(SecuredDataTransPositive::new(
+                apar,
+                signature,
+                anti_replay_cnt,
+                code,
+                response_params,
+                signature_data,
+            )?))
         }
     }
 
@@ -209,7 +217,7 @@ impl ResponseData for SecuredDataTrans {
                 result.push(v.response);
                 result.append(&mut v.response_params);
                 result.append(&mut v.signature_data);
-            },
+            }
             Self::Unsuccessful(mut v) => {
                 result.append(&mut v.apar.into());
                 result.push(v.signature.into());
@@ -220,7 +228,7 @@ impl ResponseData for SecuredDataTrans {
                 result.push(v.service);
                 result.push(v.response);
                 result.append(&mut v.signature_data);
-            },
+            }
         }
 
         result
