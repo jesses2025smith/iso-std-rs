@@ -1,8 +1,7 @@
-
 #[derive(Debug, thiserror::Error)]
 pub enum Iso13400Error {
-    #[error("ISO13400-2 - input error: {0}")]
-    InputError(String),
+    #[error("ISO 13400-2 - input error: {0}")]
+    InvalidParam(String),
 
     #[error("ISO 13400-2 - invalid payload length: {actual} expect at least or equal {expected}")]
     InvalidPayloadLength { actual: usize, expected: usize },

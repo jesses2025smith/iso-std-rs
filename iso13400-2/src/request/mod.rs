@@ -1,9 +1,9 @@
+use crate::{constants::*, utils, Eid, Iso13400Error, LogicAddress, RoutingActiveType};
 use getset::{CopyGetters, Getters};
-use crate::{constants::*, Iso13400Error, LogicAddress, RoutingActiveType, utils, Eid};
 
 /****** --- UDP --- ********/
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct VehicleID;   // 0x0001
+pub struct VehicleID; // 0x0001
 
 impl VehicleID {
     #[inline]
@@ -79,12 +79,15 @@ impl VehicleIDWithVIN {
     pub fn new(vin: &str) -> Result<Self, Iso13400Error> {
         let vin_len = vin.len();
         if vin_len != Self::length() {
-            return Err(Iso13400Error::InputError(
-                format!("length of vin must equal {}", Self::length())
-            ));
+            return Err(Iso13400Error::InvalidParam(format!(
+                "length of vin must equal {}",
+                Self::length()
+            )));
         }
 
-        Ok(Self { vin: vin.to_owned() })
+        Ok(Self {
+            vin: vin.to_owned(),
+        })
     }
 
     #[inline]
@@ -150,7 +153,7 @@ impl From<EntityStatus> for Vec<u8> {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct DiagnosticPowerMode;    // 0x4003
+pub struct DiagnosticPowerMode; // 0x4003
 
 impl DiagnosticPowerMode {
     #[inline]
@@ -191,12 +194,13 @@ pub struct RoutingActive {  // 0x0005
 }
 
 impl RoutingActive {
-    pub fn new(
-        src_addr: LogicAddress,
-        active: RoutingActiveType,
-        user_def: Option<u32>,
-    ) -> Self {
-        Self { src_addr, active, reserved: Default::default(), user_def }
+    pub fn new(src_addr: LogicAddress, active: RoutingActiveType, user_def: Option<u32>) -> Self {
+        Self {
+            src_addr,
+            active,
+            reserved: Default::default(),
+            user_def,
+        }
     }
 
     /// min length
@@ -210,21 +214,32 @@ impl TryFrom<&[u8]> for RoutingActive {
     type Error = Iso13400Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (data_len, mut offset) = utils::data_len_check(data, Self::length(), false)?;
-        let src_addr = u16::from_be_bytes(data[offset..offset+ SIZE_OF_ADDRESS].try_into().unwrap());
+        let src_addr =
+            u16::from_be_bytes(data[offset..offset + SIZE_OF_ADDRESS].try_into().unwrap());
         offset += SIZE_OF_ADDRESS;
         let src_addr = LogicAddress::from(src_addr);
         let active = data[offset];
         offset += 1;
         let active = RoutingActiveType::from(active);
-        let reserved = u32::from_be_bytes(data[offset..offset+4].try_into().unwrap());
+        let reserved = u32::from_be_bytes(data[offset..offset + 4].try_into().unwrap());
         offset += 4;
         let user_def = match data_len - offset {
             0 => Ok(None),
-            4 => Ok(Some(u32::from_be_bytes(data[offset..offset+4].try_into().unwrap()))),
-            _ => Err(Iso13400Error::InvalidLength { actual: data_len, expected: Self::length()+4 }),
+            4 => Ok(Some(u32::from_be_bytes(
+                data[offset..offset + 4].try_into().unwrap(),
+            ))),
+            _ => Err(Iso13400Error::InvalidLength {
+                actual: data_len,
+                expected: Self::length() + 4,
+            }),
         }?;
 
-        Ok(Self { src_addr, active, reserved, user_def } )
+        Ok(Self {
+            src_addr,
+            active,
+            reserved,
+            user_def,
+        })
     }
 }
 

@@ -112,7 +112,10 @@ pub struct Id(pub(crate) u64);
 impl Id {
     pub fn new(id: u64) -> Result<Self, Iso13400Error> {
         if (id & 0xFFFF0000_00000000) > 0 {
-            return Err(Iso13400Error::InputError(format!("id: {} out of range", id)));
+            return Err(Iso13400Error::InvalidParam(format!(
+                "id: {} out of range",
+                id
+            )));
         }
 
         Ok(Self(id))
@@ -130,9 +133,9 @@ impl TryFrom<&[u8]> for Id {
     #[inline]
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let _ = utils::data_len_check(data, Self::length(), false)?;
-        let id = u64::from_be_bytes(
-            [0x00, 0x00, data[0], data[1], data[2], data[3], data[4], data[5]]
-        );
+        let id = u64::from_be_bytes([
+            0x00, 0x00, data[0], data[1], data[2], data[3], data[4], data[5],
+        ]);
 
         Self::new(id)
     }
@@ -179,8 +182,8 @@ impl TryFrom<u16> for PayloadType {
             UDP_REQ_VEHICLE_ID_WITH_EID => Ok(Self::ReqVehicleWithEid),
             UDP_REQ_VEHICLE_ID_WITH_VIN => Ok(Self::ReqVehicleWithVIN),
             UDP_RESP_VEHICLE_IDENTIFIER => Ok(Self::RespVehicleId),
-            TCP_REQ_ROUTING_ACTIVE  => Ok(Self::ReqRoutingActive),
-            TCP_RESP_ROUTING_ACTIVE  => Ok(Self::RespRoutingActive),
+            TCP_REQ_ROUTING_ACTIVE => Ok(Self::ReqRoutingActive),
+            TCP_RESP_ROUTING_ACTIVE => Ok(Self::RespRoutingActive),
             TCP_REQ_ALIVE_CHECK => Ok(Self::ReqAliveCheck),
             TCP_RESP_ALIVE_CHECK => Ok(Self::RespAliveCheck),
             UDP_REQ_ENTITY_STATUS => Ok(Self::ReqEntityStatus),
@@ -188,7 +191,7 @@ impl TryFrom<u16> for PayloadType {
             UDP_REQ_DIAGNOSTIC_POWER_MODE => Ok(Self::ReqDiagPowerMode),
             UDP_RESP_DIAGNOSTIC_POWER_MODE => Ok(Self::RespDiagPowerMode),
             TCP_DIAGNOSTIC => Ok(Self::Diagnostic),
-            TCP_RESP_DIAGNOSTIC_POSITIVE  => Ok(Self::RespDiagPositive),
+            TCP_RESP_DIAGNOSTIC_POSITIVE => Ok(Self::RespDiagPositive),
             TCP_RESP_DIAGNOSTIC_NEGATIVE => Ok(Self::RespDiagNegative),
             _ => Err(Iso13400Error::InvalidPayloadType(value)),
         }
@@ -205,5 +208,8 @@ pub type Eid = Id;
 pub type Gid = Id;
 
 /// It will be removed in a future version. Use [NodeType] instead
-#[deprecated(since = "0.1.0", note = "It will be removed in a future version. Use 'NodeType` instead")]
+#[deprecated(
+    since = "0.1.0",
+    note = "It will be removed in a future version. Use 'NodeType` instead"
+)]
 pub type Entity = NodeType;
