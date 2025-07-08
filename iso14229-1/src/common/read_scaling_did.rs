@@ -557,7 +557,7 @@ impl TryFrom<u8> for ScalingByteExtensionUnit {
                 description:
                     "Second/Minute/Hour/Month/Day/Year/Local minute offset/Local hour offset",
             }),
-            v => Err(Iso14229Error::ReservedError(v.to_string())),
+            v => Err(Iso14229Error::ReservedError(v)),
         }
     }
 }

@@ -4,18 +4,17 @@ use crate::{
     response::{Code, Response, SubFunction},
     Configuration, DefinitionType, DynamicallyDID, Iso14229Error, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref DYNAMICAL_DID_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static DYNAMICAL_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DynamicallyDefineDID(pub Option<DynamicallyDID>);

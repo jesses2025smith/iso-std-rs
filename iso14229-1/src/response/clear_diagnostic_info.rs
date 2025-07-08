@@ -4,18 +4,17 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, Configuration, Iso14229Error, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref CLEAR_DIAGNOSTIC_INFO_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static CLEAR_DIAGNOSTIC_INFO_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         Code::GeneralProgrammingFailure,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ClearDiagnosticInfo {

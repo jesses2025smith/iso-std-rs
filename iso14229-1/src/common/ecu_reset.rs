@@ -29,7 +29,7 @@ impl TryFrom<u8> for ECUResetType {
             0x40..=0x5F => Ok(Self::VehicleManufacturerSpecific(value)),
             0x60..=0x7E => Ok(Self::SystemSupplierSpecific(value)),
             0x7F => Ok(Self::Reserved(value)),
-            v => Err(Iso14229Error::ReservedError(v.to_string())),
+            v => Err(Iso14229Error::ReservedError(v)),
         }
     }
 }

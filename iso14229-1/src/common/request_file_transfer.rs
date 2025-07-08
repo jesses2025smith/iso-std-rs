@@ -1,8 +1,9 @@
 //! Commons of Service 38
 
-use crate::{enum_extend, Iso14229Error};
+use crate::Iso14229Error;
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum ModeOfOperation {
         AddFile = 0x01,
         DeleteFile = 0x02,
@@ -11,5 +12,7 @@ enum_extend!(
         ReadDir = 0x05,
         ResumeFile = 0x06,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );

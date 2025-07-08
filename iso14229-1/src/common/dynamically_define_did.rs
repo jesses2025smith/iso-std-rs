@@ -1,14 +1,17 @@
 //! Commons of Service 2C
 
-use crate::{enum_extend, utils, DataIdentifier, Iso14229Error};
+use crate::{utils, DataIdentifier, Iso14229Error};
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum DefinitionType {
         DefineByIdentifier = 0x01,
         DefineByMemoryAddress = 0x02,
         ClearDynamicallyDefinedDataIdentifier = 0x03,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]

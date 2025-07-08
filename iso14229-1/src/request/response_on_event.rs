@@ -1,21 +1,23 @@
 //! request of Service 86
 
 use crate::{
-    enum_extend,
     request::{Request, SubFunction},
     Configuration, EventType, Iso14229Error, RequestData, ResponseOnEventType, Service,
 };
 use bitfield_struct::bitfield;
 
-enum_extend!(
+rsutil::enum_extend!(
     /// Table 142 — Comparison logic parameter definition
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum ComparisonLogicID {
         LessThan = 0x01,
         LargerThan = 0x02,
         Equal = 0x03,
         NotEqual = 0x04,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );
 
 /// Table 143 — Localization of value 16 bit bitfield parameter definition

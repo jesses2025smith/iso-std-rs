@@ -4,11 +4,10 @@ use crate::{
     response::{Code, Response, SubFunction},
     Configuration, Iso14229Error, ResponseData, SecurityAccessLevel, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref SECURITY_ACCESS_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static SECURITY_ACCESS_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
@@ -17,8 +16,8 @@ lazy_static! {
         Code::InvalidKey,
         Code::ExceedNumberOfAttempts,
         Code::RequiredTimeDelayNotExpired,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityAccess {

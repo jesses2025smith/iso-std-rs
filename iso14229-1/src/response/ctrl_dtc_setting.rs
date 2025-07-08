@@ -4,17 +4,16 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, Configuration, DTCSettingType, Iso14229Error, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref CTRL_DTC_SETTING_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static CTRL_DTC_SETTING_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CtrlDTCSetting {

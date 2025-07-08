@@ -4,18 +4,17 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, Configuration, DIDData, DataIdentifier, Iso14229Error, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref WRITE_DID_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static WRITE_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
         Code::GeneralProgrammingFailure,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WriteDID(pub DataIdentifier);

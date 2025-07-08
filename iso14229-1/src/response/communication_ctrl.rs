@@ -1,18 +1,19 @@
 //! response of Service 28
 
-use crate::response::{Code, Response, SubFunction};
-use crate::{utils, CommunicationCtrlType, Configuration, Iso14229Error, ResponseData, Service};
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use crate::{
+    response::{Code, Response, SubFunction},
+    utils, CommunicationCtrlType, Configuration, Iso14229Error, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref COMMUNICATION_CTRL_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static COMMUNICATION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CommunicationCtrl {

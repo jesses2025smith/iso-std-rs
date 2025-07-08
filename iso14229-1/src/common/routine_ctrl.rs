@@ -1,15 +1,17 @@
 //! Commons of Service 31
 
-use crate::enum_extend;
 use crate::{constant::ISO_SAE_RESERVED, error::Iso14229Error, utils, Service};
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum RoutineCtrlType {
         StartRoutine = 1,
         StopRoutine = 2,
         RequestRoutineResults = 3,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );
 
 #[allow(non_upper_case_globals)]

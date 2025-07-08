@@ -5,18 +5,17 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, Configuration, DIDData, DataIdentifier, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref READ_DID_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static READ_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ResponseTooLong,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone)]
 pub struct ReadDID {

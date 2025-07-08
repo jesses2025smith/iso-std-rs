@@ -1,6 +1,6 @@
 //! Commons of Service 19
 
-use crate::{enum_extend, Iso14229Error};
+use crate::Iso14229Error;
 use bitflags::bitflags;
 
 bitflags! {
@@ -17,8 +17,9 @@ bitflags! {
     }
 }
 
-enum_extend!(
+rsutil::enum_extend!(
     /// Table 317 — Request message SubFunction definition
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum DTCReportType {
         ReportNumberOfDTCByStatusMask = 0x01,
         ReportDTCByStatusMask = 0x02,
@@ -63,5 +64,7 @@ enum_extend!(
         #[cfg(any(feature = "std2020"))]
         ReportDTCInformationByDTCReadinessGroupIdentifier = 0x56,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );

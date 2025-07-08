@@ -6,11 +6,10 @@ use crate::{
     AlgorithmIndicator, AuthenticationTask, Configuration, Iso14229Error, NotNullableData,
     NullableData, ResponseData, Service, ALGORITHM_INDICATOR_LENGTH,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref AUTH_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static AUTH_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
@@ -29,8 +28,8 @@ lazy_static! {
         Code::SessionKeyCreationDerivationFailed,
         Code::ConfigurationDataUsageFailed,
         Code::DeAuthenticationFailed,
-    ]);
-};
+    ])
+});
 
 /// Table B.5 — authenticationReturnParameter definitions
 #[repr(u8)]

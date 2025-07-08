@@ -1,20 +1,22 @@
 //! request of Service 2A
 
 use crate::{
-    enum_extend,
     request::{Request, SubFunction},
     utils, Configuration, Iso14229Error, RequestData, Service,
 };
 
-enum_extend!(
+rsutil::enum_extend!(
     /// Table C.10 — transmissionMode parameter definitions
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum TransmissionMode {
         SendAtSlowRate = 0x01,
         SendAtMediumRate = 0x02,
         SendAtFastRate = 0x03,
         StopSending = 0x04,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );
 
 #[derive(Debug, Clone, Eq, PartialEq)]

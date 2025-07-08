@@ -18,9 +18,8 @@ keywords = [
 bitfield-struct = { workspace = true }
 bitflags = { workspace = true }
 hex = { workspace = true }
-lazy_static = { workspace = true }
 log = { workspace = true }
-rsutil = { workspace = true, features = ["log", "types"] }
+rsutil = { workspace = true, features = ["log", "types", "macros"] }
 thiserror = { workspace = true }
 
 [dev-dependencies]

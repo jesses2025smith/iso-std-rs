@@ -1,10 +1,11 @@
 //! Commons of Service 29
 
-use crate::{enum_extend, utils, Iso14229Error};
+use crate::{utils, Iso14229Error};
 
 pub(crate) const ALGORITHM_INDICATOR_LENGTH: usize = 16;
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum AuthenticationTask {
         DeAuthenticate = 0x00,
         VerifyCertificateUnidirectional = 0x01,
@@ -16,7 +17,9 @@ enum_extend!(
         VerifyProofOfOwnershipBidirectional = 0x07,
         AuthenticationConfiguration = 0x08,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );
 
 #[derive(Debug, Clone, Eq, PartialEq)]

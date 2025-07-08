@@ -16,12 +16,13 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-enum_extend!(
+rsutil::enum_extend!(
     /// the service marked with `✅` is completed.
     ///
     /// the service marked with `⭕` is partially completed.
     ///
     /// The service marked with `❌` is not implemented.
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum Service {
         SessionCtrl = 0x10,         // ✅
         ECUReset = 0x11,            // ✅
@@ -55,7 +56,9 @@ enum_extend!(
         LinkCtrl = 0x87,            // ✅
         NRC = 0x7F,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );
 
 impl Display for Service {

@@ -4,18 +4,17 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, Configuration, ECUResetType, Iso14229Error, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref ECU_RESET_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static ECU_RESET_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::AuthenticationRequired,
-    ]);
-};
+    ])
+});
 
 /// only sub-function is 0x04
 #[derive(Debug, Clone, Eq, PartialEq)]

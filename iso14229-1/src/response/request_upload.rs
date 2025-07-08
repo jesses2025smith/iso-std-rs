@@ -5,20 +5,19 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, Configuration, LengthFormatIdentifier, ResponseData, Service,
 };
-use lazy_static::lazy_static;
 use rsutil::types::ByteOrder;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref REQUEST_UPLOAD_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static REQUEST_UPLOAD_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
         Code::AuthenticationRequired,
         Code::UploadDownloadNotAccepted,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone)]
 pub struct RequestUpload {

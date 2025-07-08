@@ -1,15 +1,14 @@
 //! response of Service 31
 
-use crate::response::{Response, SubFunction};
 use crate::{
-    error::Iso14229Error, response::Code, utils, Configuration, ResponseData, RoutineCtrlType,
-    RoutineId, Service,
+    error::Iso14229Error,
+    response::{Code, Response, SubFunction},
+    utils, Configuration, ResponseData, RoutineCtrlType, RoutineId, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref ROUTINE_CTRL_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static ROUTINE_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
@@ -17,8 +16,8 @@ lazy_static! {
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
         Code::GeneralProgrammingFailure,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RoutineCtrl {

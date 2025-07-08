@@ -1,25 +1,25 @@
 //! response of Service 19
 #![allow(clippy::non_minimal_cfg)]
 
-use crate::response::{Response, SubFunction};
-use crate::{enum_extend, Service};
 use crate::{
-    error::Iso14229Error, response::Code, utils, Configuration, DTCReportType, DataIdentifier,
-    ResponseData,
+    error::Iso14229Error,
+    response::Code,
+    response::{Response, SubFunction},
+    utils, Configuration, DTCReportType, DataIdentifier, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref READ_DTC_INFO_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static READ_DTC_INFO_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::RequestOutOfRange,
-    ]);
-};
+    ])
+});
 
-enum_extend!(
+rsutil::enum_extend!(
     #[allow(non_camel_case_types)]
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum DTCFormatIdentifier {
         SAE_J2012_DA_DTCFormat_00 = 0x00,
         ISO_14229_1_DTCFormat = 0x01,
@@ -27,7 +27,9 @@ enum_extend!(
         ISO_11992_4_DTCFormat = 0x03,
         SAE_J2012_DA_DTCFormat_04 = 0x04,
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );
 
 #[derive(Debug, Clone, Eq, PartialEq)]

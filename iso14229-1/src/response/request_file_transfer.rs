@@ -6,12 +6,11 @@ use crate::{
     utils, Configuration, DataFormatIdentifier, LengthFormatIdentifier, ModeOfOperation,
     ResponseData, Service,
 };
-use lazy_static::lazy_static;
 use rsutil::types::ByteOrder;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static!(
-    pub static ref REQUEST_FILE_TRANSFER_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static REQUEST_FILE_TRANSFER_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         #[cfg(any(feature = "std2020"))]
@@ -21,8 +20,8 @@ lazy_static!(
         #[cfg(any(feature = "std2020"))]
         Code::AuthenticationRequired,
         Code::UploadDownloadNotAccepted,
-    ]);
-);
+    ])
+});
 
 /*
 // Specifies the length (number of bytes) of the maxNumberOfBlockLength parameter.

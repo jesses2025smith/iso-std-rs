@@ -4,11 +4,10 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, Configuration, Iso14229Error, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref TRANSFER_DATA_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static TRANSFER_DATA_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::RequestSequenceError,
         Code::RequestOutOfRange,
@@ -17,8 +16,8 @@ lazy_static! {
         Code::WrongBlockSequenceCounter,
         Code::VoltageTooHigh,
         Code::VoltageTooLow,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone)]
 pub struct TransferData {

@@ -21,7 +21,7 @@ pub enum Iso14229Error {
     InvalidSessionData(String),
 
     #[error("ISO 14229-1 - ISO/SAEReserved: {0}")]
-    ReservedError(String),
+    ReservedError(u8),
 
     #[error("ISO 14229-1 - the sub-function is required/unnecessary on service `{0}`")]
     SubFunctionError(Service),

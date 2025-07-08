@@ -4,18 +4,17 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, Configuration, Iso14229Error, LinkCtrlType, ResponseData, Service,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref LINK_CTRL_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static LINK_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestSequenceError,
         Code::RequestOutOfRange,
-    ]);
-};
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LinkCtrl {

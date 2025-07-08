@@ -14,7 +14,7 @@ impl TryFrom<u16> for NodeId {
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0x0001..=0xFFFF => Ok(Self(value)),
-            v => Err(Iso14229Error::ReservedError(v.to_string())),
+            v => Err(Iso14229Error::ReservedError(v as u8)),
         }
     }
 }

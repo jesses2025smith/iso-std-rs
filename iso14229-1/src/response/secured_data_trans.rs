@@ -6,16 +6,13 @@ use crate::{
     utils, AdministrativeParameter, Configuration, ResponseData, Service,
     SignatureEncryptionCalculation,
 };
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static!(
-    pub static ref SECURED_DATA_TRANS_NEGATIVES: HashSet<Code>
-    = HashSet::from([
+pub static SECURED_DATA_TRANS_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         #[cfg(any(feature = "std2020"))]
         Code::SecureDataVerificationFailed,
-
         // Code::GeneralSecurityViolation,
         // Code::SecuredModeRequested,
         // Code::InsufficientProtection,
@@ -25,8 +22,8 @@ lazy_static!(
         // Code::SecuredLinkNotSupported,
         // Code::CertificateNotAvailable,
         // Code::AuditTrailInformationNotAvailable,
-    ]);
-);
+    ])
+});
 
 /// Table 492 — Positive response message definition(successful)
 #[derive(Debug, Clone)]

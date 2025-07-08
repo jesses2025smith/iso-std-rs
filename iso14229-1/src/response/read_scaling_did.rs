@@ -1,28 +1,27 @@
 //! response of Service 24
 
-use crate::{enum_extend, Service};
 use crate::{
     error::Iso14229Error,
     response::{Code, Response, SubFunction},
-    utils, Configuration, DataIdentifier, ResponseData,
+    utils, Configuration, DataIdentifier, ResponseData, Service,
 };
 use bitfield_struct::bitfield;
-use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static! {
-    pub static ref READ_SCALING_DID_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static READ_SCALING_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
         #[cfg(any(feature = "std2020"))]
         Code::AuthenticationRequired,
-    ]);
-};
+    ])
+});
 
-enum_extend!(
+rsutil::enum_extend!(
     /// Table C.2 — scalingByte (High Nibble) parameter definitions
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum ScalingByteType {
         UnSignedNumeric = 0x00,              // (1 to 4 bytes)
         SignedNumeric = 0x10,                // (1 to 4 bytes)
@@ -37,7 +36,9 @@ enum_extend!(
         UnitFormat = 0xA0,
         StateAndConnectionType = 0xB0, // 1 byte
     },
-    u8
+    u8,
+    Iso14229Error,
+    ReservedError
 );
 
 /// Table C.6 — formulaIdentifier encoding
