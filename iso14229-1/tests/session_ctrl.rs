@@ -13,7 +13,7 @@ mod tests {
         let request = request::Request::try_from_cfg(source, &cfg)?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(sub_func.function::<SessionType>()?, SessionType::Default);
-        assert!(sub_func.is_suppress_positive());
+        assert!(!sub_func.is_suppress_positive());
 
         let source = hex::decode("1081")?;
         let request = request::Request::try_from_cfg(source, &cfg)?;

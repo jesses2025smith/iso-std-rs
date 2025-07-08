@@ -11,27 +11,27 @@ use crate::{Iso14229Error, utils};
 /// ### Repr: `u16`
 /// | Field                                  | Size (bits) |
 /// |----------------------------------------|-------------|
-/// | Message is request message             | 1           |
-/// | ISO Reserved                           | 2           |
-/// | A pre-established key is used          | 1           |
-/// | Message is encrypted                   | 1           |
-/// | Message is signed                      | 1           |
-/// | Signature on the response is requested | 1           |
-/// | ISO reserved                           | 4           |
 /// | ISO reserved                           | 5           |
+/// | ISO reserved                           | 4           |
+/// | Signature on the response is requested | 1           |
+/// | Message is signed                      | 1           |
+/// | Message is encrypted                   | 1           |
+/// | A pre-established key is used          | 1           |
+/// | ISO Reserved                           | 2           |
+/// | Message is request message             | 1           |
 #[bitfield(u16, order = Msb)]
 pub struct AdministrativeParameter {
-    pub request: bool,
-    #[bits(2)]
-    __: u8,
-    pub pre_established: bool,
-    pub encrypted: bool,
-    pub signed: bool,
-    pub signature_on_response: bool,
-    #[bits(4)]
-    __: u8,
     #[bits(5)]
     __: u8,
+    #[bits(4)]
+    __: u8,
+    pub signature_on_response: bool,
+    pub signed: bool,
+    pub encrypted: bool,
+    pub pre_established: bool,
+    #[bits(2)]
+    __: u8,
+    pub request: bool,
 }
 
 impl From<AdministrativeParameter> for Vec<u8> {
