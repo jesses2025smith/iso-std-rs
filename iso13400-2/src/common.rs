@@ -150,14 +150,14 @@ pub enum LogicAddress {
 }
 
 impl From<u16> for LogicAddress {
-    fn from(value: u16) -> Self {
-        match value {
-            0x0001..=0x0DFF | 0x1000..=0x7FFF => Self::VMSpecific(value),
-            0x0E00..=0x0FFF => Self::Client(value),
-            0xE400..=0xEFFF => Self::VMSpecificFunctional(value),
+    fn from(v: u16) -> Self {
+        match v {
+            0x0001..=0x0DFF | 0x1000..=0x7FFF => Self::VMSpecific(v),
+            0x0E00..=0x0FFF => Self::Client(v),
+            0xE400..=0xEFFF => Self::VMSpecificFunctional(v),
             _ => {
-                rsutil::warn!("ISO 13400-2 - used reserved logic address: {}", value);
-                Self::Reserved(value)
+                rsutil::warn!("ISO 13400-2 - used reserved logic address: {}", v);
+                Self::Reserved(v)
             }
         }
     }
@@ -201,13 +201,13 @@ impl From<NodeType> for u8 {
 }
 
 impl From<u8> for NodeType {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::Gateway,
             0x01 => Self::Node,
             _ => {
-                rsutil::warn!("ISO 13400-2 - used reserved entity: {}", value);
-                Self::Reserved(value)
+                rsutil::warn!("ISO 13400-2 - used reserved entity: {}", v);
+                Self::Reserved(v)
             }
         }
     }
@@ -245,15 +245,15 @@ impl From<FurtherAction> for u8 {
 }
 
 impl From<u8> for FurtherAction {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::NoAction,
             0x01..=0x0F => {
-                rsutil::warn!("ISO 13400-2 - used reserved further action: {}", value);
-                Self::Reserved(value)
+                rsutil::warn!("ISO 13400-2 - used reserved further action: {}", v);
+                Self::Reserved(v)
             }
             0x10 => Self::CentralSecurity,
-            _ => Self::VMSpecific(value),
+            _ => Self::VMSpecific(v),
         }
     }
 }
@@ -278,16 +278,16 @@ impl From<SyncStatus> for u8 {
 }
 
 impl From<u8> for SyncStatus {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::VINorGIDSync,
             0x10 => Self::VINorGIDNotSync,
             _ => {
                 rsutil::warn!(
                     "ISO 13400-2 - used reserved VIN/GID sync. status: {}",
-                    value
+                    v
                 );
-                Self::Reserved(value)
+                Self::Reserved(v)
             }
         }
     }
@@ -375,14 +375,14 @@ impl From<PowerMode> for u8 {
 }
 
 impl From<u8> for PowerMode {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::NotReady,
             0x01 => Self::Ready,
             0x02 => Self::NotSupported,
             _ => {
-                rsutil::warn!("ISO 13400-2 - used reserved power mode: {}", value);
-                Self::Reserved(value)
+                rsutil::warn!("ISO 13400-2 - used reserved power mode: {}", v);
+                Self::Reserved(v)
             }
         }
     }
@@ -413,16 +413,16 @@ impl From<RoutingActiveType> for u8 {
 }
 
 impl From<u8> for RoutingActiveType {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::Default,
             0x01 => Self::WWHODB,
             0x02..=0xDF => {
-                rsutil::warn!("ISO 13400-2 - used reserved routing active type: {}", value);
-                Self::Reserved(value)
+                rsutil::warn!("ISO 13400-2 - used reserved routing active type: {}", v);
+                Self::Reserved(v)
             }
             0xE0 => Self::CentralSecurity,
-            _ => Self::VMSpecific(value),
+            _ => Self::VMSpecific(v),
         }
     }
 }
@@ -446,15 +446,15 @@ impl From<DiagnosticPositiveCode> for u8 {
 }
 
 impl From<u8> for DiagnosticPositiveCode {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::Confirm,
             _ => {
                 rsutil::warn!(
                     "ISO 13400-2 - used reserved diagnostic positive code: {}",
-                    value
+                    v
                 );
-                Self::Reserved(value)
+                Self::Reserved(v)
             }
         }
     }
@@ -499,8 +499,8 @@ impl From<DiagnosticNegativeCode> for u8 {
 }
 
 impl From<u8> for DiagnosticNegativeCode {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x02 => Self::InvalidSourceAddress,
             0x03 => Self::UnknownTargetAddress,
             0x04 => Self::DiagnosticMessageTooLarge,
@@ -511,9 +511,9 @@ impl From<u8> for DiagnosticNegativeCode {
             _ => {
                 rsutil::warn!(
                     "ISO 13400-2 - used reserved diagnostic negative code: {}",
-                    value
+                    v
                 );
-                Self::Reserved(value)
+                Self::Reserved(v)
             }
         }
     }
