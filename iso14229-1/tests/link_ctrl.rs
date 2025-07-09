@@ -3,23 +3,20 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::utils::U24;
-    use iso14229_1::{
-        request, response, Configuration, Iso14229Error, LinkCtrlMode, LinkCtrlType, Service,
-        TryFromWithCfg,
-    };
+    use iso14229_1::{request, response, DidConfig, Iso14229Error, LinkCtrlMode, LinkCtrlType, Service};
 
     #[test]
     fn new() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("870113")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<LinkCtrlType>()?,
             LinkCtrlType::VerifyModeTransitionWithFixedParameter
         );
-        let data = request.data::<request::LinkCtrl>(&cfg)?;
+        let data = request.data::<request::LinkCtrl>()?;
         match data {
             request::LinkCtrl::VerifyModeTransitionWithFixedParameter(v) => {
                 assert_eq!(v, LinkCtrlMode::CAN1MBaud)
@@ -28,13 +25,13 @@ mod tests {
         }
 
         let source = hex::decode("8702112233")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<LinkCtrlType>()?,
             LinkCtrlType::VerifyModeTransitionWithSpecificParameter
         );
-        let data = request.data::<request::LinkCtrl>(&cfg)?;
+        let data = request.data::<request::LinkCtrl>()?;
         match data {
             request::LinkCtrl::VerifyModeTransitionWithSpecificParameter(v) => {
                 assert_eq!(v, U24::new(0x112233))
@@ -43,13 +40,13 @@ mod tests {
         }
 
         let source = hex::decode("8703")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<LinkCtrlType>()?,
             LinkCtrlType::TransitionMode
         );
-        let data = request.data::<request::LinkCtrl>(&cfg)?;
+        let data = request.data::<request::LinkCtrl>()?;
         match data {
             request::LinkCtrl::TransitionMode => {}
             _ => panic!("Unexpected data {:?}", data),
@@ -60,20 +57,20 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("C701")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<LinkCtrlType>()?,
             LinkCtrlType::VerifyModeTransitionWithFixedParameter
         );
-        let data = response.data::<response::LinkCtrl>(&cfg)?;
+        let data = response.data::<response::LinkCtrl>()?;
         assert!(data.data.is_empty());
 
         let source = hex::decode("C70100")?;
-        let err = response::Response::try_from_cfg(source, &cfg).unwrap_err();
+        let err = response::Response::try_from((&source, &cfg)).unwrap_err();
         match err {
             Iso14229Error::InvalidDataLength { expect, actual } => {
                 assert_eq!(expect, 0);
@@ -87,10 +84,10 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("7F8712")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.service(), Service::LinkCtrl);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());

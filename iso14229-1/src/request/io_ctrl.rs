@@ -1,10 +1,6 @@
 //! request of Service 2F
 
-use crate::{
-    request::{Request, SubFunction},
-    utils, Configuration, DataIdentifier, IOCtrlOption, IOCtrlParameter, Iso14229Error,
-    RequestData, Service,
-};
+use crate::{request::{Request, SubFunction}, utils, DataIdentifier, DidConfig, IOCtrlOption, IOCtrlParameter, Iso14229Error, RequestData, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct IOCtrl {
@@ -19,7 +15,7 @@ impl IOCtrl {
         param: IOCtrlParameter,
         state: Vec<u8>,
         mask: Vec<u8>,
-        cfg: &Configuration,
+        cfg: &DidConfig,
     ) -> Result<Self, Iso14229Error> {
         match param {
             IOCtrlParameter::ReturnControlToEcu
@@ -33,7 +29,6 @@ impl IOCtrl {
             }
             IOCtrlParameter::ShortTermAdjustment => {
                 let &did_len = cfg
-                    .did_cfg
                     .get(&did)
                     .ok_or(Iso14229Error::DidNotSupported(did))?;
 
@@ -64,11 +59,22 @@ impl IOCtrl {
     }
 }
 
+impl From<IOCtrl> for Vec<u8> {
+    fn from(mut v: IOCtrl) -> Self {
+        let did: u16 = v.did.into();
+        let mut result = did.to_be_bytes().to_vec();
+        result.push(v.option.param.into());
+        result.append(&mut v.option.state);
+        result.append(&mut v.mask);
+
+        result
+    }
+}
+
 impl RequestData for IOCtrl {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::IOCtrl)),
@@ -84,7 +90,7 @@ impl RequestData for IOCtrl {
         }
     }
 
-    fn try_parse(request: &Request, cfg: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_with_config(request: &Request, cfg: &DidConfig) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::IOCtrl || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -100,7 +106,6 @@ impl RequestData for IOCtrl {
         let param = IOCtrlParameter::try_from(data[offset])?;
         offset += 1;
         let &did_len = cfg
-            .did_cfg
             .get(&did)
             .ok_or(Iso14229Error::DidNotSupported(did))?;
         utils::data_length_check(data_len, offset + did_len, false)?;
@@ -109,15 +114,5 @@ impl RequestData for IOCtrl {
 
         let mask = data[offset..].to_vec();
         Self::new(did, param, state, mask, cfg)
-    }
-
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let did: u16 = self.did.into();
-        let mut result = did.to_be_bytes().to_vec();
-        result.push(self.option.param.into());
-        result.append(&mut self.option.state);
-        result.append(&mut self.mask);
-
-        result
     }
 }

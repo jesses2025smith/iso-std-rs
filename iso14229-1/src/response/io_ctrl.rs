@@ -1,10 +1,6 @@
 //! response of Service 2F
 
-use crate::{
-    response::{Code, Response, SubFunction},
-    utils, Configuration, DataIdentifier, IOCtrlOption, IOCtrlParameter, Iso14229Error,
-    ResponseData, Service,
-};
+use crate::{response::{Code, Response, SubFunction}, utils, DataIdentifier, DidConfig, IOCtrlOption, IOCtrlParameter, Iso14229Error, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static IO_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -33,11 +29,23 @@ impl IOCtrl {
     }
 }
 
+impl From<IOCtrl> for Vec<u8> {
+    fn from(mut v: IOCtrl) -> Self {
+        let did: u16 = v.did.into();
+
+        let mut result = did.to_be_bytes().to_vec();
+        result.push(v.status.param.into());
+        result.append(&mut v.status.state);
+
+        result
+    }
+}
+
 impl ResponseData for IOCtrl {
-    fn response(
+    fn with_config(
         data: &[u8],
         sub_func: Option<u8>,
-        cfg: &Configuration,
+        cfg: &DidConfig,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::IOCtrl)),
@@ -51,7 +59,6 @@ impl ResponseData for IOCtrl {
                 offset += 2;
 
                 let &did_len = cfg
-                    .did_cfg
                     .get(&did)
                     .ok_or(Iso14229Error::DidNotSupported(did))?;
                 utils::data_length_check(data_len, offset + did_len, false)?;
@@ -66,7 +73,7 @@ impl ResponseData for IOCtrl {
         }
     }
 
-    fn try_parse(response: &Response, cfg: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_with_config(response: &Response, cfg: &DidConfig) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::IOCtrl || response.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -82,7 +89,6 @@ impl ResponseData for IOCtrl {
         let ctrl_type = IOCtrlParameter::try_from(data[offset])?;
         offset += 1;
         let &record_len = cfg
-            .did_cfg
             .get(&did)
             .ok_or(Iso14229Error::DidNotSupported(did))?;
 
@@ -90,16 +96,5 @@ impl ResponseData for IOCtrl {
 
         let record = data[offset..].to_vec();
         Ok(Self::new(did, ctrl_type, record))
-    }
-
-    #[inline]
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let did: u16 = self.did.into();
-
-        let mut result = did.to_be_bytes().to_vec();
-        result.push(self.status.param.into());
-        result.append(&mut self.status.state);
-
-        result
     }
 }

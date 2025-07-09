@@ -3,9 +3,8 @@
 use crate::{
     error::Iso14229Error,
     request::{Request, SubFunction},
-    utils, Configuration, DataFormatIdentifier, ModeOfOperation, RequestData, Service,
+    utils, DataFormatIdentifier, ModeOfOperation, RequestData, Service,
 };
-use rsutil::types::ByteOrder;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RequestFileTransfer {
@@ -47,11 +46,75 @@ pub enum RequestFileTransfer {
     },
 }
 
+impl From<RequestFileTransfer> for Vec<u8> {
+    fn from(v: RequestFileTransfer) -> Self {
+        let mut result = Vec::new();
+        match &v {
+            RequestFileTransfer::AddFile { .. } => result.push(ModeOfOperation::AddFile.into()),
+            RequestFileTransfer::DeleteFile { .. } => result.push(ModeOfOperation::DeleteFile.into()),
+            RequestFileTransfer::ReplaceFile { .. } => result.push(ModeOfOperation::ReplaceFile.into()),
+            RequestFileTransfer::ReadFile { .. } => result.push(ModeOfOperation::ReadFile.into()),
+            RequestFileTransfer::ReadDir { .. } => result.push(ModeOfOperation::ReadDir.into()),
+            RequestFileTransfer::ResumeFile { .. } => result.push(ModeOfOperation::ResumeFile.into()),
+        }
+        match v {
+            RequestFileTransfer::AddFile {
+                filepath,
+                dfi,
+                filesize_len,
+                uncompressed_size,
+                compressed_size,
+            }
+            | RequestFileTransfer::ReplaceFile {
+                filepath,
+                dfi,
+                filesize_len,
+                uncompressed_size,
+                compressed_size,
+            }
+            | RequestFileTransfer::ResumeFile {
+                filepath,
+                dfi,
+                filesize_len,
+                uncompressed_size,
+                compressed_size,
+            } => {
+                let mut bytes: Vec<_> = filepath.bytes().collect();
+                result.extend((bytes.len() as u16).to_be_bytes());
+                result.append(&mut bytes);
+                result.push(dfi.into());
+                result.push(filesize_len);
+
+                result.append(&mut utils::u128_to_vec(
+                    uncompressed_size,
+                    filesize_len as usize,
+                ));
+                result.append(&mut utils::u128_to_vec(
+                    compressed_size,
+                    filesize_len as usize,
+                ));
+            }
+            RequestFileTransfer::DeleteFile { filepath } | RequestFileTransfer::ReadDir { filepath } => {
+                let mut bytes: Vec<_> = filepath.bytes().collect();
+                result.extend((bytes.len() as u16).to_be_bytes());
+                result.append(&mut bytes);
+            }
+            RequestFileTransfer::ReadFile { filepath, dfi } => {
+                let mut bytes: Vec<_> = filepath.bytes().collect();
+                result.extend((bytes.len() as u16).to_be_bytes());
+                result.append(&mut bytes);
+                result.push(dfi.into());
+            }
+        }
+
+        result
+    }
+}
+
 impl RequestData for RequestFileTransfer {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -91,7 +154,7 @@ impl RequestData for RequestFileTransfer {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::RequestFileTransfer || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -114,12 +177,10 @@ impl RequestData for RequestFileTransfer {
                 offset += 1;
                 let uncompressed_size = utils::slice_to_u128(
                     &data[offset..offset + filesize_len as usize],
-                    ByteOrder::Big,
                 );
                 offset += filesize_len as usize;
                 let compressed_size = utils::slice_to_u128(
                     &data[offset..offset + filesize_len as usize],
-                    ByteOrder::Big,
                 );
                 Ok(Self::AddFile {
                     filepath,
@@ -137,12 +198,10 @@ impl RequestData for RequestFileTransfer {
                 offset += 1;
                 let uncompressed_size = utils::slice_to_u128(
                     &data[offset..offset + filesize_len as usize],
-                    ByteOrder::Big,
                 );
                 offset += filesize_len as usize;
                 let compressed_size = utils::slice_to_u128(
                     &data[offset..offset + filesize_len as usize],
-                    ByteOrder::Big,
                 );
                 Ok(Self::ReplaceFile {
                     filepath,
@@ -165,12 +224,10 @@ impl RequestData for RequestFileTransfer {
                 offset += 1;
                 let uncompressed_size = utils::slice_to_u128(
                     &data[offset..offset + filesize_len as usize],
-                    ByteOrder::Big,
                 );
                 offset += filesize_len as usize;
                 let compressed_size = utils::slice_to_u128(
                     &data[offset..offset + filesize_len as usize],
-                    ByteOrder::Big,
                 );
                 Ok(Self::ResumeFile {
                     filepath,
@@ -181,70 +238,5 @@ impl RequestData for RequestFileTransfer {
                 })
             }
         }
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let mut result = Vec::new();
-        match &self {
-            Self::AddFile { .. } => result.push(ModeOfOperation::AddFile.into()),
-            Self::DeleteFile { .. } => result.push(ModeOfOperation::DeleteFile.into()),
-            Self::ReplaceFile { .. } => result.push(ModeOfOperation::ReplaceFile.into()),
-            Self::ReadFile { .. } => result.push(ModeOfOperation::ReadFile.into()),
-            Self::ReadDir { .. } => result.push(ModeOfOperation::ReadDir.into()),
-            Self::ResumeFile { .. } => result.push(ModeOfOperation::ResumeFile.into()),
-        }
-        match self {
-            Self::AddFile {
-                filepath,
-                dfi,
-                filesize_len,
-                uncompressed_size,
-                compressed_size,
-            }
-            | Self::ReplaceFile {
-                filepath,
-                dfi,
-                filesize_len,
-                uncompressed_size,
-                compressed_size,
-            }
-            | Self::ResumeFile {
-                filepath,
-                dfi,
-                filesize_len,
-                uncompressed_size,
-                compressed_size,
-            } => {
-                let mut bytes: Vec<_> = filepath.bytes().collect();
-                result.extend((bytes.len() as u16).to_be_bytes());
-                result.append(&mut bytes);
-                result.push(dfi.into());
-                result.push(filesize_len);
-
-                result.append(&mut utils::u128_to_vec(
-                    uncompressed_size,
-                    filesize_len as usize,
-                    ByteOrder::Big,
-                ));
-                result.append(&mut utils::u128_to_vec(
-                    compressed_size,
-                    filesize_len as usize,
-                    ByteOrder::Big,
-                ));
-            }
-            Self::DeleteFile { filepath } | Self::ReadDir { filepath } => {
-                let mut bytes: Vec<_> = filepath.bytes().collect();
-                result.extend((bytes.len() as u16).to_be_bytes());
-                result.append(&mut bytes);
-            }
-            Self::ReadFile { filepath, dfi } => {
-                let mut bytes: Vec<_> = filepath.bytes().collect();
-                result.extend((bytes.len() as u16).to_be_bytes());
-                result.append(&mut bytes);
-                result.push(dfi.into());
-            }
-        }
-
-        result
     }
 }

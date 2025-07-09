@@ -1,6 +1,6 @@
 //! Commons of Service 27
 
-use crate::{utils, Configuration, Iso14229Error, RequestData, ResponseData, Service};
+use crate::{utils, Iso14229Error, RequestData, ResponseData, Service};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SecurityAccessLevel(pub(crate) u8);

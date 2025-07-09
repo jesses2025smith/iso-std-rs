@@ -19,7 +19,7 @@ bitfield-struct = { workspace = true }
 bitflags = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
-rsutil = { workspace = true, features = ["log", "types", "macros"] }
+rsutil = { workspace = true, features = ["log", "macros"] }
 thiserror = { workspace = true }
 
 [dev-dependencies]

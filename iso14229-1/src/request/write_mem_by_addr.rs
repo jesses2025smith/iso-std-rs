@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, AddressAndLengthFormatIdentifier, Configuration, Iso14229Error, MemoryLocation,
+    utils, AddressAndLengthFormatIdentifier, Iso14229Error, MemoryLocation,
     RequestData, Service,
 };
 
@@ -44,11 +44,19 @@ impl WriteMemByAddr {
     }
 }
 
+impl From<WriteMemByAddr> for Vec<u8> {
+    fn from(mut v: WriteMemByAddr) -> Self {
+        let mut result: Vec<_> = v.mem_loc.into();
+        result.append(&mut v.data);
+
+        result
+    }
+}
+
 impl RequestData for WriteMemByAddr {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteMemByAddr)),
@@ -64,7 +72,7 @@ impl RequestData for WriteMemByAddr {
         }
     }
 
-    fn try_parse(request: &Request, cfg: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::WriteMemByAddr || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -72,18 +80,10 @@ impl RequestData for WriteMemByAddr {
 
         let data = &request.data;
         let mut offset = 0;
-        let mem_loc = MemoryLocation::from_slice(data, cfg)?;
+        let mem_loc = MemoryLocation::from_slice(data)?;
         offset += mem_loc.len();
         let data = data[offset..].to_vec();
 
         Ok(Self { mem_loc, data })
-    }
-
-    #[inline]
-    fn to_vec(mut self, cfg: &Configuration) -> Vec<u8> {
-        let mut result = self.mem_loc.to_vec(cfg);
-        result.append(&mut self.data);
-
-        result
     }
 }

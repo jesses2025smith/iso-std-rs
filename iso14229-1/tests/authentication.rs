@@ -4,17 +4,14 @@
 #[cfg(any(feature = "std2020"))]
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{
-        request, response, AlgorithmIndicator, AuthenticationTask, Configuration, NotNullableData,
-        NullableData, Service, TryFromWithCfg,
-    };
+    use iso14229_1::{request, response, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData, NullableData, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("2900")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
@@ -22,13 +19,13 @@ mod tests {
         );
 
         let source = hex::decode("2901000001000000")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyCertificateUnidirectional
         );
-        let data = request.data::<request::Authentication>(&cfg)?;
+        let data = request.data::<request::Authentication>()?;
         match data {
             request::Authentication::VerifyCertificateUnidirectional {
                 config,
@@ -43,13 +40,13 @@ mod tests {
         }
 
         let source = hex::decode("290200000100000100")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyCertificateBidirectional
         );
-        let data = request.data::<request::Authentication>(&cfg)?;
+        let data = request.data::<request::Authentication>()?;
         match data {
             request::Authentication::VerifyCertificateBidirectional {
                 config,
@@ -64,13 +61,13 @@ mod tests {
         }
 
         let source = hex::decode("2903000100000100")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::ProofOfOwnership
         );
-        let data = request.data::<request::Authentication>(&cfg)?;
+        let data = request.data::<request::Authentication>()?;
         match data {
             request::Authentication::ProofOfOwnership {
                 proof_of_ownership,
@@ -83,13 +80,13 @@ mod tests {
         }
 
         let source = hex::decode("29040000000100")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::TransmitCertificate
         );
-        let data = request.data::<request::Authentication>(&cfg)?;
+        let data = request.data::<request::Authentication>()?;
         match data {
             request::Authentication::TransmitCertificate {
                 cert_evaluation_id,
@@ -102,13 +99,13 @@ mod tests {
         }
 
         let source = hex::decode("29050000000000000000000000000000000000")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::RequestChallengeForAuthentication
         );
-        let data = request.data::<request::Authentication>(&cfg)?;
+        let data = request.data::<request::Authentication>()?;
         match data {
             request::Authentication::RequestChallengeForAuthentication {
                 config,
@@ -121,13 +118,13 @@ mod tests {
         }
 
         let source = hex::decode("290600000000000000000000000000000000000100000100000100")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyProofOfOwnershipUnidirectional
         );
-        let data = request.data::<request::Authentication>(&cfg)?;
+        let data = request.data::<request::Authentication>()?;
         match data {
             request::Authentication::VerifyProofOfOwnershipUnidirectional {
                 algo_indicator,
@@ -144,13 +141,13 @@ mod tests {
         }
 
         let source = hex::decode("290700000000000000000000000000000000000100000100000100")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyProofOfOwnershipBidirectional
         );
-        let data = request.data::<request::Authentication>(&cfg)?;
+        let data = request.data::<request::Authentication>()?;
         match data {
             request::Authentication::VerifyProofOfOwnershipBidirectional {
                 algo_indicator,
@@ -167,13 +164,13 @@ mod tests {
         }
 
         let source = hex::decode("2908")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::AuthenticationConfiguration
         );
-        let data = request.data::<request::Authentication>(&cfg)?;
+        let data = request.data::<request::Authentication>()?;
         match data {
             request::Authentication::AuthenticationConfiguration => {}
             _ => panic!("Unexpected data"),
@@ -184,16 +181,16 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("690000")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::DeAuthenticate
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::DeAuthenticate(v) => {
                 assert_eq!(v, response::AuthReturnValue::RequestAccepted)
@@ -202,13 +199,13 @@ mod tests {
         }
 
         let source = hex::decode("690100000100000100")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyCertificateUnidirectional
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::VerifyCertificateUnidirectional {
                 value,
@@ -223,13 +220,13 @@ mod tests {
         }
 
         let source = hex::decode("690200000100000100000100000100")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyCertificateBidirectional
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::VerifyCertificateBidirectional {
                 value,
@@ -248,13 +245,13 @@ mod tests {
         }
 
         let source = hex::decode("690300000100")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::ProofOfOwnership
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::ProofOfOwnership {
                 value,
@@ -267,13 +264,13 @@ mod tests {
         }
 
         let source = hex::decode("690400")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::TransmitCertificate
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::TransmitCertificate(value) => {
                 assert_eq!(value, response::AuthReturnValue::RequestAccepted);
@@ -282,13 +279,13 @@ mod tests {
         }
 
         let source = hex::decode("69050000000000000000000000000000000000000100000100")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::RequestChallengeForAuthentication
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::RequestChallengeForAuthentication {
                 value,
@@ -305,13 +302,13 @@ mod tests {
         }
 
         let source = hex::decode("69060000000000000000000000000000000000000100")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyProofOfOwnershipUnidirectional
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::VerifyProofOfOwnershipUnidirectional {
                 value,
@@ -326,13 +323,13 @@ mod tests {
         }
 
         let source = hex::decode("69070000000000000000000000000000000000000100000100")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyProofOfOwnershipBidirectional
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::VerifyProofOfOwnershipBidirectional {
                 value,
@@ -349,13 +346,13 @@ mod tests {
         }
 
         let source = hex::decode("690800")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::AuthenticationConfiguration
         );
-        let data = response.data::<response::Authentication>(&cfg)?;
+        let data = response.data::<response::Authentication>()?;
         match data {
             response::Authentication::AuthenticationConfiguration(value) => {
                 assert_eq!(value, response::AuthReturnValue::RequestAccepted);
@@ -368,10 +365,10 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("7F2912")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.service(), Service::Authentication);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());

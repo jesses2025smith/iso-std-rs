@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, Iso14229Error, LinkCtrlMode, LinkCtrlType, RequestData, Service,
+    utils, Iso14229Error, LinkCtrlMode, LinkCtrlType, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -14,11 +14,34 @@ pub enum LinkCtrl {
     SystemSupplierSpecific(Vec<u8>),
 }
 
+impl From<LinkCtrl> for Vec<u8> {
+    fn from(v: LinkCtrl) -> Self {
+        let mut result = Vec::new();
+
+        match v {
+            LinkCtrl::VerifyModeTransitionWithFixedParameter(v) => {
+                result.push(v.into());
+            }
+            LinkCtrl::VerifyModeTransitionWithSpecificParameter(v) => {
+                result.append(&mut v.into());
+            }
+            LinkCtrl::TransitionMode => {}
+            LinkCtrl::VehicleManufacturerSpecific(mut v) => {
+                result.append(&mut v);
+            }
+            LinkCtrl::SystemSupplierSpecific(mut v) => {
+                result.append(&mut v);
+            }
+        }
+
+        result
+    }
+}
+
 impl RequestData for LinkCtrl {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -48,7 +71,7 @@ impl RequestData for LinkCtrl {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::LinkCtrl || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -75,27 +98,5 @@ impl RequestData for LinkCtrl {
             }
             LinkCtrlType::Reserved(_) => Ok(Self::SystemSupplierSpecific(data[offset..].to_vec())),
         }
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let mut result = Vec::new();
-
-        match self {
-            Self::VerifyModeTransitionWithFixedParameter(v) => {
-                result.push(v.into());
-            }
-            Self::VerifyModeTransitionWithSpecificParameter(v) => {
-                result.append(&mut v.into());
-            }
-            Self::TransitionMode => {}
-            Self::VehicleManufacturerSpecific(mut v) => {
-                result.append(&mut v);
-            }
-            Self::SystemSupplierSpecific(mut v) => {
-                result.append(&mut v);
-            }
-        }
-
-        result
     }
 }

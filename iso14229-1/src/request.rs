@@ -73,8 +73,7 @@ mod request_file_transfer; // 0x38
 pub use request_file_transfer::*;
 
 use crate::{
-    error::Iso14229Error, request, utils, Configuration, RequestData, Service, TryFromWithCfg,
-    SUPPRESS_POSITIVE,
+    error::Iso14229Error, request, utils, DidConfig, RequestData, Service, SUPPRESS_POSITIVE,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -125,39 +124,39 @@ impl Request {
         service: Service,
         sub_func: Option<u8>,
         data: Vec<u8>,
-        cfg: &Configuration,
+        cfg: &DidConfig,
     ) -> Result<Self, Iso14229Error> {
         match service {
-            Service::SessionCtrl => SessionCtrl::request(&data, sub_func, cfg),
-            Service::ECUReset => ECUReset::request(&data, sub_func, cfg),
-            Service::ClearDiagnosticInfo => ClearDiagnosticInfo::request(&data, sub_func, cfg),
-            Service::ReadDTCInfo => DTCInfo::request(&data, sub_func, cfg),
-            Service::ReadDID => ReadDID::request(&data, sub_func, cfg),
-            Service::ReadMemByAddr => ReadMemByAddr::request(&data, sub_func, cfg),
-            Service::ReadScalingDID => ReadScalingDID::request(&data, sub_func, cfg),
-            Service::SecurityAccess => SecurityAccess::request(&data, sub_func, cfg),
-            Service::CommunicationCtrl => CommunicationCtrl::request(&data, sub_func, cfg),
+            Service::SessionCtrl => SessionCtrl::without_config(&data, sub_func),
+            Service::ECUReset => ECUReset::without_config(&data, sub_func),
+            Service::ClearDiagnosticInfo => ClearDiagnosticInfo::without_config(&data, sub_func),
+            Service::ReadDTCInfo => DTCInfo::without_config(&data, sub_func),
+            Service::ReadDID => ReadDID::without_config(&data, sub_func),
+            Service::ReadMemByAddr => ReadMemByAddr::without_config(&data, sub_func),
+            Service::ReadScalingDID => ReadScalingDID::without_config(&data, sub_func),
+            Service::SecurityAccess => SecurityAccess::without_config(&data, sub_func),
+            Service::CommunicationCtrl => CommunicationCtrl::without_config(&data, sub_func),
             #[cfg(any(feature = "std2020"))]
-            Service::Authentication => Authentication::request(&data, sub_func, cfg),
-            Service::ReadDataByPeriodId => ReadDataByPeriodId::request(&data, sub_func, cfg),
-            Service::DynamicalDefineDID => DynamicallyDefineDID::request(&data, sub_func, cfg),
-            Service::WriteDID => WriteDID::request(&data, sub_func, cfg),
-            Service::IOCtrl => IOCtrl::request(&data, sub_func, cfg),
-            Service::RoutineCtrl => RoutineCtrl::request(&data, sub_func, cfg),
-            Service::RequestDownload => RequestDownload::request(&data, sub_func, cfg),
-            Service::RequestUpload => RequestUpload::request(&data, sub_func, cfg),
-            Service::TransferData => TransferData::request(&data, sub_func, cfg),
-            Service::RequestTransferExit => RequestTransferExit::request(&data, sub_func, cfg),
+            Service::Authentication => Authentication::without_config(&data, sub_func),
+            Service::ReadDataByPeriodId => ReadDataByPeriodId::without_config(&data, sub_func),
+            Service::DynamicalDefineDID => DynamicallyDefineDID::without_config(&data, sub_func),
+            Service::WriteDID => WriteDID::with_config(&data, sub_func, cfg),
+            Service::IOCtrl => IOCtrl::without_config(&data, sub_func),
+            Service::RoutineCtrl => RoutineCtrl::without_config(&data, sub_func),
+            Service::RequestDownload => RequestDownload::without_config(&data, sub_func),
+            Service::RequestUpload => RequestUpload::without_config(&data, sub_func),
+            Service::TransferData => TransferData::without_config(&data, sub_func),
+            Service::RequestTransferExit => RequestTransferExit::without_config(&data, sub_func),
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Service::RequestFileTransfer => RequestFileTransfer::request(&data, sub_func, cfg),
-            Service::WriteMemByAddr => WriteMemByAddr::request(&data, sub_func, cfg),
-            Service::TesterPresent => TesterPresent::request(&data, sub_func, cfg),
+            Service::RequestFileTransfer => RequestFileTransfer::without_config(&data, sub_func),
+            Service::WriteMemByAddr => WriteMemByAddr::without_config(&data, sub_func),
+            Service::TesterPresent => TesterPresent::without_config(&data, sub_func),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Service::AccessTimingParam => AccessTimingParameter::request(&data, sub_func, cfg),
-            Service::SecuredDataTrans => SecuredDataTrans::request(&data, sub_func, cfg),
-            Service::CtrlDTCSetting => CtrlDTCSetting::request(&data, sub_func, cfg),
-            Service::ResponseOnEvent => ResponseOnEvent::request(&data, sub_func, cfg),
-            Service::LinkCtrl => LinkCtrl::request(&data, sub_func, cfg),
+            Service::AccessTimingParam => AccessTimingParameter::without_config(&data, sub_func),
+            Service::SecuredDataTrans => SecuredDataTrans::without_config(&data, sub_func),
+            Service::CtrlDTCSetting => CtrlDTCSetting::without_config(&data, sub_func),
+            Service::ResponseOnEvent => ResponseOnEvent::without_config(&data, sub_func),
+            Service::LinkCtrl => LinkCtrl::without_config(&data, sub_func),
             Service::NRC => Err(Iso14229Error::OtherError(
                 "got an NRC service from request".into(),
             )),
@@ -180,11 +179,19 @@ impl Request {
     }
 
     #[inline]
-    pub fn data<T>(&self, cfg: &Configuration) -> Result<T, Iso14229Error>
+    pub fn data<T>(&self) -> Result<T, Iso14229Error>
     where
         T: RequestData,
     {
-        T::try_parse(self, cfg)
+        T::try_without_config(self)
+    }
+
+    #[inline]
+    pub fn data_with_config<T>(&self, cfg: &DidConfig) -> Result<T, Iso14229Error>
+    where
+        T: RequestData,
+    {
+        T::try_with_config(self, cfg)
     }
 
     #[inline]
@@ -193,7 +200,7 @@ impl Request {
         data_len: usize,
         mut offset: usize,
         service: Service,
-        cfg: &Configuration,
+        cfg: &DidConfig,
     ) -> Result<Self, Iso14229Error> {
         utils::data_length_check(data_len, offset + 1, false)?;
         let sub_func = data[offset];
@@ -217,9 +224,10 @@ impl From<Request> for Vec<u8> {
     }
 }
 
-impl TryFromWithCfg<Vec<u8>> for Request {
+impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
     type Error = Iso14229Error;
-    fn try_from_cfg(data: Vec<u8>, cfg: &Configuration) -> Result<Self, Self::Error> {
+    fn try_from((data, cfg): (T, &DidConfig)) -> Result<Self, Self::Error> {
+        let data = data.as_ref();
         let data_len = data.len();
         utils::data_length_check(data_len, 1, false)?;
 

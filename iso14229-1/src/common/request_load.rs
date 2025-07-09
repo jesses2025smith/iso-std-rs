@@ -68,8 +68,8 @@ impl DataFormatIdentifier {
 
 impl From<u8> for DataFormatIdentifier {
     #[inline]
-    fn from(value: u8) -> Self {
-        Self(value)
+    fn from(v: u8) -> Self {
+        Self(v)
     }
 }
 

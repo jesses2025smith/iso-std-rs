@@ -3,7 +3,7 @@
 use crate::{
     error::Iso14229Error,
     response::{Code, Response, SubFunction},
-    utils, AdministrativeParameter, Configuration, ResponseData, Service,
+    utils, AdministrativeParameter, ResponseData, Service,
     SignatureEncryptionCalculation,
 };
 use std::{collections::HashSet, sync::LazyLock};
@@ -120,11 +120,41 @@ pub enum SecuredDataTrans {
     Unsuccessful(SecuredDataTransNegative),
 }
 
+impl From<SecuredDataTrans> for Vec<u8> {
+    fn from(v: SecuredDataTrans) -> Self {
+        let mut result = Vec::new();
+        match v {
+            SecuredDataTrans::Successful(mut v) => {
+                result.append(&mut v.apar.into());
+                result.push(v.signature.into());
+                let signature_len = v.signature_data.len() as u16;
+                result.extend(signature_len.to_be_bytes());
+                result.extend(v.anti_replay_cnt.to_be_bytes());
+                result.push(v.response);
+                result.append(&mut v.response_params);
+                result.append(&mut v.signature_data);
+            }
+            SecuredDataTrans::Unsuccessful(mut v) => {
+                result.append(&mut v.apar.into());
+                result.push(v.signature.into());
+                let signature_len = v.signature_data.len() as u16;
+                result.extend(signature_len.to_be_bytes());
+                result.extend(v.anti_replay_cnt.to_be_bytes());
+                result.push(Service::NRC.into());
+                result.push(v.service);
+                result.push(v.response);
+                result.append(&mut v.signature_data);
+            }
+        }
+
+        result
+    }
+}
+
 impl ResponseData for SecuredDataTrans {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::SecuredDataTrans)),
@@ -141,7 +171,7 @@ impl ResponseData for SecuredDataTrans {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service;
         if service != Service::SecuredDataTrans || response.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -200,34 +230,5 @@ impl ResponseData for SecuredDataTrans {
                 signature_data,
             )?))
         }
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let mut result = Vec::new();
-        match self {
-            Self::Successful(mut v) => {
-                result.append(&mut v.apar.into());
-                result.push(v.signature.into());
-                let signature_len = v.signature_data.len() as u16;
-                result.extend(signature_len.to_be_bytes());
-                result.extend(v.anti_replay_cnt.to_be_bytes());
-                result.push(v.response);
-                result.append(&mut v.response_params);
-                result.append(&mut v.signature_data);
-            }
-            Self::Unsuccessful(mut v) => {
-                result.append(&mut v.apar.into());
-                result.push(v.signature.into());
-                let signature_len = v.signature_data.len() as u16;
-                result.extend(signature_len.to_be_bytes());
-                result.extend(v.anti_replay_cnt.to_be_bytes());
-                result.push(Service::NRC.into());
-                result.push(v.service);
-                result.push(v.response);
-                result.append(&mut v.signature_data);
-            }
-        }
-
-        result
     }
 }

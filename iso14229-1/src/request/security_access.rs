@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    Configuration, Iso14229Error, RequestData, SecurityAccessLevel, Service,
+    Iso14229Error, RequestData, SecurityAccessLevel, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -10,11 +10,16 @@ pub struct SecurityAccess {
     pub data: Vec<u8>,
 }
 
+impl From<SecurityAccess> for Vec<u8> {
+    fn from(v: SecurityAccess) -> Self {
+        v.data
+    }
+}
+
 impl RequestData for SecurityAccess {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(level) => Ok(Request {
@@ -26,7 +31,7 @@ impl RequestData for SecurityAccess {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::SecurityAccess || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -35,10 +40,5 @@ impl RequestData for SecurityAccess {
         Ok(Self {
             data: request.data.clone(),
         })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
     }
 }

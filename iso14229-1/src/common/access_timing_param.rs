@@ -1,6 +1,6 @@
 //! Commons of Service 83
 
-use crate::{Configuration, Iso14229Error, RequestData, ResponseData, Service};
+use crate::{Iso14229Error, RequestData, ResponseData, Service};
 
 rsutil::enum_extend!(
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]

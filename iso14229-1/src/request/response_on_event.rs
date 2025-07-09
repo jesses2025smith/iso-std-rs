@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    Configuration, EventType, Iso14229Error, RequestData, ResponseOnEventType, Service,
+    EventType, Iso14229Error, RequestData, ResponseOnEventType, Service,
 };
 use bitfield_struct::bitfield;
 
@@ -118,17 +118,17 @@ pub struct ResponseOnEvent {
     pub param: EventTypeParameter,
 }
 
+#[allow(unused)]
 impl From<ResponseOnEvent> for Vec<u8> {
-    fn from(_: ResponseOnEvent) -> Self {
-        panic!("This library does not yet support");
+    fn from(v: ResponseOnEvent) -> Self {
+        unreachable!("This library does not yet support");
     }
 }
 
 impl RequestData for ResponseOnEvent {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::ResponseOnEvent)),
@@ -140,17 +140,12 @@ impl RequestData for ResponseOnEvent {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::ResponseOnEvent || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
         }
 
         Err(Iso14229Error::NotImplement)
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        unreachable!("This library does not yet support");
     }
 }

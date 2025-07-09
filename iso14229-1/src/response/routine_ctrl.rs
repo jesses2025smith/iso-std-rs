@@ -3,7 +3,7 @@
 use crate::{
     error::Iso14229Error,
     response::{Code, Response, SubFunction},
-    utils, Configuration, ResponseData, RoutineCtrlType, RoutineId, Service,
+    utils, ResponseData, RoutineCtrlType, RoutineId, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -46,11 +46,23 @@ impl RoutineCtrl {
     }
 }
 
+impl From<RoutineCtrl> for Vec<u8> {
+    fn from(mut v: RoutineCtrl) -> Self {
+        let routine_id: u16 = v.routine_id.into();
+        let mut result = routine_id.to_be_bytes().to_vec();
+        if let Some(routine_info) = v.routine_info {
+            result.push(routine_info);
+            result.append(&mut v.routine_status);
+        }
+
+        result
+    }
+}
+
 impl ResponseData for RoutineCtrl {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -69,7 +81,7 @@ impl ResponseData for RoutineCtrl {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service;
         if service != Service::RoutineCtrl || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -97,17 +109,5 @@ impl ResponseData for RoutineCtrl {
             routine_info,
             routine_status,
         })
-    }
-
-    #[inline]
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let routine_id: u16 = self.routine_id.into();
-        let mut result = routine_id.to_be_bytes().to_vec();
-        if let Some(routine_info) = self.routine_info {
-            result.push(routine_info);
-            result.append(&mut self.routine_status);
-        }
-
-        result
     }
 }

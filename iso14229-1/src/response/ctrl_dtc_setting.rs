@@ -2,7 +2,7 @@
 
 use crate::{
     response::{Code, Response, SubFunction},
-    utils, Configuration, DTCSettingType, Iso14229Error, ResponseData, Service,
+    utils, DTCSettingType, Iso14229Error, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -20,11 +20,16 @@ pub struct CtrlDTCSetting {
     pub data: Vec<u8>, // should empty
 }
 
+impl From<CtrlDTCSetting> for Vec<u8> {
+    fn from(v: CtrlDTCSetting) -> Self {
+        v.data
+    }
+}
+
 impl ResponseData for CtrlDTCSetting {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -43,7 +48,7 @@ impl ResponseData for CtrlDTCSetting {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service;
         if service != Service::CtrlDTCSetting || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -53,10 +58,5 @@ impl ResponseData for CtrlDTCSetting {
         Ok(Self {
             data: response.data.clone(),
         })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
     }
 }

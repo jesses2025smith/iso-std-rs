@@ -2,7 +2,7 @@
 
 use crate::{
     response::{Code, Response, SubFunction},
-    Configuration, Iso14229Error, ResponseData, SecurityAccessLevel, Service,
+    Iso14229Error, ResponseData, SecurityAccessLevel, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -24,11 +24,16 @@ pub struct SecurityAccess {
     pub key: Vec<u8>,
 }
 
+impl From<SecurityAccess> for Vec<u8> {
+    fn from(v: SecurityAccess) -> Self {
+        v.key
+    }
+}
+
 impl ResponseData for SecurityAccess {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(level) => {
@@ -49,7 +54,7 @@ impl ResponseData for SecurityAccess {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::SecurityAccess || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -58,10 +63,5 @@ impl ResponseData for SecurityAccess {
         Ok(Self {
             key: response.data.clone(),
         })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.key
     }
 }

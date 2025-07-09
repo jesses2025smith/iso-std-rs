@@ -2,18 +2,16 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{
-        request, response, Configuration, Service, SignatureEncryptionCalculation, TryFromWithCfg,
-    };
+    use iso14229_1::{request, response, DidConfig, Service, SignatureEncryptionCalculation};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("84006100000601242EF123AA55DBD10EDC55AA")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::SecuredDataTrans>(&cfg)?;
+        let data = request.data::<request::SecuredDataTrans>()?;
         assert!(data.apar.is_signed());
         assert!(data.apar.is_signature_on_response());
         assert_eq!(
@@ -30,12 +28,12 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("C4002000000601246EF123FEDB910EDCFF")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::SecuredDataTrans>(&cfg)?;
+        let data = response.data::<response::SecuredDataTrans>()?;
         match data {
             response::SecuredDataTrans::Successful(v) => {
                 assert!(v.apar.is_signed());
@@ -52,9 +50,9 @@ mod tests {
         }
 
         let source = hex::decode("C4002000000601367F2E13FEC9A180ECFF")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::SecuredDataTrans>(&cfg)?;
+        let data = response.data::<response::SecuredDataTrans>()?;
         match data {
             response::SecuredDataTrans::Unsuccessful(v) => {
                 assert!(v.apar.is_signed());
@@ -75,10 +73,10 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("7F8412")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.service(), Service::SecuredDataTrans);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());

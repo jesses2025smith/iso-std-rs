@@ -1,6 +1,6 @@
 //! Commons of Service 22|2E
 
-use crate::{error::Iso14229Error, utils, Configuration, Service};
+use crate::{error::Iso14229Error, utils, DidConfig, Service};
 
 /// Table C.1 — DID data-parameter definitions
 #[repr(u16)]
@@ -61,17 +61,17 @@ pub enum DataIdentifier {
 }
 
 impl From<u16> for DataIdentifier {
-    fn from(value: u16) -> Self {
-        match value {
+    fn from(v: u16) -> Self {
+        match v {
             0x0100..=0xA5FF
             | 0xA800..=0xACFF
             | 0xB000..=0xB1FF
             | 0xC000..=0xC2FF
             | 0xCF00..=0xEFFF
-            | 0xF010..=0xF0FF => Self::VehicleManufacturerSpecific(value),
-            0xF000..=0xF00F => Self::NetworkConfigurationDataForTractorTrailerApplication(value),
+            | 0xF010..=0xF0FF => Self::VehicleManufacturerSpecific(v),
+            0xF000..=0xF00F => Self::NetworkConfigurationDataForTractorTrailerApplication(v),
             0xF100..=0xF17F | 0xF1A0..=0xF1EF => {
-                Self::IdentificationOptionVehicleManufacturerSpecific(value)
+                Self::IdentificationOptionVehicleManufacturerSpecific(v)
             }
             0xF180 => Self::BootSoftwareIdentification,
             0xF181 => Self::ApplicationSoftwareIdentification,
@@ -105,22 +105,22 @@ impl From<u16> for DataIdentifier {
             0xF19D => Self::ECUInstallationDate,
             0xF19E => Self::ODXFile,
             0xF19F => Self::Entity,
-            0xF1F0..=0xF1FF => Self::IdentificationOptionSystemSupplierSpecific(value),
-            0xF200..=0xF2FF => Self::Periodic(value),
-            0xF300..=0xF3FF => Self::DynamicallyDefined(value),
-            0xF400..=0xF5FF | 0xF700..=0xF7FF => Self::OBD(value),
-            0xF600..=0xF6FF => Self::OBDMonitor(value),
-            0xF800..=0xF8FF => Self::OBDInfoType(value),
-            0xF900..=0xF9FF => Self::Tachograph(value),
-            0xFA00..=0xFA0F => Self::AirbagDeployment(value),
+            0xF1F0..=0xF1FF => Self::IdentificationOptionSystemSupplierSpecific(v),
+            0xF200..=0xF2FF => Self::Periodic(v),
+            0xF300..=0xF3FF => Self::DynamicallyDefined(v),
+            0xF400..=0xF5FF | 0xF700..=0xF7FF => Self::OBD(v),
+            0xF600..=0xF6FF => Self::OBDMonitor(v),
+            0xF800..=0xF8FF => Self::OBDInfoType(v),
+            0xF900..=0xF9FF => Self::Tachograph(v),
+            0xFA00..=0xFA0F => Self::AirbagDeployment(v),
             0xFA10 => Self::NumberOfEDRDevices,
             0xFA11 => Self::EDRIdentification,
             0xFA12 => Self::EDRDeviceAddressInformation,
-            0xFA13..=0xFA18 => Self::EDREntries(value),
-            0xFA19..=0xFAFF => Self::SafetySystem(value),
-            0xFD00..=0xFEFF => Self::SystemSupplierSpecific(value),
+            0xFA13..=0xFA18 => Self::EDREntries(v),
+            0xFA19..=0xFAFF => Self::SafetySystem(v),
+            0xFD00..=0xFEFF => Self::SystemSupplierSpecific(v),
             0xFF00 => Self::UDSVersion,
-            _ => Self::Reserved(value),
+            _ => Self::Reserved(v),
         }
     }
 }
@@ -193,10 +193,9 @@ impl DIDData {
     pub fn new(
         did: DataIdentifier,
         data: Vec<u8>,
-        cfg: &Configuration,
+        cfg: &DidConfig,
     ) -> Result<Self, Iso14229Error> {
         let &did_len = cfg
-            .did_cfg
             .get(&did)
             .ok_or(Iso14229Error::DidNotSupported(did))?;
         utils::data_length_check(data.len(), did_len, true)?;

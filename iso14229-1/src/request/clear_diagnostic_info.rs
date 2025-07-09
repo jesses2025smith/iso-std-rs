@@ -3,7 +3,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, Iso14229Error, RequestData, Service,
+    utils, Iso14229Error, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -34,12 +34,24 @@ impl ClearDiagnosticInfo {
     }
 }
 
+impl From<ClearDiagnosticInfo> for Vec<u8> {
+    fn from(v: ClearDiagnosticInfo) -> Self {
+        #[allow(unused_mut)]
+        let mut result: Vec<_> = v.group.into();
+        #[cfg(any(feature = "std2020"))]
+        if let Some(v) = v.mem_sel {
+            result.push(v);
+        }
+
+        result
+    }
+}
+
 impl RequestData for ClearDiagnosticInfo {
     #[inline]
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(
@@ -61,7 +73,7 @@ impl RequestData for ClearDiagnosticInfo {
     }
 
     #[cfg(any(feature = "std2020"))]
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::ClearDiagnosticInfo || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -84,7 +96,7 @@ impl RequestData for ClearDiagnosticInfo {
     }
 
     #[cfg(any(feature = "std2006", feature = "std2013"))]
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::ClearDiagnosticInfo || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -94,16 +106,5 @@ impl RequestData for ClearDiagnosticInfo {
         let group = utils::U24::from_be_bytes([data[0], data[1], data[2]]);
 
         Ok(Self::new(group))
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        #[allow(unused_mut)]
-        let mut result: Vec<_> = self.group.into();
-        #[cfg(any(feature = "std2020"))]
-        if let Some(v) = self.mem_sel {
-            result.push(v);
-        }
-
-        result
     }
 }

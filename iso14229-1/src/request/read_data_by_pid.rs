@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, Iso14229Error, RequestData, Service,
+    utils, Iso14229Error, RequestData, Service,
 };
 
 rsutil::enum_extend!(
@@ -45,11 +45,19 @@ impl ReadDataByPeriodId {
     }
 }
 
+impl From<ReadDataByPeriodId> for Vec<u8> {
+    fn from(mut v: ReadDataByPeriodId) -> Self {
+        let mut result = vec![v.mode.into()];
+        result.append(&mut v.did);
+
+        result
+    }
+}
+
 impl RequestData for ReadDataByPeriodId {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDataByPeriodId)),
@@ -65,7 +73,7 @@ impl RequestData for ReadDataByPeriodId {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::ReadDataByPeriodId || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -80,12 +88,5 @@ impl RequestData for ReadDataByPeriodId {
             mode,
             did: data[offset..].to_vec(),
         })
-    }
-
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let mut result = vec![self.mode.into()];
-        result.append(&mut self.did);
-
-        result
     }
 }

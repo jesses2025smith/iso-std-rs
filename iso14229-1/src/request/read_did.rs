@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, DataIdentifier, Iso14229Error, RequestData, Service,
+    utils, DataIdentifier, Iso14229Error, RequestData, Service,
 };
 
 #[derive(Debug, Clone)]
@@ -17,11 +17,23 @@ impl ReadDID {
     }
 }
 
+impl From<ReadDID> for Vec<u8> {
+    fn from(input: ReadDID) -> Self {
+        let did: u16 = input.did.into();
+        let mut result: Vec<_> = did.to_be_bytes().to_vec();
+        input.others.into_iter().for_each(|v| {
+            let v: u16 = v.into();
+            result.extend(v.to_be_bytes());
+        });
+
+        result
+    }
+}
+
 impl RequestData for ReadDID {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDID)),
@@ -44,7 +56,7 @@ impl RequestData for ReadDID {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::ReadDID || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -67,16 +79,5 @@ impl RequestData for ReadDID {
         }
 
         Ok(Self::new(did, others))
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let did: u16 = self.did.into();
-        let mut result: Vec<_> = did.to_be_bytes().to_vec();
-        self.others.into_iter().for_each(|v| {
-            let v: u16 = v.into();
-            result.extend(v.to_be_bytes());
-        });
-
-        result
     }
 }

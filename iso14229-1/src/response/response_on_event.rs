@@ -1,10 +1,6 @@
 //! response of Service 86
 
-use crate::{
-    error::Iso14229Error,
-    response::{Code, Response, SubFunction},
-    Configuration, ResponseData, Service,
-};
+use crate::{error::Iso14229Error, response::{Code, Response, SubFunction}, DidConfig, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static RESPONSE_ON_EVENT_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -21,12 +17,18 @@ pub struct ResponseOnEvent {
     pub data: Vec<u8>,
 }
 
+impl From<ResponseOnEvent> for Vec<u8> {
+    fn from(v: ResponseOnEvent) -> Self {
+        v.data
+    }
+}
+
 #[allow(unused_variables)]
 impl ResponseData for ResponseOnEvent {
-    fn response(
+    fn with_config(
         data: &[u8],
         sub_func: Option<u8>,
-        cfg: &Configuration,
+        cfg: &DidConfig,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => Err(Iso14229Error::SubFunctionError(Service::ResponseOnEvent)),
@@ -39,12 +41,7 @@ impl ResponseData for ResponseOnEvent {
         }
     }
 
-    fn try_parse(response: &Response, cfg: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_with_config(response: &Response, cfg: &DidConfig) -> Result<Self, Iso14229Error> {
         Err(Iso14229Error::NotImplement)
-    }
-
-    #[inline]
-    fn to_vec(self, cfg: &Configuration) -> Vec<u8> {
-        self.data
     }
 }

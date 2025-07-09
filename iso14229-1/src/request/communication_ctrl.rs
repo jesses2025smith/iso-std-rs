@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, CommunicationCtrlType, CommunicationType, Configuration, Iso14229Error, RequestData,
+    utils, CommunicationCtrlType, CommunicationType, Iso14229Error, RequestData,
     Service,
 };
 
@@ -56,11 +56,22 @@ impl CommunicationCtrl {
     }
 }
 
+impl From<CommunicationCtrl> for Vec<u8> {
+    fn from(v: CommunicationCtrl) -> Self {
+        let mut result = vec![v.comm_type.0];
+        if let Some(v) = v.node_id {
+            let v: u16 = v.into();
+            result.extend(v.to_be_bytes());
+        }
+
+        result
+    }
+}
+
 impl RequestData for CommunicationCtrl {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -84,7 +95,7 @@ impl RequestData for CommunicationCtrl {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service;
         if service != Service::CommunicationCtrl || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -115,15 +126,5 @@ impl RequestData for CommunicationCtrl {
             comm_type: CommunicationType(comm_type),
             node_id,
         })
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let mut result = vec![self.comm_type.0];
-        if let Some(v) = self.node_id {
-            let v: u16 = v.into();
-            result.extend(v.to_be_bytes());
-        }
-
-        result
     }
 }

@@ -2,16 +2,16 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, Configuration, Service, TryFromWithCfg};
+    use iso14229_1::{request, response, DidConfig, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("360100112233445566778899")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::TransferData>(&cfg)?;
+        let data = request.data::<request::TransferData>()?;
         assert_eq!(data.sequence, 0x01);
         assert_eq!(
             data.data,
@@ -23,12 +23,12 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("760100112233445566778899")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::TransferData>(&cfg)?;
+        let data = response.data::<response::TransferData>()?;
         assert_eq!(data.sequence, 0x01);
         assert_eq!(
             data.data,
@@ -40,10 +40,10 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("7F3612")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.service(), Service::TransferData);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());

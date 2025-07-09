@@ -10,7 +10,6 @@ pub use constant::*;
 mod error;
 pub use error::*;
 
-use rsutil::types::ByteOrder;
 use std::{
     collections::HashMap,
     fmt::{Display, Formatter},
@@ -99,51 +98,68 @@ impl Display for Service {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Configuration {
-    pub did_cfg: HashMap<DataIdentifier, usize>,
-    pub bo_addr: ByteOrder,
-    pub bo_mem_size: ByteOrder,
-}
+pub type DidConfig = HashMap<DataIdentifier, usize>;
 
-impl Default for Configuration {
-    /// ISO 14229-2 default using big-endian.
-    fn default() -> Self {
-        Self {
-            did_cfg: Default::default(),
-            bo_addr: ByteOrder::Big,
-            bo_mem_size: ByteOrder::Big,
-        }
+#[allow(unused)]
+pub trait RequestData: Into<Vec<u8>> {
+    fn without_config(
+        data: &[u8],
+        sub_func: Option<u8>,
+    ) -> Result<request::Request, Iso14229Error> {
+        Err(Iso14229Error::NotImplement)
+    }
+    fn with_config(
+        data: &[u8],
+        sub_func: Option<u8>,
+        cfg: &DidConfig
+    ) -> Result<request::Request, Iso14229Error> {
+        Err(Iso14229Error::NotImplement)
+    }
+    fn try_without_config(request: &request::Request) -> Result<Self, Iso14229Error>
+    where
+        Self: Sized
+    {
+        Err(Iso14229Error::NotImplement)
+    }
+    fn try_with_config(
+        request: &request::Request,
+        cfg: &DidConfig
+    ) -> Result<Self, Iso14229Error>
+    where
+        Self: Sized
+    {
+        Err(Iso14229Error::NotImplement)
     }
 }
 
-pub trait RequestData {
-    fn request(
+#[allow(unused)]
+pub trait ResponseData: Into<Vec<u8>> {
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        cfg: &Configuration,
-    ) -> Result<request::Request, Iso14229Error>;
-    fn try_parse(request: &request::Request, cfg: &Configuration) -> Result<Self, Iso14229Error>
-    where
-        Self: Sized;
-    fn to_vec(self, cfg: &Configuration) -> Vec<u8>;
-}
-
-pub trait ResponseData {
-    fn response(
+    ) -> Result<response::Response, Iso14229Error> {
+        Err(Iso14229Error::NotImplement)
+    }
+    fn with_config(
         data: &[u8],
         sub_func: Option<u8>,
-        cfg: &Configuration,
-    ) -> Result<response::Response, Iso14229Error>;
-    fn try_parse(response: &response::Response, cfg: &Configuration) -> Result<Self, Iso14229Error>
+        cfg: &DidConfig
+    ) -> Result<response::Response, Iso14229Error> {
+        Err(Iso14229Error::NotImplement)
+    }
+    fn try_without_config(response: &response::Response) -> Result<Self, Iso14229Error>
     where
-        Self: Sized;
-    fn to_vec(self, cfg: &Configuration) -> Vec<u8>;
-}
-
-pub trait TryFromWithCfg<T> {
-    type Error;
-    fn try_from_cfg(data: T, cfg: &Configuration) -> Result<Self, Self::Error>
+        Self: Sized
+    {
+        Err(Iso14229Error::NotImplement)
+    }
+    fn try_with_config(
+        response: &response::Response,
+        cfg: &DidConfig
+    ) -> Result<Self, Iso14229Error>
     where
-        Self: Sized;
+        Self: Sized
+    {
+        Err(Iso14229Error::NotImplement)
+    }
 }

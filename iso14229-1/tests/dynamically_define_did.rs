@@ -2,23 +2,20 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{
-        request, response, Configuration, DefinitionType, DynamicallyDID, DynamicallyMemAddr,
-        Service, TryFromWithCfg,
-    };
+    use iso14229_1::{request, response, DefinitionType, DidConfig, DynamicallyDID, DynamicallyMemAddr, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("2C01F30112340102567801019ABC0104")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DefinitionType>()?,
             DefinitionType::DefineByIdentifier
         );
-        let data = request.data::<request::DynamicallyDefineDID>(&cfg)?;
+        let data = request.data::<request::DynamicallyDefineDID>()?;
         match data {
             request::DynamicallyDefineDID::DefineByIdentifier {
                 did,
@@ -54,13 +51,13 @@ mod tests {
         }
 
         let source = hex::decode("2C02F302240009196900012109196900012109196b0102131019950001")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DefinitionType>()?,
             DefinitionType::DefineByMemoryAddress
         );
-        let data = request.data::<request::DynamicallyDefineDID>(&cfg)?;
+        let data = request.data::<request::DynamicallyDefineDID>()?;
         match data {
             request::DynamicallyDefineDID::DefineByMemoryAddress {
                 did,
@@ -78,13 +75,13 @@ mod tests {
         }
 
         let source = hex::decode("2C03F302")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DefinitionType>()?,
             DefinitionType::ClearDynamicallyDefinedDataIdentifier
         );
-        let data = request.data::<request::DynamicallyDefineDID>(&cfg)?;
+        let data = request.data::<request::DynamicallyDefineDID>()?;
         match data {
             request::DynamicallyDefineDID::ClearDynamicallyDefinedDataIdentifier(v) => {
                 assert_eq!(v, Some(DynamicallyDID::try_from(0xF302)?))
@@ -97,16 +94,16 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("6C01F302")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DefinitionType>()?,
             DefinitionType::DefineByIdentifier
         );
-        let data = response.data::<response::DynamicallyDefineDID>(&cfg)?;
+        let data = response.data::<response::DynamicallyDefineDID>()?;
         assert_eq!(
             data,
             response::DynamicallyDefineDID(Some(DynamicallyDID::try_from(0xF302)?))
@@ -117,10 +114,10 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("7F2C12")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.service(), Service::DynamicalDefineDID);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());

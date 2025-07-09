@@ -3,7 +3,7 @@
 use crate::{
     error::Iso14229Error,
     response::{Code, Response, SubFunction},
-    utils, Configuration, DataIdentifier, ResponseData, Service,
+    utils, DataIdentifier, ResponseData, Service,
 };
 use bitfield_struct::bitfield;
 use std::{collections::HashSet, sync::LazyLock};
@@ -59,8 +59,8 @@ pub enum Formula {
 }
 
 impl From<u8> for Formula {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::Formula0,
             0x01 => Self::Formula1,
             0x02 => Self::Formula2,
@@ -71,8 +71,8 @@ impl From<u8> for Formula {
             0x07 => Self::Formula7,
             0x08 => Self::Formula8,
             0x09 => Self::Formula9,
-            0x0A..=0x7F => Self::Reserved(value),
-            0x80..=0xFF => Self::VehicleManufacturerSpecific(value),
+            0x0A..=0x7F => Self::Reserved(v),
+            0x80..=0xFF => Self::VehicleManufacturerSpecific(v),
         }
     }
 }
@@ -125,11 +125,28 @@ pub struct ReadScalingDID {
     pub others: Vec<ScalingByteData>, // at least one
 }
 
+impl From<ReadScalingDID> for Vec<u8> {
+    fn from(v: ReadScalingDID) -> Self {
+        let did: u16 = v.did.into();
+        let mut result = did.to_be_bytes().to_vec();
+
+        let byte_type: u8 = v.data.byte_type.into();
+        result.push(byte_type | v.data.byte_len);
+
+        v.others.into_iter().for_each(|mut v| {
+            let byte_type: u8 = v.byte_type.into();
+            result.push(byte_type | v.byte_len);
+            result.append(&mut v.extensions);
+        });
+
+        result
+    }
+}
+
 impl ResponseData for ReadScalingDID {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadScalingDID)),
@@ -147,7 +164,7 @@ impl ResponseData for ReadScalingDID {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::ReadScalingDID || response.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -213,22 +230,5 @@ impl ResponseData for ReadScalingDID {
             },
             others,
         })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let did: u16 = self.did.into();
-        let mut result = did.to_be_bytes().to_vec();
-
-        let byte_type: u8 = self.data.byte_type.into();
-        result.push(byte_type | self.data.byte_len);
-
-        self.others.into_iter().for_each(|mut v| {
-            let byte_type: u8 = v.byte_type.into();
-            result.push(byte_type | v.byte_len);
-            result.append(&mut v.extensions);
-        });
-
-        result
     }
 }

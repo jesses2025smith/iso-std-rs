@@ -2,7 +2,7 @@
 
 use crate::{
     response::{Code, Response, SubFunction},
-    Configuration, Iso14229Error, ResponseData, Service, TimingParameterAccessType,
+    Iso14229Error, ResponseData, Service, TimingParameterAccessType,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -12,7 +12,7 @@ pub static ACCESS_TIMING_PARAM_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::ne
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
-    ]);
+    ])
 });
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -20,11 +20,16 @@ pub struct AccessTimingParameter {
     pub data: Vec<u8>,
 }
 
+impl From<AccessTimingParameter> for Vec<u8> {
+    fn from(v: AccessTimingParameter) -> Self {
+        v.data
+    }
+}
+
 impl ResponseData for AccessTimingParameter {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -52,7 +57,7 @@ impl ResponseData for AccessTimingParameter {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::AccessTimingParam || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -61,10 +66,5 @@ impl ResponseData for AccessTimingParameter {
         Ok(Self {
             data: response.data.clone(),
         })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
     }
 }

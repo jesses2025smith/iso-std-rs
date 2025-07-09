@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, DataFormatIdentifier, Iso14229Error, MemoryLocation, RequestData,
+    utils, DataFormatIdentifier, Iso14229Error, MemoryLocation, RequestData,
     Service,
 };
 
@@ -12,11 +12,19 @@ pub struct RequestUpload {
     pub mem_loc: MemoryLocation,
 }
 
+impl From<RequestUpload> for Vec<u8> {
+    fn from(v: RequestUpload) -> Self {
+        let mut result = vec![v.dfi.0];
+        result.append(&mut v.mem_loc.into());
+
+        result
+    }
+}
+
 impl RequestData for RequestUpload {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::RequestUpload)),
@@ -32,7 +40,7 @@ impl RequestData for RequestUpload {
         }
     }
 
-    fn try_parse(request: &Request, cfg: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::RequestUpload || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -43,16 +51,8 @@ impl RequestData for RequestUpload {
         let dfi = DataFormatIdentifier(data[offset]);
         offset += 1;
 
-        let mem_loc = MemoryLocation::from_slice(&data[offset..], cfg)?;
+        let mem_loc = MemoryLocation::from_slice(&data[offset..])?;
 
         Ok(Self { dfi, mem_loc })
-    }
-
-    #[inline]
-    fn to_vec(self, cfg: &Configuration) -> Vec<u8> {
-        let mut result = vec![self.dfi.0];
-        result.append(&mut self.mem_loc.to_vec(cfg));
-
-        result
     }
 }

@@ -2,7 +2,7 @@
 
 use crate::{
     response::{Code, Response, SubFunction},
-    utils, Configuration, Iso14229Error, ResponseData, Service, TesterPresentType,
+    utils, Iso14229Error, ResponseData, Service, TesterPresentType,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -18,11 +18,16 @@ pub struct TesterPresent {
     pub data: Vec<u8>, // should emtpy
 }
 
+impl From<TesterPresent> for Vec<u8> {
+    fn from(v: TesterPresent) -> Self {
+        v.data
+    }
+}
+
 impl ResponseData for TesterPresent {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -41,7 +46,7 @@ impl ResponseData for TesterPresent {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::TesterPresent || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -50,10 +55,5 @@ impl ResponseData for TesterPresent {
         Ok(Self {
             data: response.data.clone(),
         })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
     }
 }

@@ -1,4 +1,4 @@
-use crate::{ByteOrder, Iso14229Error, SUPPRESS_POSITIVE};
+use crate::{Iso14229Error, SUPPRESS_POSITIVE};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct U24(pub(crate) u32);
@@ -50,8 +50,8 @@ impl From<U24> for Vec<u8> {
 
 impl From<u32> for U24 {
     #[inline]
-    fn from(value: u32) -> Self {
-        Self::new(value)
+    fn from(v: u32) -> Self {
+        Self::new(v)
     }
 }
 
@@ -86,7 +86,7 @@ pub(crate) fn data_length_check(
 
 /// used only enable std2020 feature
 #[allow(unused)]
-pub(crate) fn u128_to_vec_fix(value: u128, bo: ByteOrder) -> Vec<u8> {
+pub(crate) fn u128_to_vec_fix(value: u128) -> Vec<u8> {
     let mut result = value.to_le_bytes().to_vec();
     let mut count = result.len();
 
@@ -99,30 +99,24 @@ pub(crate) fn u128_to_vec_fix(value: u128, bo: ByteOrder) -> Vec<u8> {
 
     result.resize(count, Default::default());
 
-    if bo.is_big() {
-        result.reverse();
-    }
+    result.reverse();
 
     result
 }
 
-pub(crate) fn u128_to_vec(value: u128, len: usize, bo: ByteOrder) -> Vec<u8> {
+pub(crate) fn u128_to_vec(value: u128, len: usize) -> Vec<u8> {
     let mut result = value.to_le_bytes().to_vec();
     result.resize(len, Default::default());
 
-    if bo.is_big() {
-        result.reverse();
-    }
+    result.reverse();
 
     result
 }
 
 #[inline]
-pub(crate) fn slice_to_u128(slice: &[u8], bo: ByteOrder) -> u128 {
+pub(crate) fn slice_to_u128(slice: &[u8]) -> u128 {
     let mut data = slice.to_vec();
-    if bo.is_big() {
-        data.reverse();
-    }
+    data.reverse();
 
     data.resize(std::mem::size_of::<u128>(), Default::default());
     data.reverse();

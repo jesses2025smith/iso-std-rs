@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, ECUResetType, Iso14229Error, RequestData, Service,
+    utils, ECUResetType, Iso14229Error, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -10,11 +10,16 @@ pub struct ECUReset {
     pub data: Vec<u8>, // should empty
 }
 
+impl From<ECUReset> for Vec<u8> {
+    fn from(v: ECUReset) -> Self {
+        v.data
+    }
+}
+
 impl RequestData for ECUReset {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -33,7 +38,7 @@ impl RequestData for ECUReset {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::ECUReset || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -42,9 +47,5 @@ impl RequestData for ECUReset {
         Ok(Self {
             data: request.data.clone(),
         })
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
     }
 }

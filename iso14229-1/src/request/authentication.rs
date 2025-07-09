@@ -3,7 +3,7 @@
 use crate::request::{Request, SubFunction};
 use crate::{
     parse_algo_indicator, parse_not_nullable, parse_nullable, utils, AlgorithmIndicator,
-    AuthenticationTask, Configuration, Iso14229Error, NotNullableData, NullableData, RequestData,
+    AuthenticationTask, Iso14229Error, NotNullableData, NullableData, RequestData,
     Service,
 };
 
@@ -128,10 +128,9 @@ impl From<Authentication> for Vec<u8> {
 }
 
 impl RequestData for Authentication {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -178,7 +177,7 @@ impl RequestData for Authentication {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service;
         if service != Service::Authentication || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -273,10 +272,5 @@ impl RequestData for Authentication {
                 Ok(Self::AuthenticationConfiguration)
             }
         }
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.into()
     }
 }

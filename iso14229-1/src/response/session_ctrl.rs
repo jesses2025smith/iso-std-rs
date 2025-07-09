@@ -4,7 +4,7 @@ use crate::{
     constant::{P2_MAX, P2_STAR_MAX},
     error::Iso14229Error,
     response::{Code, Response, SubFunction},
-    utils, Configuration, ResponseData, Service, SessionType,
+    utils, ResponseData, Service, SessionType,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -102,11 +102,16 @@ impl From<SessionTiming> for Vec<u8> {
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct SessionCtrl(pub SessionTiming);
 
+impl From<SessionCtrl> for Vec<u8> {
+    fn from(v: SessionCtrl) -> Self {
+        v.0.into()
+    }
+}
+
 impl ResponseData for SessionCtrl {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -125,7 +130,7 @@ impl ResponseData for SessionCtrl {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::SessionCtrl || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -134,10 +139,5 @@ impl ResponseData for SessionCtrl {
         let timing = SessionTiming::try_from(response.data.as_slice())?;
 
         Ok(Self(timing))
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.0.into()
     }
 }

@@ -1,12 +1,7 @@
 //! response of Service 19
 #![allow(clippy::non_minimal_cfg)]
 
-use crate::{
-    error::Iso14229Error,
-    response::Code,
-    response::{Response, SubFunction},
-    utils, Configuration, DTCReportType, DataIdentifier, ResponseData, Service,
-};
+use crate::{error::Iso14229Error, response::Code, response::{Response, SubFunction}, utils, DTCReportType, DataIdentifier, DidConfig, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static READ_DTC_INFO_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -612,10 +607,9 @@ impl From<DTCInfo> for Vec<u8> {
 }
 
 impl ResponseData for DTCInfo {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -779,7 +773,7 @@ impl ResponseData for DTCInfo {
         }
     }
 
-    fn try_parse(response: &Response, cfg: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_with_config(response: &Response, cfg: &DidConfig) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::ReadDTCInfo || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -873,7 +867,6 @@ impl ResponseData for DTCInfo {
                         ]));
                         offset += 2;
                         let &did_data_len = cfg
-                            .did_cfg
                             .get(&did)
                             .ok_or(Iso14229Error::DidNotSupported(did))?;
 
@@ -1296,7 +1289,6 @@ impl ResponseData for DTCInfo {
                         ]));
                         offset += 2;
                         let &did_data_len = cfg
-                            .did_cfg
                             .get(&did)
                             .ok_or(Iso14229Error::DidNotSupported(did))?;
 
@@ -1488,10 +1480,5 @@ impl ResponseData for DTCInfo {
                 })
             }
         }
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.into()
     }
 }

@@ -2,16 +2,14 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{
-        request, response, Configuration, ECUResetType, Iso14229Error, Service, TryFromWithCfg,
-    };
+    use iso14229_1::{request, response, DidConfig, ECUResetType, Iso14229Error, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
         let source = hex::decode("1101")?;
 
-        let cfg = Configuration::default();
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let cfg = DidConfig::default();
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<ECUResetType>()?,
@@ -20,7 +18,7 @@ mod tests {
         assert!(!sub_func.is_suppress_positive());
 
         let source = hex::decode("1181")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<ECUResetType>()?,
@@ -29,7 +27,7 @@ mod tests {
         assert!(sub_func.is_suppress_positive());
 
         let source = hex::decode("110100")?;
-        let err = request::Request::try_from_cfg(source, &cfg).unwrap_err();
+        let err = request::Request::try_from((&source, &cfg)).unwrap_err();
         match err {
             Iso14229Error::InvalidDataLength { expect, actual } => {
                 assert_eq!(expect, 0);
@@ -45,8 +43,8 @@ mod tests {
     fn test_response() -> anyhow::Result<()> {
         let source = hex::decode("5101")?;
 
-        let cfg = Configuration::default();
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let cfg = DidConfig::default();
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<ECUResetType>()?,
@@ -54,7 +52,7 @@ mod tests {
         );
 
         let source = hex::decode("5104")?;
-        let err = response::Response::try_from_cfg(source, &cfg).unwrap_err();
+        let err = response::Response::try_from((&source, &cfg)).unwrap_err();
         match err {
             Iso14229Error::InvalidDataLength { expect, actual } => {
                 assert_eq!(expect, 1);
@@ -64,13 +62,13 @@ mod tests {
         }
 
         let source = hex::decode("510401")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<ECUResetType>()?,
             ECUResetType::EnableRapidPowerShutDown
         );
-        let data = response.data::<response::ECUReset>(&cfg)?;
+        let data = response.data::<response::ECUReset>()?;
         assert_eq!(data.second, Some(1));
 
         Ok(())
@@ -78,10 +76,10 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("7F1112")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.service(), Service::ECUReset);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());

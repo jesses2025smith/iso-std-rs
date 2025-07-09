@@ -3,27 +3,24 @@
 #[cfg(any(feature = "std2013", feature = "std2020"))]
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{
-        request, response, Configuration, DataFormatIdentifier, ModeOfOperation, Service,
-        TryFromWithCfg,
-    };
+    use iso14229_1::{request, response, DataFormatIdentifier, DidConfig, ModeOfOperation, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
         // D:\mapdata\europe\germany1.yxz
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode(
             "3801001E443A5C6D6170646174615C6575726F70655C6765726D616E79312E79787A1102C3507530",
         )?;
 
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<ModeOfOperation>()?,
             ModeOfOperation::AddFile
         );
-        let data = request.data::<request::RequestFileTransfer>(&cfg)?;
+        let data = request.data::<request::RequestFileTransfer>()?;
         match data {
             request::RequestFileTransfer::AddFile {
                 filepath,
@@ -46,16 +43,16 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("780102C35011")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<ModeOfOperation>()?,
             ModeOfOperation::AddFile
         );
-        let data = response.data::<response::RequestFileTransfer>(&cfg)?;
+        let data = response.data::<response::RequestFileTransfer>()?;
         match data {
             response::RequestFileTransfer::AddFile {
                 lfi,
@@ -74,10 +71,10 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("7F3812")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.service(), Service::RequestFileTransfer);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());

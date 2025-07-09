@@ -2,7 +2,7 @@
 
 use crate::{
     response::{Code, Response, SubFunction},
-    utils, Configuration, Iso14229Error, ResponseData, Service,
+    utils, Iso14229Error, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -25,11 +25,18 @@ pub struct TransferData {
     pub data: Vec<u8>,
 }
 
+impl From<TransferData> for Vec<u8> {
+    fn from(mut v: TransferData) -> Self {
+        let mut result = vec![v.sequence];
+        result.append(&mut v.data);
+        result
+    }
+}
+
 impl ResponseData for TransferData {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::TransferData)),
@@ -46,7 +53,7 @@ impl ResponseData for TransferData {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::TransferData || response.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -61,12 +68,5 @@ impl ResponseData for TransferData {
             sequence,
             data: data[offset..].to_vec(),
         })
-    }
-
-    #[inline]
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let mut result = vec![self.sequence];
-        result.append(&mut self.data);
-        result
     }
 }

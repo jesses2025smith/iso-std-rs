@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, AdministrativeParameter, Configuration, Iso14229Error, RequestData, Service,
+    utils, AdministrativeParameter, Iso14229Error, RequestData, Service,
     SignatureEncryptionCalculation,
 };
 
@@ -48,11 +48,25 @@ impl SecuredDataTrans {
     }
 }
 
+impl From<SecuredDataTrans> for Vec<u8> {
+    fn from(mut v: SecuredDataTrans) -> Self {
+        let mut result: Vec<_> = v.apar.into();
+        result.push(v.signature.into());
+        let signature_len = v.signature_data.len() as u16;
+        result.extend(signature_len.to_be_bytes());
+        result.extend(v.anti_replay_cnt.to_be_bytes());
+        result.push(v.service);
+        result.append(&mut v.service_data);
+        result.append(&mut v.signature_data);
+
+        result
+    }
+}
+
 impl RequestData for SecuredDataTrans {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::SecuredDataTrans)),
@@ -68,7 +82,7 @@ impl RequestData for SecuredDataTrans {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::SecuredDataTrans || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -110,18 +124,5 @@ impl RequestData for SecuredDataTrans {
             service_data,
             signature_data,
         )
-    }
-
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let mut result: Vec<_> = self.apar.into();
-        result.push(self.signature.into());
-        let signature_len = self.signature_data.len() as u16;
-        result.extend(signature_len.to_be_bytes());
-        result.extend(self.anti_replay_cnt.to_be_bytes());
-        result.push(self.service);
-        result.append(&mut self.service_data);
-        result.append(&mut self.signature_data);
-
-        result
     }
 }

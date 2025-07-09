@@ -4,62 +4,60 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::utils::U24;
-    use iso14229_1::{
-        request, response, Configuration, DTCReportType, DataIdentifier, Service, TryFromWithCfg,
-    };
+    use iso14229_1::{request, response, DTCReportType, DataIdentifier, DidConfig, Service};
     use std::vec;
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("190100")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportNumberOfDTCByStatusMask
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportNumberOfDTCByStatusMask(v) => assert_eq!(v, 0x00),
             _ => panic!("Unexpected data: {:?}", data),
         }
 
         let source = hex::decode("190200")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCByStatusMask
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportDTCByStatusMask(v) => assert_eq!(v, 0x00),
             _ => panic!("Unexpected data: {:?}", data),
         }
 
         let source = hex::decode("1903")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCSnapshotIdentification
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportDTCSnapshotIdentification => {}
             _ => panic!("Unexpected data: {:?}", data),
         }
 
         let source = hex::decode("190401020301")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCSnapshotRecordByDTCNumber
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportDTCSnapshotRecordByDTCNumber {
                 mask_record,
@@ -72,13 +70,13 @@ mod tests {
         }
 
         let source = hex::decode("190501")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCStoredDataByRecordNumber
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportDTCStoredDataByRecordNumber { stored_num } => {
                 assert_eq!(stored_num, 0x01);
@@ -87,13 +85,13 @@ mod tests {
         }
 
         let source = hex::decode("190601020301")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCExtDataRecordByDTCNumber
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportDTCExtDataRecordByDTCNumber {
                 mask_record,
@@ -106,13 +104,13 @@ mod tests {
         }
 
         let source = hex::decode("19070102")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportNumberOfDTCBySeverityMaskRecord
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportNumberOfDTCBySeverityMaskRecord {
                 severity_mask,
@@ -125,13 +123,13 @@ mod tests {
         }
 
         let source = hex::decode("19080102")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCBySeverityMaskRecord
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportDTCBySeverityMaskRecord {
                 severity_mask,
@@ -144,13 +142,13 @@ mod tests {
         }
 
         let source = hex::decode("1909010203")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportSeverityInformationOfDTC
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportSeverityInformationOfDTC { mask_record } => {
                 assert_eq!(mask_record, U24::new(0x010203));
@@ -159,13 +157,13 @@ mod tests {
         }
 
         let source = hex::decode("190A")?;
-        let request = request::Request::try_from_cfg(source, &cfg)?;
+        let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportSupportedDTC
         );
-        let data = request.data::<request::DTCInfo>(&cfg)?;
+        let data = request.data::<request::DTCInfo>()?;
         match data {
             request::DTCInfo::ReportSupportedDTC => {}
             _ => panic!("Unexpected data: {:?}", data),
@@ -174,13 +172,13 @@ mod tests {
         #[cfg(any(feature = "std2006", feature = "std2013"))]
         {
             let source = hex::decode("190F00")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportMirrorMemoryDTCByStatusMask
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportMirrorMemoryDTCByStatusMask(v) => assert_eq!(v, 0x00),
                 _ => panic!("Unexpected data: {:?}", data),
@@ -190,13 +188,13 @@ mod tests {
         #[cfg(any(feature = "std2006", feature = "std2013"))]
         {
             let source = hex::decode("191001020300")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportMirrorMemoryDTCExtDataRecordByDTCNumber
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportMirrorMemoryDTCExtDataRecordByDTCNumber {
                     mask_record,
@@ -212,13 +210,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("191600")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportDTCExtDataRecordByRecordNumber
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportDTCExtDataRecordByRecordNumber { extra_num } => {
                     assert_eq!(extra_num, 0x00)
@@ -230,13 +228,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("19170000")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCByStatusMask
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportUserDefMemoryDTCByStatusMask {
                     status_mask,
@@ -252,13 +250,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("19180102030000")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber {
                     mask_record,
@@ -276,13 +274,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("19190102030000")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCExtDataRecordByDTCNumber
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportUserDefMemoryDTCExtDataRecordByDTCNumber {
                     mask_record,
@@ -300,13 +298,13 @@ mod tests {
         #[cfg(any(feature = "std2020"))]
         {
             let source = hex::decode("191A01")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportSupportedDTCExtDataRecord
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportSupportedDTCExtDataRecord { extra_num } => {
                     assert_eq!(extra_num, 0x01);
@@ -318,13 +316,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("1942000000")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportWWHOBDDTCByMaskRecord
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportWWHOBDDTCByMaskRecord {
                     func_gid,
@@ -342,13 +340,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("195500")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportWWHOBDDTCWithPermanentStatus
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportWWHOBDDTCWithPermanentStatus { func_gid } => {
                     assert_eq!(func_gid, 0x00);
@@ -360,13 +358,13 @@ mod tests {
         #[cfg(any(feature = "std2020"))]
         {
             let source = hex::decode("19560000")?;
-            let request = request::Request::try_from_cfg(source, &cfg)?;
+            let request = request::Request::try_from((&source, &cfg))?;
             let sub_func = request.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportDTCInformationByDTCReadinessGroupIdentifier
             );
-            let data = request.data::<request::DTCInfo>(&cfg)?;
+            let data = request.data::<request::DTCInfo>()?;
             match data {
                 request::DTCInfo::ReportDTCInformationByDTCReadinessGroupIdentifier {
                     func_gid,
@@ -384,17 +382,17 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let mut cfg = Configuration::default();
-        cfg.did_cfg.insert(DataIdentifier::VIN, 17);
+        let mut cfg = DidConfig::default();
+        cfg.insert(DataIdentifier::VIN, 17);
 
         let source = hex::decode("590100000001")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportNumberOfDTCByStatusMask
         );
-        let data = response.data::<response::DTCInfo>(&cfg)?;
+        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportNumberOfDTCByStatusMask {
                 avl_mask,
@@ -412,13 +410,13 @@ mod tests {
         }
 
         let source = hex::decode("590200")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCByStatusMask
         );
-        let data = response.data::<response::DTCInfo>(&cfg)?;
+        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCByStatusMask { avl_mask, records } => {
                 assert_eq!(avl_mask, 0x00);
@@ -428,13 +426,13 @@ mod tests {
         }
 
         let source = hex::decode("59020101020300")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCByStatusMask
         );
-        let data = response.data::<response::DTCInfo>(&cfg)?;
+        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCByStatusMask { avl_mask, records } => {
                 assert_eq!(avl_mask, 0x01);
@@ -450,13 +448,13 @@ mod tests {
         }
 
         let source = hex::decode("590301020300")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCSnapshotIdentification
         );
-        let data = response.data::<response::DTCInfo>(&cfg)?;
+        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCSnapshotIdentification { records } => {
                 assert_eq!(
@@ -471,13 +469,13 @@ mod tests {
         }
 
         let source = hex::decode("5904010203000100F1903030303030303030303030303030303030")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCSnapshotRecordByDTCNumber
         );
-        let data = response.data::<response::DTCInfo>(&cfg)?;
+        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCSnapshotRecordByDTCNumber {
                 status_record,
@@ -512,13 +510,13 @@ mod tests {
         // TODO 0x06
 
         let source = hex::decode("590800000001020300")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCBySeverityMaskRecord
         );
-        let data = response.data::<response::DTCInfo>(&cfg)?;
+        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCBySeverityMaskRecord {
                 avl_mask,
@@ -541,13 +539,13 @@ mod tests {
         }
 
         let source = hex::decode("590900000001020300")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportSeverityInformationOfDTC
         );
-        let data = response.data::<response::DTCInfo>(&cfg)?;
+        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportSeverityInformationOfDTC { avl_mask, records } => {
                 assert_eq!(avl_mask, 0x00);
@@ -565,13 +563,13 @@ mod tests {
         }
 
         let source = hex::decode("591401020304")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCFaultDetectionCounter
         );
-        let data = response.data::<response::DTCInfo>(&cfg)?;
+        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCFaultDetectionCounter { records } => {
                 assert_eq!(
@@ -593,13 +591,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("5917000001020300")?;
-            let response = response::Response::try_from_cfg(source, &cfg)?;
+            let response = response::Response::try_from((&source, &cfg))?;
             let sub_func = response.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCByStatusMask
             );
-            let data = response.data::<response::DTCInfo>(&cfg)?;
+            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportUserDefMemoryDTCByStatusMask {
                     mem_selection,
@@ -623,13 +621,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("591800010203000100F1903030303030303030303030303030303030")?;
-            let response = response::Response::try_from_cfg(source, &cfg)?;
+            let response = response::Response::try_from((&source, &cfg))?;
             let sub_func = response.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber
             );
-            let data = response.data::<response::DTCInfo>(&cfg)?;
+            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber {
                     mem_selection,
@@ -671,13 +669,13 @@ mod tests {
         #[cfg(any(feature = "std2020"))]
         {
             let source = hex::decode("591A000101020300")?;
-            let response = response::Response::try_from_cfg(source, &cfg)?;
+            let response = response::Response::try_from((&source, &cfg))?;
             let sub_func = response.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportSupportedDTCExtDataRecord
             );
-            let data = response.data::<response::DTCInfo>(&cfg)?;
+            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportSupportedDTCExtDataRecord {
                     avl_mask,
@@ -701,13 +699,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("5942000000040001020300")?;
-            let response = response::Response::try_from_cfg(source, &cfg)?;
+            let response = response::Response::try_from((&source, &cfg))?;
             let sub_func = response.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportWWHOBDDTCByMaskRecord
             );
-            let data = response.data::<response::DTCInfo>(&cfg)?;
+            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportWWHOBDDTCByMaskRecord {
                     func_gid,
@@ -739,13 +737,13 @@ mod tests {
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         {
             let source = hex::decode("595500000401020300")?;
-            let response = response::Response::try_from_cfg(source, &cfg)?;
+            let response = response::Response::try_from((&source, &cfg))?;
             let sub_func = response.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportWWHOBDDTCWithPermanentStatus
             );
-            let data = response.data::<response::DTCInfo>(&cfg)?;
+            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportWWHOBDDTCWithPermanentStatus {
                     func_gid,
@@ -774,13 +772,13 @@ mod tests {
         #[cfg(any(feature = "std2020"))]
         {
             let source = hex::decode("59560000000001020300")?;
-            let response = response::Response::try_from_cfg(source, &cfg)?;
+            let response = response::Response::try_from((&source, &cfg))?;
             let sub_func = response.sub_function().unwrap();
             assert_eq!(
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportDTCInformationByDTCReadinessGroupIdentifier
             );
-            let data = response.data::<response::DTCInfo>(&cfg)?;
+            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportDTCInformationByDTCReadinessGroupIdentifier {
                     func_gid,
@@ -810,10 +808,10 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = Configuration::default();
+        let cfg = DidConfig::default();
 
         let source = hex::decode("7F1912")?;
-        let response = response::Response::try_from_cfg(source, &cfg)?;
+        let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.service(), Service::ReadDTCInfo);
         assert_eq!(response.sub_function(), None);
         assert!(response.is_negative());

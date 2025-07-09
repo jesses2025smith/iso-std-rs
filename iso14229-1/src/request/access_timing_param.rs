@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, Iso14229Error, RequestData, Service, TimingParameterAccessType,
+    utils, Iso14229Error, RequestData, Service, TimingParameterAccessType,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -10,11 +10,16 @@ pub struct AccessTimingParameter {
     pub data: Vec<u8>,
 }
 
+impl From<AccessTimingParameter> for Vec<u8> {
+    fn from(v: AccessTimingParameter) -> Self {
+        v.data
+    }
+}
+
 impl RequestData for AccessTimingParameter {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -50,7 +55,7 @@ impl RequestData for AccessTimingParameter {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::AccessTimingParam || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -59,10 +64,5 @@ impl RequestData for AccessTimingParameter {
         Ok(Self {
             data: request.data.clone(),
         })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
     }
 }

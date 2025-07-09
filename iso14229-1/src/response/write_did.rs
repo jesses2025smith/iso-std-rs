@@ -2,7 +2,7 @@
 
 use crate::{
     response::{Code, Response, SubFunction},
-    utils, Configuration, DIDData, DataIdentifier, Iso14229Error, ResponseData, Service,
+    utils, DIDData, DataIdentifier, Iso14229Error, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -19,11 +19,17 @@ pub static WRITE_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WriteDID(pub DataIdentifier);
 
+impl From<WriteDID> for Vec<u8> {
+    fn from(v: WriteDID) -> Self {
+        let did: u16 = v.0.into();
+        did.to_be_bytes().to_vec()
+    }
+}
+
 impl ResponseData for WriteDID {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteDID)),
@@ -41,7 +47,7 @@ impl ResponseData for WriteDID {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::WriteDID || response.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -51,11 +57,5 @@ impl ResponseData for WriteDID {
         let did = DataIdentifier::from(u16::from_be_bytes([data[0], data[1]]));
 
         Ok(Self(did))
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let did: u16 = self.0.into();
-        did.to_be_bytes().to_vec()
     }
 }

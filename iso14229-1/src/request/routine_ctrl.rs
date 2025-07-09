@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, Iso14229Error, RequestData, RoutineCtrlType, RoutineId, Service,
+    utils, Iso14229Error, RequestData, RoutineCtrlType, RoutineId, Service,
 };
 
 #[derive(Debug, Clone)]
@@ -11,11 +11,20 @@ pub struct RoutineCtrl {
     pub option_record: Vec<u8>,
 }
 
+impl From<RoutineCtrl> for Vec<u8> {
+    fn from(mut v: RoutineCtrl) -> Self {
+        let routine_id: u16 = v.routine_id.into();
+        let mut result = routine_id.to_be_bytes().to_vec();
+        result.append(&mut v.option_record);
+
+        result
+    }
+}
+
 impl RequestData for RoutineCtrl {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -34,7 +43,7 @@ impl RequestData for RoutineCtrl {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::RoutineCtrl || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -52,13 +61,5 @@ impl RequestData for RoutineCtrl {
             routine_id,
             option_record: data[offset..].to_vec(),
         })
-    }
-    #[inline]
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let routine_id: u16 = self.routine_id.into();
-        let mut result = routine_id.to_be_bytes().to_vec();
-        result.append(&mut self.option_record);
-
-        result
     }
 }

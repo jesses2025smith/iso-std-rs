@@ -3,7 +3,7 @@
 use crate::response::{Response, SubFunction};
 use crate::{
     parse_algo_indicator, parse_not_nullable, parse_nullable, response::Code, utils,
-    AlgorithmIndicator, AuthenticationTask, Configuration, Iso14229Error, NotNullableData,
+    AlgorithmIndicator, AuthenticationTask, Iso14229Error, NotNullableData,
     NullableData, ResponseData, Service, ALGORITHM_INDICATOR_LENGTH,
 };
 use std::{collections::HashSet, sync::LazyLock};
@@ -50,8 +50,8 @@ pub enum AuthReturnValue {
 }
 
 impl From<u8> for AuthReturnValue {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::RequestAccepted,
             0x01 => Self::GeneralReject,
             0x02 => Self::AuthenticationConfigurationAPCE,
@@ -61,11 +61,11 @@ impl From<u8> for AuthReturnValue {
             0x11 => Self::CertificateVerifiedOrOwnershipVerificationNecessary,
             0x12 => Self::OwnershipVerifiedOrAuthenticationComplete,
             0x13 => Self::CertificateVerified,
-            0xA0..=0xCF => Self::VehicleManufacturerSpecific(value),
-            0xD0..=0xFE => Self::SystemSupplierSpecific(value),
+            0xA0..=0xCF => Self::VehicleManufacturerSpecific(v),
+            0xD0..=0xFE => Self::SystemSupplierSpecific(v),
             _ => {
-                rsutil::warn!("ISO 14229-1 used reserved value: {}", value);
-                Self::Reserved(value)
+                rsutil::warn!("ISO 14229-1 used reserved value: {}", v);
+                Self::Reserved(v)
             }
         }
     }
@@ -206,10 +206,9 @@ impl From<Authentication> for Vec<u8> {
 }
 
 impl ResponseData for Authentication {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -255,7 +254,7 @@ impl ResponseData for Authentication {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service;
         if service != Service::Authentication || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -342,10 +341,5 @@ impl ResponseData for Authentication {
                 Ok(Self::AuthenticationConfiguration(value))
             }
         }
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.into()
     }
 }

@@ -3,7 +3,7 @@
 use crate::{
     error::Iso14229Error,
     response::{Code, Response, SubFunction},
-    utils, Configuration, ResponseData, Service,
+    utils, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -22,11 +22,19 @@ pub struct ReadDataByPeriodId {
     pub record: Vec<u8>,
 }
 
+impl From<ReadDataByPeriodId> for Vec<u8> {
+    fn from(mut v: ReadDataByPeriodId) -> Self {
+        let mut result = vec![v.did];
+        result.append(&mut v.record);
+
+        result
+    }
+}
+
 impl ResponseData for ReadDataByPeriodId {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDataByPeriodId)),
@@ -44,7 +52,7 @@ impl ResponseData for ReadDataByPeriodId {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service();
         if service != Service::ReadDataByPeriodId || response.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -58,13 +66,5 @@ impl ResponseData for ReadDataByPeriodId {
         let record = data[offset..].to_vec();
 
         Ok(Self { did, record })
-    }
-
-    #[inline]
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let mut result = vec![self.did];
-        result.append(&mut self.record);
-
-        result
     }
 }

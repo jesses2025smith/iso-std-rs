@@ -50,8 +50,8 @@ impl RoutineId {
 
 impl From<u16> for RoutineId {
     #[inline]
-    fn from(value: u16) -> Self {
-        Self(value)
+    fn from(v: u16) -> Self {
+        Self(v)
     }
 }
 

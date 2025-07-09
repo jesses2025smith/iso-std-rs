@@ -2,17 +2,22 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, Iso14229Error, MemoryLocation, RequestData, Service,
+    utils, Iso14229Error, MemoryLocation, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadMemByAddr(pub MemoryLocation);
 
+impl From<ReadMemByAddr> for Vec<u8> {
+    fn from(v: ReadMemByAddr) -> Self {
+        v.0.into()
+    }
+}
+
 impl RequestData for ReadMemByAddr {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadMemByAddr)),
@@ -28,18 +33,13 @@ impl RequestData for ReadMemByAddr {
         }
     }
 
-    fn try_parse(request: &Request, cfg: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::ReadMemByAddr || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
         }
 
         let data = &request.data;
-        Ok(Self(MemoryLocation::from_slice(data, cfg)?))
-    }
-
-    #[inline]
-    fn to_vec(self, cfg: &Configuration) -> Vec<u8> {
-        self.0.to_vec(cfg)
+        Ok(Self(MemoryLocation::from_slice(data)?))
     }
 }

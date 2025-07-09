@@ -2,7 +2,7 @@
 
 use crate::{
     response::{Code, Response, SubFunction},
-    Configuration, DefinitionType, DynamicallyDID, Iso14229Error, ResponseData, Service,
+    DefinitionType, DynamicallyDID, Iso14229Error, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -19,11 +19,19 @@ pub static DYNAMICAL_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DynamicallyDefineDID(pub Option<DynamicallyDID>);
 
+impl From<DynamicallyDefineDID> for Vec<u8> {
+    fn from(v: DynamicallyDefineDID) -> Self {
+        match v.0 {
+            Some(v) => v.into(),
+            None => vec![],
+        }
+    }
+}
+
 impl ResponseData for DynamicallyDefineDID {
-    fn response(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Response, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -51,7 +59,7 @@ impl ResponseData for DynamicallyDefineDID {
         }
     }
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
         let service = response.service;
         if service != Service::DynamicalDefineDID || response.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -74,13 +82,5 @@ impl ResponseData for DynamicallyDefineDID {
         }?;
 
         Ok(Self(dynamic))
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        match self.0 {
-            Some(v) => v.into(),
-            None => vec![],
-        }
     }
 }

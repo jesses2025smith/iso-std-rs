@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, Iso14229Error, RequestData, Service, SessionType,
+    utils, Iso14229Error, RequestData, Service, SessionType,
 };
 
 #[derive(Debug, Clone)]
@@ -11,11 +11,18 @@ pub struct TransferData {
     pub data: Vec<u8>,
 }
 
+impl From<TransferData> for Vec<u8> {
+    fn from(mut v: TransferData) -> Self {
+        let mut result = vec![v.sequence];
+        result.append(&mut v.data);
+        result
+    }
+}
+
 impl RequestData for TransferData {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(_) => Err(Iso14229Error::SubFunctionError(Service::TransferData)),
@@ -31,7 +38,7 @@ impl RequestData for TransferData {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service();
         if service != Service::TransferData || request.sub_func.is_some() {
             return Err(Iso14229Error::ServiceError(service));
@@ -46,12 +53,5 @@ impl RequestData for TransferData {
             sequence,
             data: data[offset..].to_vec(),
         })
-    }
-
-    #[inline]
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let mut result = vec![self.sequence];
-        result.append(&mut self.data);
-        result
     }
 }

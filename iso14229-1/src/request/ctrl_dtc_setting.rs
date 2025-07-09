@@ -2,7 +2,7 @@
 
 use crate::{
     request::{Request, SubFunction},
-    utils, Configuration, DTCSettingType, Iso14229Error, RequestData, Service,
+    utils, DTCSettingType, Iso14229Error, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -10,11 +10,16 @@ pub struct CtrlDTCSetting {
     pub data: Vec<u8>,
 }
 
+impl From<CtrlDTCSetting> for Vec<u8> {
+    fn from(v: CtrlDTCSetting) -> Self {
+        v.data
+    }
+}
+
 impl RequestData for CtrlDTCSetting {
-    fn request(
+    fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-        _: &Configuration,
     ) -> Result<Request, Iso14229Error> {
         match sub_func {
             Some(sub_func) => {
@@ -31,7 +36,7 @@ impl RequestData for CtrlDTCSetting {
         }
     }
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
         let service = request.service;
         if service != Service::CtrlDTCSetting || request.sub_func.is_none() {
             return Err(Iso14229Error::ServiceError(service));
@@ -41,9 +46,5 @@ impl RequestData for CtrlDTCSetting {
         Ok(Self {
             data: request.data.clone(),
         })
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
     }
 }
