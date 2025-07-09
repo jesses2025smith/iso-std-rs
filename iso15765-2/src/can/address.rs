@@ -2,7 +2,7 @@
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum AddressFormat {
     #[default]
-    Normal = 0x01,      // 11bit CAN-ID
+    Normal = 0x01, // 11bit CAN-ID
     NormalFixed = 0x02, // 29bit CAN-ID
     Extend = 0x03,      // 11bit Remote CAN-ID
     ExtendMixed = 0x04, // 11bit and 11bit Remote CAN-ID mixed

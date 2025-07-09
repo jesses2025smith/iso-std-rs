@@ -1,10 +1,5 @@
 use rs_can::{CanDevice, CanFrame, CanListener};
-use std::{
-    collections::HashMap,
-    fmt::Display,
-    sync::Arc,
-    time::Duration,
-};
+use std::{collections::HashMap, fmt::Display, sync::Arc, time::Duration};
 use tokio::{
     sync::{
         mpsc::{channel, Receiver, Sender},
@@ -15,6 +10,7 @@ use tokio::{
 };
 
 type Listeners<C, F> = Arc<Mutex<HashMap<String, Box<dyn CanListener<C, F>>>>>;
+const DEFAULT_STOP_DELAY: u64 = 500;
 
 #[derive(Clone)]
 pub struct CanAdapter<D, C, F> {
@@ -99,7 +95,7 @@ where
             self.stop_rx.clone(),
             interval_us,
         )
-            .await;
+        .await;
 
         let rx_task = Self::receive_task(
             device.clone(),
@@ -108,7 +104,7 @@ where
             self.stop_rx.clone(),
             interval_us,
         )
-            .await;
+        .await;
 
         self.send_task = Arc::new(Some(tx_task));
         self.receive_task = Arc::new(Some(rx_task));
@@ -121,9 +117,9 @@ where
         }
 
         sleep(Duration::from_micros(
-            2 * self.interval.unwrap_or(50 * 1000),
+            2 * self.interval.unwrap_or(DEFAULT_STOP_DELAY),
         ))
-            .await;
+        .await;
 
         if let Some(task) = &*self.send_task {
             if !task.is_finished() {

@@ -17,6 +17,7 @@ keywords = [
 [dependencies]
 async-trait = { workspace = true }
 bitflags = { workspace = true }
+bytes = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
 rsutil = { workspace = true, features = ["log"] }

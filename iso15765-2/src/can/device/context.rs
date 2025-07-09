@@ -1,6 +1,9 @@
-use crate::constants::{CONSECUTIVE_SEQUENCE_START, P2_MAX, P2_STAR_MAX};
-use crate::core::{Event, FlowControlContext};
-use crate::error::Error;
+use crate::{
+    constants::{CONSECUTIVE_SEQUENCE_START, P2_MAX, P2_STAR_MAX},
+    core::{Event, FlowControlContext},
+    error::Error,
+};
+use bytes::BytesMut;
 
 #[derive(Debug, Clone)]
 pub struct P2 {
@@ -56,7 +59,7 @@ pub(crate) struct FlowCtrl {
 pub(crate) struct Consecutive {
     pub(crate) sequence: Option<u8>,
     pub(crate) length: Option<u32>,
-    pub(crate) buffer: Vec<u8>,
+    pub(crate) buffer: BytesMut,
 }
 
 #[derive(Debug, Default, Clone)]
@@ -94,7 +97,7 @@ impl Context {
     #[inline]
     pub(crate) fn update_consecutive(&mut self, length: u32, mut data: Vec<u8>) {
         self.consecutive.length = Some(length);
-        self.consecutive.buffer.append(&mut data);
+        self.consecutive.buffer.extend_from_slice(&mut data);
     }
     pub(crate) fn append_consecutive(
         &mut self,
@@ -120,14 +123,14 @@ impl Context {
             });
         }
 
-        self.consecutive.buffer.append(&mut data);
+        self.consecutive.buffer.extend_from_slice(&mut data);
 
         let buff_len = self.consecutive.buffer.len();
         let target_len = self.consecutive.length.unwrap() as usize;
         if buff_len >= target_len {
             self.consecutive.buffer.resize(target_len, 0);
             let data = self.consecutive.buffer.clone();
-            Ok(Event::DataReceived(data))
+            Ok(Event::DataReceived(data.into()))
         } else {
             Ok(Event::Wait)
         }

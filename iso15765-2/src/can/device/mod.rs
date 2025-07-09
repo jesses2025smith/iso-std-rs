@@ -1,20 +1,26 @@
 pub(crate) mod adapter;
 pub(crate) mod context;
 
+use bytes::Bytes;
 use rs_can::{CanFrame, CanId, CanListener};
 use std::{
     any::Any,
     fmt::Display,
-    sync::{mpsc::Sender, Arc, Mutex},
-    thread,
+    sync::Arc,
     time::{Duration, Instant},
 };
+use tokio::{
+    sync::{mpsc::Sender, Mutex},
+    time::sleep,
+};
 
-use crate::can::address::{Address, AddressType};
-use crate::constants::{DEFAULT_P2_START_MS, TIMEOUT_AS_ISO15765_2, TIMEOUT_CR_ISO15765_2};
-use crate::core::{Event, EventListener, FlowControlContext, FlowControlState, State};
-use crate::error::Error;
-use crate::frame::Frame;
+use crate::{
+    can::address::{Address, AddressType},
+    constants::{TIMEOUT_AS_ISO15765_2, TIMEOUT_CR_ISO15765_2},
+    core::{Event, EventListener, FlowControlContext, FlowControlState, State},
+    error::Error,
+    frame::Frame,
+};
 
 #[derive(Clone)]
 pub struct CanIsoTp<C, F> {
@@ -46,40 +52,30 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
         }
     }
 
-    pub fn set_p2_context(&self, p2_ms: u16, p2_star_ms: u32) {
-        match self.context.lock() {
-            Ok(mut ctx) => {
-                ctx.p2.update(p2_ms, p2_star_ms);
-            }
-            Err(e) => rsutil::warn!("CanIsoTp::set_p2_context: {}", e),
-        }
+    #[inline(always)]
+    pub async fn set_p2_context(&self, p2_ms: u16, p2_star_ms: u32) {
+        self.context.lock().await.p2.update(p2_ms, p2_star_ms)
     }
 
     #[inline]
-    pub fn update_address(&self, address: Address) {
-        if let Ok(mut addr) = self.address.lock() {
-            *addr = address;
-        }
+    pub async fn update_address(&self, address: Address) {
+        let mut guard = self.address.lock().await;
+        *guard = address;
     }
 
-    pub fn write(&self, addr_type: AddressType, data: Vec<u8>) -> Result<(), Error> {
-        self.state_append(State::Idle);
-        self.context_reset();
+    pub async fn write(&self, addr_type: AddressType, data: Vec<u8>) -> Result<(), Error> {
+        self.state_append(State::Idle).await;
+        self.context.lock().await.reset();
         rsutil::trace!("ISO-TP - Sending: {}", hex::encode(&data));
 
         let frames = Frame::from_data(data)?;
         let frame_len = frames.len();
 
-        let can_id = match self.address.lock() {
-            Ok(address) => match addr_type {
-                AddressType::Physical => Ok(address.tx_id),
-                AddressType::Functional => Ok(address.fid),
-            },
-            Err(_) => {
-                rsutil::warn!("can't get address context");
-                Err(Error::DeviceError)
-            }
-        }?;
+        let guard = self.address.lock().await;
+        let can_id = match addr_type {
+            AddressType::Physical => guard.tx_id,
+            AddressType::Functional => guard.fid,
+        };
         let mut need_flow_ctrl = frame_len > 1;
         let mut index = 0;
         for iso_tp_frame in frames {
@@ -92,12 +88,13 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
 
             if need_flow_ctrl {
                 need_flow_ctrl = false;
-                self.state_append(State::Sending | State::WaitFlowCtrl);
+                self.state_append(State::Sending | State::WaitFlowCtrl)
+                    .await;
             } else {
-                self.write_waiting(&mut index)?;
-                self.state_append(State::Sending);
+                self.write_waiting(&mut index).await?;
+                self.state_append(State::Sending).await;
             }
-            self.sender.send(frame).map_err(|e| {
+            self.sender.send(frame).await.map_err(|e| {
                 rsutil::warn!("ISO-TP - transmit failed: {:?}", e);
                 Error::DeviceError
             })?;
@@ -106,14 +103,15 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
         Ok(())
     }
 
-    #[inline]
-    pub(crate) fn on_single_frame(&self, data: Vec<u8>) {
-        self.iso_tp_event(Event::DataReceived(data));
+    #[inline(always)]
+    pub(crate) async fn on_single_frame(&self, data: Vec<u8>) {
+        self.iso_tp_event(Event::DataReceived(Bytes::from(data)))
+            .await;
     }
 
     #[inline]
-    pub(crate) fn on_first_frame(&self, tx_id: u32, length: u32, data: Vec<u8>) {
-        self.update_consecutive(length, data);
+    pub(crate) async fn on_first_frame(&self, tx_id: u32, length: u32, data: Vec<u8>) {
+        self.context.lock().await.update_consecutive(length, data);
 
         let iso_tp_frame = Frame::default_flow_ctrl_frame();
         let data = iso_tp_frame.encode(None);
@@ -121,16 +119,17 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
             Some(mut frame) => {
                 frame.set_channel(self.channel.clone());
 
-                self.state_append(State::Sending);
-                match self.sender.send(frame) {
+                self.state_append(State::Sending).await;
+                match self.sender.send(frame).await {
                     Ok(_) => {
-                        self.iso_tp_event(Event::FirstFrameReceived);
+                        self.iso_tp_event(Event::FirstFrameReceived).await;
                     }
                     Err(e) => {
                         rsutil::warn!("ISO-TP - transmit failed: {:?}", e);
-                        self.state_append(State::Error);
+                        self.state_append(State::Error).await;
 
-                        self.iso_tp_event(Event::ErrorOccurred(Error::DeviceError));
+                        self.iso_tp_event(Event::ErrorOccurred(Error::DeviceError))
+                            .await;
                     }
                 }
             }
@@ -139,106 +138,87 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
     }
 
     #[inline]
-    pub(crate) fn on_consecutive_frame(&self, sequence: u8, data: Vec<u8>) {
-        match self.append_consecutive(sequence, data) {
-            Ok(event) => self.iso_tp_event(event),
+    pub(crate) async fn on_consecutive_frame(&self, sequence: u8, data: Vec<u8>) {
+        match self.context.lock().await.append_consecutive(sequence, data) {
+            Ok(event) => self.iso_tp_event(event).await,
             Err(e) => {
-                self.state_append(State::Error);
-                self.iso_tp_event(Event::ErrorOccurred(e));
+                self.state_append(State::Error).await;
+                self.iso_tp_event(Event::ErrorOccurred(e)).await;
             }
         }
     }
 
     #[inline]
-    pub(crate) fn on_flow_ctrl_frame(&self, ctx: FlowControlContext) {
+    pub(crate) async fn on_flow_ctrl_frame(&self, ctx: FlowControlContext) {
         match ctx.state() {
             FlowControlState::Continues => {
-                self.state_remove(State::WaitBusy | State::WaitFlowCtrl);
+                self.state_remove(State::WaitBusy | State::WaitFlowCtrl)
+                    .await;
             }
             FlowControlState::Wait => {
-                self.state_append(State::WaitBusy);
-                self.iso_tp_event(Event::Wait);
+                self.state_append(State::WaitBusy).await;
+                self.iso_tp_event(Event::Wait).await;
                 return;
             }
             FlowControlState::Overload => {
-                self.state_append(State::Error);
-                self.iso_tp_event(Event::ErrorOccurred(Error::OverloadFlow));
+                self.state_append(State::Error).await;
+                self.iso_tp_event(Event::ErrorOccurred(Error::OverloadFlow))
+                    .await;
                 return;
             }
         }
 
-        if let Ok(mut context) = self.context.lock() {
-            context.update_flow_ctrl(ctx);
-        };
+        self.context.lock().await.update_flow_ctrl(ctx);
     }
 
-    fn iso_tp_event(&self, event: Event) {
-        match self.listener.lock() {
-            Ok(mut listener) => {
-                // println!("ISO-TP - Sending iso-tp event: {:?}", event);
-                match &event {
-                    Event::DataReceived(data) => {
-                        rsutil::debug!("ISO-TP - Received: {}", hex::encode(data));
-                    }
-                    Event::ErrorOccurred(_) => {
-                        rsutil::warn!("ISO-TP - Sending iso-tp event: {:?}", event)
-                    }
-                    _ => rsutil::trace!("ISO-TP - Sending iso-tp event: {:?}", event),
-                }
-                listener.on_iso_tp_event(event);
+    async fn iso_tp_event(&self, event: Event) {
+        match &event {
+            Event::DataReceived(data) => {
+                rsutil::debug!("ISO-TP - Received: {}", hex::encode(data));
             }
-            Err(_) => rsutil::warn!("ISO-TP(CAN async): Sending event failed"),
+            Event::ErrorOccurred(_) => {
+                rsutil::warn!("ISO-TP - Sending iso-tp event: {:?}", event)
+            }
+            _ => rsutil::trace!("ISO-TP - Sending iso-tp event: {:?}", event),
         }
+        self.listener.lock().await.on_iso_tp_event(event).await;
     }
 
-    fn write_waiting(&self, index: &mut usize) -> Result<(), Error> {
-        match self.context.lock() {
-            Ok(ctx) => {
-                if let Some(ctx) = &ctx.flow_ctrl {
-                    if ctx.block_size != 0 {
-                        if (*index + 1) == ctx.block_size as usize {
-                            *index = 0;
-                            self.state_append(State::WaitFlowCtrl);
-                        } else {
-                            *index += 1;
-                        }
-                    }
-                    thread::sleep(Duration::from_micros(ctx.st_min as u64));
+    async fn write_waiting(&self, index: &mut usize) -> Result<(), Error> {
+        if let Some(ctx) = &self.context.lock().await.flow_ctrl {
+            if ctx.block_size != 0 {
+                if (*index + 1) == ctx.block_size as usize {
+                    *index = 0;
+                    self.state_append(State::WaitFlowCtrl).await;
+                } else {
+                    *index += 1;
                 }
-
-                Ok(())
             }
-            Err(_) => {
-                rsutil::warn!("can't get `context`");
-                Err(Error::DeviceError)
-            }
-        }?;
+            sleep(Duration::from_micros(ctx.st_min as u64)).await;
+        }
 
         let start = Instant::now();
         loop {
-            if self.state_contains(State::Error) {
+            if self.state_contains(State::Error).await {
                 return Err(Error::DeviceError);
             }
 
-            if self.state_contains(State::Sending) {
+            if self.state_contains(State::Sending).await {
                 if start.elapsed() > Duration::from_millis(TIMEOUT_AS_ISO15765_2 as u64) {
                     return Err(Error::Timeout {
                         value: TIMEOUT_AS_ISO15765_2 as u64,
                         unit: "ms",
                     });
                 }
-            } else if self.state_contains(State::WaitBusy) {
-                let p2_star = match self.context.lock() {
-                    Ok(ctx) => ctx.p2.p2_star_ms(),
-                    Err(_) => DEFAULT_P2_START_MS,
-                };
+            } else if self.state_contains(State::WaitBusy).await {
+                let p2_star = self.context.lock().await.p2.p2_star_ms();
                 if start.elapsed() > Duration::from_millis(p2_star) {
                     return Err(Error::Timeout {
                         value: p2_star,
                         unit: "ms",
                     });
                 }
-            } else if self.state_contains(State::WaitFlowCtrl) {
+            } else if self.state_contains(State::WaitFlowCtrl).await {
                 if start.elapsed() > Duration::from_millis(TIMEOUT_CR_ISO15765_2 as u64) {
                     return Err(Error::Timeout {
                         value: TIMEOUT_CR_ISO15765_2 as u64,
@@ -253,69 +233,31 @@ impl<C: Clone, F: CanFrame<Channel = C>> CanIsoTp<C, F> {
         Ok(())
     }
 
-    fn append_consecutive(&self, sequence: u8, data: Vec<u8>) -> Result<Event, Error> {
-        match self.context.lock() {
-            Ok(mut context) => context.append_consecutive(sequence, data),
-            Err(_) => {
-                rsutil::warn!("can't get `context`");
-                Err(Error::DeviceError)
-            }
-        }
-    }
-
-    fn update_consecutive(&self, length: u32, data: Vec<u8>) {
-        if let Ok(mut context) = self.context.lock() {
-            context.update_consecutive(length, data);
-        }
-    }
-
-    fn context_reset(&self) {
-        if let Ok(mut context) = self.context.lock() {
-            context.reset();
-        };
+    #[inline]
+    async fn state_contains(&self, flags: State) -> bool {
+        let guard = self.state.lock().await;
+        *guard & flags != State::Idle
     }
 
     #[inline]
-    fn state_contains(&self, flags: State) -> bool {
-        match self.state.lock() {
-            Ok(v) => {
-                // rsutil::debug!("ISO-TP - current state(state contains): {} contains: {}", *v, flags);
-                *v & flags != State::Idle
-            }
-            Err(_) => {
-                rsutil::warn!("ISO-TP - state mutex is poisoned");
-                false
-            }
+    async fn state_append(&self, flags: State) {
+        let mut guard = self.state.lock().await;
+        if flags == State::Idle {
+            *guard = State::Idle;
+        } else if flags.contains(State::Error) {
+            *guard = State::Error;
+        } else {
+            *guard |= flags;
         }
+
+        rsutil::trace!("ISO-TP - current state(state append): {}", *guard);
     }
 
     #[inline]
-    fn state_append(&self, flags: State) {
-        match self.state.lock() {
-            Ok(mut v) => {
-                if flags == State::Idle {
-                    *v = State::Idle;
-                } else if flags.contains(State::Error) {
-                    *v = State::Error;
-                } else {
-                    *v |= flags;
-                }
-
-                rsutil::trace!("ISO-TP - current state(state append): {}", *v);
-            }
-            Err(_) => rsutil::warn!("ISO-TP - state mutex is poisoned when appending"),
-        }
-    }
-
-    #[inline]
-    fn state_remove(&self, flags: State) {
-        match self.state.lock() {
-            Ok(mut v) => {
-                v.remove(flags);
-                rsutil::trace!("ISO-TP - current state(state remove): {}", *v);
-            }
-            Err(_) => rsutil::warn!("ISO-TP - state mutex is poisoned when removing"),
-        }
+    async fn state_remove(&self, flags: State) {
+        let mut guard = self.state.lock().await;
+        guard.remove(flags);
+        rsutil::trace!("ISO-TP - current state(state remove): {}", *guard);
     }
 }
 
@@ -338,51 +280,44 @@ where
             return;
         }
 
-        if let Ok(address) = self.address.lock() {
-            if id == address.tx_id || id == address.fid {
-                self.state_remove(State::Sending);
-            }
+        let address = self.address.lock().await;
+        if id == address.tx_id || id == address.fid {
+            self.state_remove(State::Sending).await;
         }
     }
 
     async fn on_frame_received(&self, channel: C, frames: &[F]) {
-        if channel != self.channel || self.state_contains(State::Error) {
+        if channel != self.channel || self.state_contains(State::Error).await {
             return;
         }
 
-        let address_id = if let Ok(address) = self.address.lock() {
-            Some((address.tx_id, address.rx_id))
-        } else {
-            None
-        };
+        let address = self.address.lock().await;
 
-        if let Some(address) = address_id {
-            for frame in frames {
-                if frame.id().into_bits() == address.1 {
-                    rsutil::debug!("ISO-TP received: {}", frame);
+        for frame in frames {
+            if frame.id().into_bits() == address.rx_id {
+                rsutil::debug!("ISO-TP received: {}", frame);
 
-                    match Frame::decode(frame.data()) {
-                        Ok(frame) => match frame {
-                            Frame::SingleFrame { data } => {
-                                self.on_single_frame(data);
-                            }
-                            Frame::FirstFrame { length, data } => {
-                                self.on_first_frame(address.0, length, data);
-                            }
-                            Frame::ConsecutiveFrame { sequence, data } => {
-                                self.on_consecutive_frame(sequence, data);
-                            }
-                            Frame::FlowControlFrame(ctx) => {
-                                self.on_flow_ctrl_frame(ctx);
-                            }
-                        },
-                        Err(e) => {
-                            rsutil::warn!("ISO-TP - data convert to frame failed: {}", e);
-                            self.state_append(State::Error);
-                            self.iso_tp_event(Event::ErrorOccurred(e));
-
-                            break;
+                match Frame::decode(frame.data()) {
+                    Ok(frame) => match frame {
+                        Frame::SingleFrame { data } => {
+                            self.on_single_frame(data).await;
                         }
+                        Frame::FirstFrame { length, data } => {
+                            self.on_first_frame(address.tx_id, length, data).await;
+                        }
+                        Frame::ConsecutiveFrame { sequence, data } => {
+                            self.on_consecutive_frame(sequence, data).await;
+                        }
+                        Frame::FlowControlFrame(ctx) => {
+                            self.on_flow_ctrl_frame(ctx).await;
+                        }
+                    },
+                    Err(e) => {
+                        rsutil::warn!("ISO-TP - data convert to frame failed: {}", e);
+                        self.state_append(State::Error).await;
+                        self.iso_tp_event(Event::ErrorOccurred(e)).await;
+
+                        break;
                     }
                 }
             }

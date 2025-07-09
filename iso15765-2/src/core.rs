@@ -1,8 +1,8 @@
 #![allow(deprecated)]
-use bitflags::bitflags;
-use std::fmt::{Display, Formatter};
-
 use crate::error::Error;
+use bitflags::bitflags;
+use bytes::Bytes;
+use std::fmt::{Display, Formatter};
 
 bitflags! {
     /// ISO 15765-2 state.
@@ -108,14 +108,15 @@ impl Display for State {
 pub enum Event {
     Wait,
     FirstFrameReceived,
-    DataReceived(Vec<u8>),
+    DataReceived(Bytes),
     ErrorOccurred(Error),
 }
 
-pub trait EventListener {
-    fn buffer_data(&mut self) -> Option<Event>;
-    fn clear_buffer(&mut self);
-    fn on_iso_tp_event(&mut self, event: Event);
+#[async_trait::async_trait]
+pub trait EventListener: Send + Sync {
+    async fn buffer_data(&mut self) -> Option<Event>;
+    async fn clear_buffer(&mut self);
+    async fn on_iso_tp_event(&mut self, event: Event);
 }
 
 /// Flow control type define.
