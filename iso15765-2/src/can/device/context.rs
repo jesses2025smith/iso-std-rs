@@ -37,13 +37,17 @@ impl P2 {
     pub fn update(&mut self, p2_ms: u16, p2_star_ms: u32) {
         let p2_star = (p2_star_ms / 10) as u16;
         self.p2 = if p2_ms > P2_MAX { P2_MAX } else { p2_ms };
-        self.p2_star = if p2_star > P2_STAR_MAX { P2_STAR_MAX } else { p2_star };
+        self.p2_star = if p2_star > P2_STAR_MAX {
+            P2_STAR_MAX
+        } else {
+            p2_star
+        };
     }
 }
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct FlowCtrl {
-    pub(crate) st_min: u32,    // μs
+    pub(crate) st_min: u32, // μs
     pub(crate) block_size: u8,
 }
 
@@ -92,7 +96,11 @@ impl Context {
         self.consecutive.length = Some(length);
         self.consecutive.buffer.append(&mut data);
     }
-    pub(crate) fn append_consecutive(&mut self, sequence: u8, mut data: Vec<u8>) -> Result<Event, Error> {
+    pub(crate) fn append_consecutive(
+        &mut self,
+        sequence: u8,
+        mut data: Vec<u8>,
+    ) -> Result<Event, Error> {
         if self.consecutive.length.is_none() {
             return Err(Error::MixFramesError);
         }
@@ -102,11 +110,14 @@ impl Context {
                 ..=0x0E => v + 1,
                 _ => 0,
             },
-            None => CONSECUTIVE_SEQUENCE_START
+            None => CONSECUTIVE_SEQUENCE_START,
         };
         self.consecutive.sequence = Some(target);
         if sequence != target {
-            return Err(Error::InvalidSequence { expect: target, actual: sequence });
+            return Err(Error::InvalidSequence {
+                expect: target,
+                actual: sequence,
+            });
         }
 
         self.consecutive.buffer.append(&mut data);
@@ -117,8 +128,7 @@ impl Context {
             self.consecutive.buffer.resize(target_len, 0);
             let data = self.consecutive.buffer.clone();
             Ok(Event::DataReceived(data))
-        }
-        else {
+        } else {
             Ok(Event::Wait)
         }
     }

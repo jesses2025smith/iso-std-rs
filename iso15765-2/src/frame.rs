@@ -53,7 +53,7 @@ pub enum Frame {
     /// The ISO-TP consecutive frame.
     ConsecutiveFrame { sequence: u8, data: Vec<u8> },
     /// The ISO-TP flow control frame.
-    FlowControlFrame(FlowControlContext)
+    FlowControlFrame(FlowControlContext),
 }
 
 unsafe impl Send for Frame {}
@@ -70,7 +70,6 @@ impl From<&Frame> for FrameType {
 }
 
 impl Frame {
-
     /// Decode frame from origin data like `02 10 01`.
     ///
     /// # Parameters
@@ -89,27 +88,31 @@ impl Frame {
             3.. => {
                 let byte0 = data[0];
                 match FrameType::try_from(byte0)? {
-                    FrameType::Single => {   // Single frame
+                    FrameType::Single => {
+                        // Single frame
                         #[cfg(feature = "can")]
                         crate::can::standard::decode_single(data, byte0, length)
-                    },
-                    FrameType::First => {   // First frame
+                    }
+                    FrameType::First => {
+                        // First frame
                         #[cfg(feature = "can")]
                         crate::can::standard::decode_first(data, byte0, length)
-                    },
+                    }
                     FrameType::Consecutive => {
                         let sequence = byte0 & 0x0F;
-                        Ok(Self::ConsecutiveFrame { sequence, data: Vec::from(&data[1..]) })
-                    },
+                        Ok(Self::ConsecutiveFrame {
+                            sequence,
+                            data: Vec::from(&data[1..]),
+                        })
+                    }
                     FrameType::FlowControl => {
                         // let suppress_positive = (data1 & 0x80) == 0x80;
                         let state = FlowControlState::try_from(byte0 & 0x0F)?;
                         let fc = FlowControlContext::new(state, data[1], data[2])?;
                         Ok(Self::FlowControlFrame(fc))
-                    },
+                    }
                 }
-            }
-            // v => Err(IsoTpError::LengthOutOfRange(v)),
+            } // v => Err(IsoTpError::LengthOutOfRange(v)),
         }
     }
 
@@ -124,32 +127,36 @@ impl Frame {
     /// The encoded data.
     pub fn encode(self, padding: Option<u8>) -> Vec<u8> {
         match self {
-            Self::SingleFrame { data } => {
+            Self::SingleFrame { data } =>
+            {
                 #[cfg(feature = "can")]
                 crate::can::standard::encode_single(data, padding)
-            },
-            Self::FirstFrame { length, data } => {
+            }
+            Self::FirstFrame { length, data } =>
+            {
                 #[cfg(feature = "can")]
                 crate::can::standard::encode_first(length, data)
-            },
+            }
             Self::ConsecutiveFrame { sequence, mut data } => {
                 let mut result = vec![FrameType::Consecutive as u8 | sequence];
                 result.append(&mut data);
                 #[cfg(feature = "can")]
-                result.resize(rs_can::MAX_FRAME_SIZE, padding.unwrap_or(rs_can::DEFAULT_PADDING));
+                result.resize(
+                    rs_can::MAX_FRAME_SIZE,
+                    padding.unwrap_or(rs_can::DEFAULT_PADDING),
+                );
                 result
-            },
+            }
             Self::FlowControlFrame(context) => {
                 let byte0_h: u8 = FrameType::FlowControl.into();
                 let byte0_l: u8 = context.state().into();
-                let mut result = vec![
-                    byte0_h | byte0_l,
-                    context.block_size(),
-                    context.st_min(),
-                ];
-                result.resize(rs_can::MAX_FRAME_SIZE, padding.unwrap_or(rs_can::DEFAULT_PADDING));
+                let mut result = vec![byte0_h | byte0_l, context.block_size(), context.st_min()];
+                result.resize(
+                    rs_can::MAX_FRAME_SIZE,
+                    padding.unwrap_or(rs_can::DEFAULT_PADDING),
+                );
                 result
-            },
+            }
         }
     }
 
@@ -197,13 +204,14 @@ impl Frame {
     ///
     /// A new `FlowControlFrame` if parameters are valid.
     #[inline]
-    pub fn flow_ctrl_frame(state: FlowControlState,
-                           block_size: u8,
-                           st_min: u8,
+    pub fn flow_ctrl_frame(
+        state: FlowControlState,
+        block_size: u8,
+        st_min: u8,
     ) -> Result<Self, Error> {
-        Ok(Self::FlowControlFrame(
-            FlowControlContext::new(state, block_size, st_min)?
-        ))
+        Ok(Self::FlowControlFrame(FlowControlContext::new(
+            state, block_size, st_min,
+        )?))
     }
 
     #[inline]
@@ -211,8 +219,8 @@ impl Frame {
         Self::flow_ctrl_frame(
             FlowControlState::Continues,
             DEFAULT_BLOCK_SIZE,
-            DEFAULT_ST_MIN
+            DEFAULT_ST_MIN,
         )
-            .unwrap()
+        .unwrap()
     }
 }

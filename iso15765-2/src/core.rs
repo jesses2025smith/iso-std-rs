@@ -1,6 +1,6 @@
 #![allow(deprecated)]
-use std::fmt::{Display, Formatter};
 use bitflags::bitflags;
+use std::fmt::{Display, Formatter};
 
 use crate::error::Error;
 
@@ -35,37 +35,65 @@ impl Display for State {
             first = false;
         }
         if self.contains(State::WaitFirst) {
-            write!(f, "{}", format_args!("{}WaitFirst", if first { "" } else { " | " }))?;
+            write!(
+                f,
+                "{}",
+                format_args!("{}WaitFirst", if first { "" } else { " | " })
+            )?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitFlowCtrl) {
-            write!(f, "{}", format_args!("{}WaitFlowCtrl", if first { "" } else { " | " }))?;
+            write!(
+                f,
+                "{}",
+                format_args!("{}WaitFlowCtrl", if first { "" } else { " | " })
+            )?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitData) {
-            write!(f, "{}", format_args!("{}WaitData", if first { "" } else { " | " }))?;
+            write!(
+                f,
+                "{}",
+                format_args!("{}WaitData", if first { "" } else { " | " })
+            )?;
             idle = false;
             first = false;
         }
         if self.contains(State::WaitBusy) {
-            write!(f, "{}", format_args!("{}WaitBusy", if first { "" } else { " | " }))?;
+            write!(
+                f,
+                "{}",
+                format_args!("{}WaitBusy", if first { "" } else { " | " })
+            )?;
             idle = false;
             first = false;
         }
         if self.contains(State::ResponsePending) {
-            write!(f, "{}", format_args!("{}ResponsePending", if first { "" } else { " | " }))?;
+            write!(
+                f,
+                "{}",
+                format_args!("{}ResponsePending", if first { "" } else { " | " })
+            )?;
             idle = false;
             first = false;
         }
         if self.contains(State::Sending) {
-            write!(f, "{}", format_args!("{}Sending", if first { "" } else { " | " }))?;
+            write!(
+                f,
+                "{}",
+                format_args!("{}Sending", if first { "" } else { " | " })
+            )?;
             idle = false;
             first = false;
         }
         if self.contains(State::Error) {
-            write!(f, "{}", format_args!("{}Error", if first { "" } else { " | " }))?;
+            write!(
+                f,
+                "{}",
+                format_args!("{}Error", if first { "" } else { " | " })
+            )?;
             idle = false;
         }
         if idle {
@@ -136,15 +164,14 @@ pub struct FlowControlContext {
 
 impl FlowControlContext {
     #[inline]
-    pub fn new(
-        state: FlowControlState,
-        block_size: u8,
-        st_min: u8,
-    ) -> Result<Self, Error> {
+    pub fn new(state: FlowControlState, block_size: u8, st_min: u8) -> Result<Self, Error> {
         match st_min {
-            0x80..=0xF0 |
-            0xFA..=0xFF => Err(Error::InvalidStMin(st_min)),
-            v => Ok(Self { state, block_size, st_min: v }),
+            0x80..=0xF0 | 0xFA..=0xFF => Err(Error::InvalidStMin(st_min)),
+            v => Ok(Self {
+                state,
+                block_size,
+                st_min: v,
+            }),
         }
     }
     #[inline]
@@ -164,13 +191,12 @@ impl FlowControlContext {
         match self.st_min {
             // 0x00 => 1000 * 10,
             ..=0x7F => 1000 * (self.st_min as u32),
-            0x80..=0xF0 |
-            0xFA..=0xFF => {
+            0x80..=0xF0 | 0xFA..=0xFF => {
                 // should not enter
                 let message = format!("ISO 15765-2 - got an invalid st_min: {}", self.st_min);
                 rsutil::error!("{}", message);
-                unreachable!("{}", message)   // panic is dangerous
-            },
+                unreachable!("{}", message) // panic is dangerous
+            }
             0xF1..=0xF9 => 100 * (self.st_min & 0x0F) as u32,
         }
     }

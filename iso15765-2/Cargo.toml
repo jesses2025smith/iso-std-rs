@@ -15,11 +15,13 @@ keywords = [
 ]
 
 [dependencies]
+async-trait = { workspace = true }
 bitflags = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
 rsutil = { workspace = true, features = ["log"] }
 thiserror = { workspace = true }
+tokio = { workspace = true, features = ["rt", "sync", "time"] }
 
 [dependencies.rs-can]
 workspace = true
