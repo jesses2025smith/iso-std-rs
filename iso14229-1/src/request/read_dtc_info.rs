@@ -6,13 +6,13 @@ use crate::{
     utils, DTCReportType, Iso14229Error, RequestData, Service,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DTCExtDataRecord {
     pub number: u8,
     pub data: Vec<u8>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum DTCInfo {
     ReportNumberOfDTCByStatusMask(u8), // 0x01
     ReportDTCByStatusMask(u8),         // 0x02

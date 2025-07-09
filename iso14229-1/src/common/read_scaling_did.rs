@@ -3,7 +3,7 @@
 use crate::{utils, Iso14229Error};
 
 /// see `ISO-14229(2020) Table C.8(page#429)`
-#[derive(Debug, Clone, Eq)]
+#[derive(Debug, Copy, Clone, Eq)]
 pub struct ScalingByteExtensionUnit {
     id: u8,
     pub name: &'static str,

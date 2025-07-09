@@ -7,7 +7,7 @@ use crate::Iso14229Error;
 /// ⎯ bit 3 - 0: reserved by document, to be set to 0 hex.
 /// The format of this parameter is compatible to the format of the addressAndLengthFormatIdentifier parameter contained
 /// in the request message, except that the lower nibble has to be set to 0 hex.
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub struct LengthFormatIdentifier(pub(crate) u8);
 
 impl LengthFormatIdentifier {
@@ -48,7 +48,7 @@ impl TryFrom<u8> for LengthFormatIdentifier {
 }
 
 /// Defined by the vehicle manufacturer
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub struct DataFormatIdentifier(pub(crate) u8);
 
 impl DataFormatIdentifier {
@@ -83,7 +83,7 @@ impl From<DataFormatIdentifier> for u8 {
 /// This parameter is a one Byte value with each nibble encoded separately (see Table H.1 for example values):
 /// — bit 7 - 4: Length (number of bytes) of the memorySize parameter
 /// — bit 3 - 0: Length (number of bytes) of the memoryAddress parameter
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct AddressAndLengthFormatIdentifier(u8);
 
 impl AddressAndLengthFormatIdentifier {

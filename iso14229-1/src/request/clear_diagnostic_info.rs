@@ -6,7 +6,7 @@ use crate::{
     utils, Iso14229Error, RequestData, Service,
 };
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ClearDiagnosticInfo {
     group: utils::U24,
     #[cfg(any(feature = "std2020"))]

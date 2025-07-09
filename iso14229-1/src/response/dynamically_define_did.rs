@@ -16,7 +16,7 @@ pub static DYNAMICAL_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
     ])
 });
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct DynamicallyDefineDID(pub Option<DynamicallyDID>);
 
 impl From<DynamicallyDefineDID> for Vec<u8> {

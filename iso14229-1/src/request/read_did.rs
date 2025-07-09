@@ -5,7 +5,7 @@ use crate::{
     utils, DataIdentifier, Iso14229Error, RequestData, Service,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadDID {
     pub did: DataIdentifier,
     pub others: Vec<DataIdentifier>,

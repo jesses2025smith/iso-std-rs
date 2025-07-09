@@ -13,7 +13,7 @@ pub static TESTER_PRESENT_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| 
     ])
 });
 
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct TesterPresent {
     pub data: Vec<u8>, // should emtpy
 }

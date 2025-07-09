@@ -74,7 +74,7 @@ impl From<NullableData> for Vec<u8> {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct AlgorithmIndicator(pub [u8; ALGORITHM_INDICATOR_LENGTH]);
 
 impl From<AlgorithmIndicator> for Vec<u8> {

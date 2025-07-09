@@ -19,7 +19,7 @@ pub static TRANSFER_DATA_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
     ])
 });
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TransferData {
     pub sequence: u8,
     pub data: Vec<u8>,

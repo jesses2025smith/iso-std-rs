@@ -77,7 +77,7 @@ impl Localization {
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum EventTypeParameter {
     StopResponseOnEvent = 0x00,
     OnDTCStatusChange {
@@ -112,7 +112,7 @@ pub enum EventTypeParameter {
     } = 0x09, // C2
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct ResponseOnEvent {
     pub window_time: u8, // unit of window time is `s`(seconds)
     pub param: EventTypeParameter,

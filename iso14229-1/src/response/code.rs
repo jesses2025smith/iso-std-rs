@@ -1,7 +1,7 @@
 //! response code enum
 
 #[repr(u8)]
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq, Hash)]
 pub enum Code {
     #[default]
     Positive = 0x00,

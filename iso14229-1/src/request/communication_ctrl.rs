@@ -25,7 +25,7 @@ impl From<NodeId> for u16 {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct CommunicationCtrl {
     pub comm_type: CommunicationType,
     pub node_id: Option<NodeId>,

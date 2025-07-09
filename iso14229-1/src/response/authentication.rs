@@ -33,7 +33,7 @@ pub static AUTH_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
 
 /// Table B.5 — authenticationReturnParameter definitions
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum AuthReturnValue {
     RequestAccepted = 0x00,
     GeneralReject = 0x01,

@@ -41,7 +41,7 @@ impl From<DynamicallyDID> for Vec<u8> {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct DynamicallyMemAddr {
     pub did: u16,
     pub position: u8,

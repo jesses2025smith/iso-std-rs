@@ -149,7 +149,7 @@ impl Into<u8> for SubFunction {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Response {
     service: Service,
     negative: bool,

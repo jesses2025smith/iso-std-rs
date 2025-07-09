@@ -81,7 +81,7 @@ If the modeOfOperation parameter equals to 01 (AddFile), 02 (DeleteFile), 03 (Re
 or 05 (ReadDir) this parameter shall not be included in the request.
 */
 // filePosition
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum RequestFileTransfer {
     AddFile {
         // 1 modeOfOperation

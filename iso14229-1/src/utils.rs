@@ -1,6 +1,6 @@
 use crate::{Iso14229Error, SUPPRESS_POSITIVE};
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct U24(pub(crate) u32);
 
 impl U24 {

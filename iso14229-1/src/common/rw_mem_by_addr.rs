@@ -2,7 +2,7 @@
 
 use crate::{utils, AddressAndLengthFormatIdentifier, Iso14229Error};
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct MemoryLocation {
     alfi: AddressAndLengthFormatIdentifier,
     mem_addr: u128,

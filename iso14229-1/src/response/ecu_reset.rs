@@ -17,7 +17,7 @@ pub static ECU_RESET_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
 });
 
 /// only sub-function is 0x04
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ECUReset {
     pub second: Option<u8>,
 }

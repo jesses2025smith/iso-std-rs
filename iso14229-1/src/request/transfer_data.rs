@@ -5,7 +5,7 @@ use crate::{
     utils, Iso14229Error, RequestData, Service, SessionType,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TransferData {
     pub sequence: u8,
     pub data: Vec<u8>,

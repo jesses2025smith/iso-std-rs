@@ -5,7 +5,7 @@ use crate::{
     utils, Iso14229Error, RequestData, RoutineCtrlType, RoutineId, Service,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RoutineCtrl {
     pub routine_id: RoutineId,
     pub option_record: Vec<u8>,

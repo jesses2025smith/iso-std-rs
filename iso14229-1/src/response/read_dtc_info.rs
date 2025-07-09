@@ -27,7 +27,7 @@ rsutil::enum_extend!(
     ReservedError
 );
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct DTCAndStatusRecord {
     // 0x02 0x0A 0x0B 0x0C 0x0D 0x0E 0x15 0x17 0x1A 0x55 0x56
     pub dtc: utils::U24,

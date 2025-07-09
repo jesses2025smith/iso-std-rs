@@ -18,7 +18,7 @@ pub static REQUEST_DOWNLOAD_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|
     ])
 });
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct RequestDownload {
     pub lfi: LengthFormatIdentifier,
     pub max_num_of_block_len: u128,

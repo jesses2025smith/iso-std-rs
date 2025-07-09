@@ -16,7 +16,7 @@ pub static SESSION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
     ])
 });
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SessionTiming {
     pub p2: u16,
     pub p2_star: u16,

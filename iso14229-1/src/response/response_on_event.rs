@@ -12,7 +12,7 @@ pub static RESPONSE_ON_EVENT_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(
     ])
 });
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ResponseOnEvent {
     pub data: Vec<u8>,
 }

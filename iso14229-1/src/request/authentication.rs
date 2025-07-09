@@ -7,7 +7,7 @@ use crate::{
     Service,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Authentication {
     DeAuthenticate, // 0x00
     VerifyCertificateUnidirectional {

@@ -13,7 +13,7 @@ pub static READ_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
     ])
 });
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadDID {
     pub data: DIDData,
     pub others: Vec<DIDData>,

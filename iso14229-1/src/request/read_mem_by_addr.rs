@@ -5,7 +5,7 @@ use crate::{
     utils, Iso14229Error, MemoryLocation, RequestData, Service,
 };
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ReadMemByAddr(pub MemoryLocation);
 
 impl From<ReadMemByAddr> for Vec<u8> {

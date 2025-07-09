@@ -112,7 +112,7 @@ impl From<SubFunction> for u8 {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Request {
     pub(crate) service: Service,
     pub(crate) sub_func: Option<SubFunction>,

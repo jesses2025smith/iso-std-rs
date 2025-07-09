@@ -6,7 +6,7 @@ use crate::{
     Service,
 };
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct RequestUpload {
     pub dfi: DataFormatIdentifier,
     pub mem_loc: MemoryLocation,

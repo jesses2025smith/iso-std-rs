@@ -111,14 +111,14 @@ impl TwoByteRealNumber {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ScalingByteData {
     pub byte_type: ScalingByteType,
     pub byte_len: u8,
     pub extensions: Vec<u8>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadScalingDID {
     pub did: DataIdentifier,
     pub data: ScalingByteData,
