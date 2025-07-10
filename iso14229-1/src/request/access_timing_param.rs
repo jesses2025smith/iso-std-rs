@@ -1,10 +1,6 @@
 //! request of Service 83
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, RequestData, Service, TimingParameterAccessType,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, RequestData, Service, TimingParameterAccessType};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AccessTimingParameter {
@@ -18,7 +14,7 @@ impl From<AccessTimingParameter> for Vec<u8> {
 }
 
 impl RequestData for AccessTimingParameter {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -52,15 +48,18 @@ impl RequestData for AccessTimingParameter {
             None => Err(Error::SubFunctionError(Service::AccessTimingParam)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::AccessTimingParam || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for AccessTimingParameter {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::AccessTimingParam || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
         Ok(Self {
-            data: request.data.clone(),
+            data: req.data.clone(),
         })
     }
 }

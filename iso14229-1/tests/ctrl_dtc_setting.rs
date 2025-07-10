@@ -12,14 +12,14 @@ mod tests {
         let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(sub_func.function::<DTCSettingType>()?, DTCSettingType::On);
-        let data = request.data::<request::CtrlDTCSetting>()?;
+        let data = request.data::<request::CtrlDTCSetting>(&cfg)?;
         assert_eq!(data, request::CtrlDTCSetting { data: vec![0x00] });
 
         let source = hex::decode("8502")?;
         let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(sub_func.function::<DTCSettingType>()?, DTCSettingType::Off);
-        let data = request.data::<request::CtrlDTCSetting>()?;
+        let data = request.data::<request::CtrlDTCSetting>(&cfg)?;
         assert_eq!(data, request::CtrlDTCSetting { data: vec![] });
 
         Ok(())

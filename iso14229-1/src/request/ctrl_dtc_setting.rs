@@ -1,10 +1,6 @@
 //! request of Service 85
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, DTCSettingType, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DTCSettingType, DidConfig, RequestData, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CtrlDTCSetting {
@@ -18,7 +14,8 @@ impl From<CtrlDTCSetting> for Vec<u8> {
 }
 
 impl RequestData for CtrlDTCSetting {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -33,16 +30,19 @@ impl RequestData for CtrlDTCSetting {
             None => Err(Error::SubFunctionError(Service::CtrlDTCSetting)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service;
-        if service != Service::CtrlDTCSetting || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for CtrlDTCSetting {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service;
+        if service != Service::CtrlDTCSetting || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
         // let sub_func: DTCSettingType = request.sub_function().unwrap().function()?;
         Ok(Self {
-            data: request.data.clone(),
+            data: req.data.clone(),
         })
     }
 }

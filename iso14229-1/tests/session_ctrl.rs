@@ -46,7 +46,7 @@ mod tests {
         assert_eq!(sub_func.function::<SessionType>()?, SessionType::Extended);
         assert!(!response.is_negative());
 
-        let session = response.data::<response::SessionCtrl>()?;
+        let session = response.data::<response::SessionCtrl>(&cfg)?;
         assert_eq!(session.0.p2, 50);
         assert_eq!(session.0.p2_star, P2_STAR_MAX);
 

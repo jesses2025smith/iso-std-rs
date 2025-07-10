@@ -11,7 +11,7 @@ mod tests {
         let source = hex::decode("22F190F180")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::ReadDID>()?;
+        let data = request.data::<request::ReadDID>(&cfg)?;
         assert_eq!(data.did, DataIdentifier::VIN);
         assert_eq!(
             data.others,
@@ -24,7 +24,7 @@ mod tests {
         )?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::ReadDID>()?;
+        let data = request.data::<request::ReadDID>(&cfg)?;
         assert_eq!(data.did, DataIdentifier::VIN);
         assert_eq!(
             data.others,
@@ -58,7 +58,7 @@ mod tests {
         )?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data_with_config::<response::ReadDID>(&cfg)?;
+        let data = response.data::<response::ReadDID>(&cfg)?;
         assert_eq!(
             data.data,
             DIDData {
@@ -111,7 +111,7 @@ mod tests {
         let source = hex::decode("2ef1904441564443313030394e544c5036313338")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::WriteDID>()?;
+        let data = request.data::<request::WriteDID>(&cfg)?;
         assert_eq!(
             data.0,
             DIDData {
@@ -130,7 +130,7 @@ mod tests {
         let source = hex::decode("6EF190")?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::WriteDID>()?;
+        let data = response.data::<response::WriteDID>(&cfg)?;
         assert_eq!(data.0, DataIdentifier::VIN);
 
         Ok(())

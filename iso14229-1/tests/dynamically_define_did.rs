@@ -17,7 +17,7 @@ mod tests {
             sub_func.function::<DefinitionType>()?,
             DefinitionType::DefineByIdentifier
         );
-        let data = request.data::<request::DynamicallyDefineDID>()?;
+        let data = request.data::<request::DynamicallyDefineDID>(&cfg)?;
         match data {
             request::DynamicallyDefineDID::DefineByIdentifier {
                 did,
@@ -59,7 +59,7 @@ mod tests {
             sub_func.function::<DefinitionType>()?,
             DefinitionType::DefineByMemoryAddress
         );
-        let data = request.data::<request::DynamicallyDefineDID>()?;
+        let data = request.data::<request::DynamicallyDefineDID>(&cfg)?;
         match data {
             request::DynamicallyDefineDID::DefineByMemoryAddress {
                 did,
@@ -83,7 +83,7 @@ mod tests {
             sub_func.function::<DefinitionType>()?,
             DefinitionType::ClearDynamicallyDefinedDataIdentifier
         );
-        let data = request.data::<request::DynamicallyDefineDID>()?;
+        let data = request.data::<request::DynamicallyDefineDID>(&cfg)?;
         match data {
             request::DynamicallyDefineDID::ClearDynamicallyDefinedDataIdentifier(v) => {
                 assert_eq!(v, Some(DynamicallyDID::try_from(0xF302)?))
@@ -105,7 +105,7 @@ mod tests {
             sub_func.function::<DefinitionType>()?,
             DefinitionType::DefineByIdentifier
         );
-        let data = response.data::<response::DynamicallyDefineDID>()?;
+        let data = response.data::<response::DynamicallyDefineDID>(&cfg)?;
         assert_eq!(
             data,
             response::DynamicallyDefineDID(Some(DynamicallyDID::try_from(0xF302)?))

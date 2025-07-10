@@ -100,57 +100,19 @@ impl Display for Service {
 
 pub type DidConfig = HashMap<DataIdentifier, usize>;
 
-#[allow(unused)]
-pub trait RequestData: Into<Vec<u8>> {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<request::Request, error::Error> {
-        Err(error::Error::NotImplement)
-    }
-    fn with_config(
-        data: &[u8],
+pub trait RequestData: Into<Vec<u8>> + for<'a> TryFrom<(&'a request::Request, &'a DidConfig), Error = error::Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
         sub_func: Option<u8>,
         cfg: &DidConfig,
-    ) -> Result<request::Request, error::Error> {
-        Err(error::Error::NotImplement)
-    }
-    fn try_without_config(request: &request::Request) -> Result<Self, error::Error>
-    where
-        Self: Sized,
-    {
-        Err(error::Error::NotImplement)
-    }
-    fn try_with_config(request: &request::Request, cfg: &DidConfig) -> Result<Self, error::Error>
-    where
-        Self: Sized,
-    {
-        Err(error::Error::NotImplement)
-    }
+    ) -> Result<request::Request, error::Error>;
 }
 
-#[allow(unused)]
-pub trait ResponseData: Into<Vec<u8>> {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<response::Response, error::Error> {
-        Err(error::Error::NotImplement)
-    }
-    fn with_config(
-        data: &[u8],
+// TryFrom<(T, &DidConfig)>
+pub trait ResponseData: Into<Vec<u8>> + for<'a> TryFrom<(&'a response::Response, &'a DidConfig), Error = error::Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
         sub_func: Option<u8>,
         cfg: &DidConfig,
-    ) -> Result<response::Response, error::Error> {
-        Err(error::Error::NotImplement)
-    }
-    fn try_without_config(response: &response::Response) -> Result<Self, error::Error>
-    where
-        Self: Sized,
-    {
-        Err(error::Error::NotImplement)
-    }
-    fn try_with_config(response: &response::Response, cfg: &DidConfig) -> Result<Self, error::Error>
-    where
-        Self: Sized,
-    {
-        Err(error::Error::NotImplement)
-    }
+    ) -> Result<response::Response, error::Error>;
 }

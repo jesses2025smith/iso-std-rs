@@ -1,11 +1,7 @@
 //! request of Service 19
 #![allow(clippy::non_minimal_cfg)]
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, DTCReportType, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DTCReportType, DidConfig, RequestData, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct DTCExtDataRecord {
@@ -239,7 +235,8 @@ impl From<DTCInfo> for Vec<u8> {
 }
 
 impl RequestData for DTCInfo {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -357,16 +354,19 @@ impl RequestData for DTCInfo {
             None => Err(Error::SubFunctionError(Service::ReadDTCInfo)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::ReadDTCInfo || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for DTCInfo {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::ReadDTCInfo || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
-        let sub_func: DTCReportType = request.sub_function().unwrap().function()?;
+        let sub_func: DTCReportType = req.sub_function().unwrap().function()?;
 
-        let data = &request.data;
+        let data = &req.data;
         let mut offset = 0;
         match sub_func {
             DTCReportType::ReportNumberOfDTCByStatusMask => {

@@ -36,7 +36,8 @@ impl From<ReadDID> for Vec<u8> {
 }
 
 impl ResponseData for ReadDID {
-    fn with_config(data: &[u8], sub_func: Option<u8>, cfg: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, cfg: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ReadDID)),
             None => {
@@ -69,14 +70,17 @@ impl ResponseData for ReadDID {
             }
         }
     }
+}
 
-    fn try_with_config(response: &Response, cfg: &DidConfig) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::ReadDID || response.sub_func.is_some() {
+impl TryFrom<(&Response, &DidConfig)> for ReadDID {
+    type Error = Error;
+    fn try_from((resp, cfg): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::ReadDID || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &resp.data;
         let data_len = data.len();
         let mut offset = 0;
 

@@ -1,10 +1,6 @@
 //! response of Service 11
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, ECUResetType, ResponseData, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, ECUResetType, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static ECU_RESET_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -33,7 +29,8 @@ impl From<ECUReset> for Vec<u8> {
 }
 
 impl ResponseData for ECUReset {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let data_len = data.len();
@@ -54,15 +51,18 @@ impl ResponseData for ECUReset {
             None => Err(Error::SubFunctionError(Service::ECUReset)),
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::ECUReset || response.sub_func.is_none() {
+impl TryFrom<(&Response, &DidConfig)> for ECUReset {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::ECUReset || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
-        let sub_func: ECUResetType = response.sub_function().unwrap().function()?;
-        let data = &response.data;
+        let sub_func: ECUResetType = resp.sub_function().unwrap().function()?;
+        let data = &resp.data;
         let second = match sub_func {
             ECUResetType::EnableRapidPowerShutDown => Some(data[0]),
             _ => None,

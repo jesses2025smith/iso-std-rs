@@ -11,7 +11,7 @@ mod tests {
         let source = hex::decode("84006100000601242EF123AA55DBD10EDC55AA")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::SecuredDataTrans>()?;
+        let data = request.data::<request::SecuredDataTrans>(&cfg)?;
         assert!(data.apar.is_signed());
         assert!(data.apar.is_signature_on_response());
         assert_eq!(
@@ -33,7 +33,7 @@ mod tests {
         let source = hex::decode("C4002000000601246EF123FEDB910EDCFF")?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::SecuredDataTrans>()?;
+        let data = response.data::<response::SecuredDataTrans>(&cfg)?;
         match data {
             response::SecuredDataTrans::Successful(v) => {
                 assert!(v.apar.is_signed());
@@ -52,7 +52,7 @@ mod tests {
         let source = hex::decode("C4002000000601367F2E13FEC9A180ECFF")?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::SecuredDataTrans>()?;
+        let data = response.data::<response::SecuredDataTrans>(&cfg)?;
         match data {
             response::SecuredDataTrans::Unsuccessful(v) => {
                 assert!(v.apar.is_signed());

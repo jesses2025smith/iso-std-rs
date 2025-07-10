@@ -1,11 +1,7 @@
 //! request of Service 14
 #![allow(clippy::non_minimal_cfg)]
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, RequestData, Service};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ClearDiagnosticInfo {
@@ -50,7 +46,8 @@ impl From<ClearDiagnosticInfo> for Vec<u8> {
 
 impl RequestData for ClearDiagnosticInfo {
     #[inline]
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ClearDiagnosticInfo)),
             None => {
@@ -68,14 +65,18 @@ impl RequestData for ClearDiagnosticInfo {
         }
     }
 
+}
+
+impl TryFrom<(&Request, &DidConfig)> for ClearDiagnosticInfo {
+    type Error = Error;
     #[cfg(any(feature = "std2020"))]
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::ClearDiagnosticInfo || request.sub_func.is_some() {
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::ClearDiagnosticInfo || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let data_len = data.len();
         let mut offset = 0;
         let group = utils::U24::from_be_bytes([data[offset], data[offset + 1], data[offset + 2]]);
@@ -92,13 +93,13 @@ impl RequestData for ClearDiagnosticInfo {
     }
 
     #[cfg(any(feature = "std2006", feature = "std2013"))]
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::ClearDiagnosticInfo || request.sub_func.is_some() {
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::ClearDiagnosticInfo || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let group = utils::U24::from_be_bytes([data[0], data[1], data[2]]);
 
         Ok(Self::new(group))

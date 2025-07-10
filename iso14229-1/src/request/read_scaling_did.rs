@@ -1,10 +1,6 @@
 //! request of Service 24
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, DataIdentifier, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DataIdentifier, DidConfig, RequestData, Service};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ReadScalingDID(pub DataIdentifier);
@@ -17,7 +13,8 @@ impl From<ReadScalingDID> for Vec<u8> {
 }
 
 impl RequestData for ReadScalingDID {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ReadScalingDID)),
             None => {
@@ -31,14 +28,17 @@ impl RequestData for ReadScalingDID {
             }
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::ReadScalingDID || request.sub_func.is_some() {
+impl TryFrom<(&Request, &DidConfig)> for ReadScalingDID {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<ReadScalingDID, Error> {
+        let service = req.service();
+        if service != Service::ReadScalingDID || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let did = DataIdentifier::from(u16::from_be_bytes([data[0], data[1]]));
 
         Ok(Self(did))

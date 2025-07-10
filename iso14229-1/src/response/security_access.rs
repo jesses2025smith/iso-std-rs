@@ -1,10 +1,6 @@
 //! response of Service 27
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    ResponseData, SecurityAccessLevel, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, DidConfig, ResponseData, SecurityAccessLevel, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static SECURITY_ACCESS_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -32,7 +28,8 @@ impl From<SecurityAccess> for Vec<u8> {
 }
 
 impl ResponseData for SecurityAccess {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(level) => {
                 if level % 2 != 0 && data.is_empty() {
@@ -51,15 +48,18 @@ impl ResponseData for SecurityAccess {
             None => Err(Error::SubFunctionError(Service::SecurityAccess)),
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::SecurityAccess || response.sub_func.is_none() {
+impl TryFrom<(&Response, &DidConfig)> for SecurityAccess {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::SecurityAccess || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
         Ok(Self {
-            key: response.data.clone(),
+            key: resp.data.clone(),
         })
     }
 }

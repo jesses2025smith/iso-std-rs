@@ -1,10 +1,6 @@
 //! response of Service 34
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, LengthFormatIdentifier, ResponseData, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, LengthFormatIdentifier, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static REQUEST_DOWNLOAD_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -55,7 +51,8 @@ impl From<RequestDownload> for Vec<u8> {
 }
 
 impl ResponseData for RequestDownload {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::RequestDownload)),
             None => {
@@ -70,14 +67,17 @@ impl ResponseData for RequestDownload {
             }
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::RequestDownload || response.sub_func.is_some() {
+impl TryFrom<(&Response, &DidConfig)> for RequestDownload {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::RequestDownload || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &resp.data;
         let mut offset = 0;
         utils::data_length_check(data.len(), 1, false)?;
         let lfi = LengthFormatIdentifier::try_from(data[offset])?;

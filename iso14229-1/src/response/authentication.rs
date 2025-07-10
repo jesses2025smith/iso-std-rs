@@ -1,11 +1,7 @@
 //! response of Service 29
 
 use crate::response::{Response, SubFunction};
-use crate::{
-    error::Error, parse_algo_indicator, parse_not_nullable, parse_nullable, response::Code, utils,
-    AlgorithmIndicator, AuthenticationTask, NotNullableData, NullableData, ResponseData, Service,
-    ALGORITHM_INDICATOR_LENGTH,
-};
+use crate::{error::Error, parse_algo_indicator, parse_not_nullable, parse_nullable, response::Code, utils, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData, NullableData, ResponseData, Service, ALGORITHM_INDICATOR_LENGTH};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static AUTH_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -206,7 +202,8 @@ impl From<Authentication> for Vec<u8> {
 }
 
 impl ResponseData for Authentication {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let data_len = data.len();
@@ -250,15 +247,18 @@ impl ResponseData for Authentication {
             None => Err(Error::SubFunctionError(Service::Authentication)),
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service;
-        if service != Service::Authentication || response.sub_func.is_none() {
+impl TryFrom<(&Response, &DidConfig)> for Authentication {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service;
+        if service != Service::Authentication || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
-        let sub_func: AuthenticationTask = response.sub_function().unwrap().function()?;
+        let sub_func: AuthenticationTask = resp.sub_function().unwrap().function()?;
 
-        let data = &response.data;
+        let data = &resp.data;
         let data_len = data.len();
         let mut offset = 0;
         let value = AuthReturnValue::from(data[offset]);

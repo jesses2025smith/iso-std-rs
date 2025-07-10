@@ -11,13 +11,13 @@ mod tests {
         let source = hex::decode("37")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::RequestTransferExit>()?;
+        let data = request.data::<request::RequestTransferExit>(&cfg)?;
         assert_eq!(data.data, vec![]);
 
         let source = hex::decode("3701")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::RequestTransferExit>()?;
+        let data = request.data::<request::RequestTransferExit>(&cfg)?;
         assert_eq!(data.data, vec![0x01]);
 
         Ok(())
@@ -30,13 +30,13 @@ mod tests {
         let source = hex::decode("77")?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::RequestTransferExit>()?;
+        let data = response.data::<response::RequestTransferExit>(&cfg)?;
         assert_eq!(data.data, vec![]);
 
         let source = hex::decode("7701")?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::RequestTransferExit>()?;
+        let data = response.data::<response::RequestTransferExit>(&cfg)?;
         assert_eq!(data.data, vec![0x01]);
 
         Ok(())

@@ -1,10 +1,6 @@
 //! response of Service 23
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    ResponseData, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, DidConfig, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static READ_MEM_BY_ADDR_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -29,7 +25,8 @@ impl From<ReadMemByAddr> for Vec<u8> {
 }
 
 impl ResponseData for ReadMemByAddr {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ReadMemByAddr)),
             None => Ok(Response {
@@ -40,15 +37,18 @@ impl ResponseData for ReadMemByAddr {
             }),
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::ReadMemByAddr || response.sub_func.is_some() {
+impl TryFrom<(&Response, &DidConfig)> for ReadMemByAddr {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::ReadMemByAddr || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
         Ok(Self {
-            data: response.data.clone(),
+            data: resp.data.clone(),
         })
     }
 }

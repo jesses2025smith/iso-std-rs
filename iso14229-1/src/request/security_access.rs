@@ -1,10 +1,6 @@
 //! request of Service 27
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    RequestData, SecurityAccessLevel, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, DidConfig, RequestData, SecurityAccessLevel, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityAccess {
@@ -18,7 +14,8 @@ impl From<SecurityAccess> for Vec<u8> {
 }
 
 impl RequestData for SecurityAccess {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(level) => Ok(Request {
                 service: Service::SecurityAccess,
@@ -28,15 +25,18 @@ impl RequestData for SecurityAccess {
             None => Err(Error::SubFunctionError(Service::SecurityAccess)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::SecurityAccess || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for SecurityAccess {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::SecurityAccess || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
         Ok(Self {
-            data: request.data.clone(),
+            data: req.data.clone(),
         })
     }
 }

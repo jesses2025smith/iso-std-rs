@@ -44,7 +44,7 @@ mod tests {
             sub_func.function::<TimingParameterAccessType>()?,
             TimingParameterAccessType::SetTimingParametersToGivenValues
         );
-        let data = request.data::<request::AccessTimingParameter>()?;
+        let data = request.data::<request::AccessTimingParameter>(&cfg)?;
         assert_eq!(data, request::AccessTimingParameter { data: vec![0x00] });
 
         Ok(())
@@ -65,7 +65,7 @@ mod tests {
             sub_func.function::<TimingParameterAccessType>()?,
             TimingParameterAccessType::ReadExtendedTimingParameterSet
         );
-        let data = response.data::<response::AccessTimingParameter>()?;
+        let data = response.data::<response::AccessTimingParameter>(&cfg)?;
         assert_eq!(data, response::AccessTimingParameter { data: vec![0x00] });
 
         let source = hex::decode("C302")?;

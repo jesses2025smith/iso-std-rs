@@ -1,10 +1,6 @@
 //! response of Service 38
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, DataFormatIdentifier, ModeOfOperation, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DataFormatIdentifier, DidConfig, ModeOfOperation, RequestData, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum RequestFileTransfer {
@@ -119,7 +115,8 @@ impl From<RequestFileTransfer> for Vec<u8> {
 }
 
 impl RequestData for RequestFileTransfer {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -155,15 +152,18 @@ impl RequestData for RequestFileTransfer {
             None => Err(Error::SubFunctionError(Service::RequestFileTransfer)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::RequestFileTransfer || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for RequestFileTransfer {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::RequestFileTransfer || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
-        let sub_func: ModeOfOperation = request.sub_function().unwrap().function()?;
-        let data = &request.data;
+        let sub_func: ModeOfOperation = req.sub_function().unwrap().function()?;
+        let data = &req.data;
         let mut offset = 0;
         let len = u16::from_be_bytes([data[offset], data[offset + 1]]) as usize;
         offset += 2;

@@ -14,7 +14,7 @@ mod tests {
         let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function();
         assert_eq!(sub_func, None);
-        let data = request.data_with_config::<request::IOCtrl>(&cfg)?;
+        let data = request.data::<request::IOCtrl>(&cfg)?;
         assert_eq!(
             data,
             request::IOCtrl::new(
@@ -39,7 +39,7 @@ mod tests {
         let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function();
         assert_eq!(sub_func, None);
-        let data = response.data_with_config::<response::IOCtrl>(&cfg)?;
+        let data = response.data::<response::IOCtrl>(&cfg)?;
         assert_eq!(
             data,
             response::IOCtrl::new(

@@ -1,10 +1,6 @@
 //! request of Service 87
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, LinkCtrlMode, LinkCtrlType, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, LinkCtrlMode, LinkCtrlType, RequestData, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum LinkCtrl {
@@ -40,7 +36,8 @@ impl From<LinkCtrl> for Vec<u8> {
 }
 
 impl RequestData for LinkCtrl {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -68,15 +65,18 @@ impl RequestData for LinkCtrl {
             None => Err(Error::SubFunctionError(Service::LinkCtrl)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::LinkCtrl || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for LinkCtrl {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::LinkCtrl || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
-        let sub_func: LinkCtrlType = request.sub_function().unwrap().function()?;
-        let data = &request.data;
+        let sub_func: LinkCtrlType = req.sub_function().unwrap().function()?;
+        let data = &req.data;
         let offset = 0;
         match sub_func {
             LinkCtrlType::VerifyModeTransitionWithFixedParameter => Ok(

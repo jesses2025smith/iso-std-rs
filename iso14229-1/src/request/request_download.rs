@@ -1,10 +1,6 @@
 //! request of Service 34
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, DataFormatIdentifier, MemoryLocation, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DataFormatIdentifier, DidConfig, MemoryLocation, RequestData, Service};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct RequestDownload {
@@ -22,7 +18,8 @@ impl From<RequestDownload> for Vec<u8> {
 }
 
 impl RequestData for RequestDownload {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::RequestDownload)),
             None => {
@@ -36,14 +33,17 @@ impl RequestData for RequestDownload {
             }
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::RequestDownload || request.sub_func.is_some() {
+impl TryFrom<(&Request, &DidConfig)> for RequestDownload {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::RequestDownload || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let mut offset = 0;
         let dfi = DataFormatIdentifier(data[offset]);
         offset += 1;

@@ -1,10 +1,6 @@
 //! request of Service 22
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, DataIdentifier, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DataIdentifier, DidConfig, RequestData, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadDID {
@@ -32,7 +28,8 @@ impl From<ReadDID> for Vec<u8> {
 }
 
 impl RequestData for ReadDID {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ReadDID)),
             None => {
@@ -53,14 +50,17 @@ impl RequestData for ReadDID {
             }
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::ReadDID || request.sub_func.is_some() {
+impl TryFrom<(&Request, &DidConfig)> for ReadDID {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::ReadDID || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let data_len = data.len();
         let mut offset = 0;
 

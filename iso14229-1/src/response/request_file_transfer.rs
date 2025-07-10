@@ -1,10 +1,6 @@
 //! response of Service 38
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, DataFormatIdentifier, LengthFormatIdentifier, ModeOfOperation, ResponseData, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DataFormatIdentifier, DidConfig, LengthFormatIdentifier, ModeOfOperation, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static REQUEST_FILE_TRANSFER_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -190,7 +186,8 @@ impl From<RequestFileTransfer> for Vec<u8> {
 }
 
 impl ResponseData for RequestFileTransfer {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let data_len = data.len();
@@ -213,15 +210,18 @@ impl ResponseData for RequestFileTransfer {
             None => Err(Error::SubFunctionError(Service::RequestFileTransfer)),
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::RequestFileTransfer || response.sub_func.is_none() {
+impl TryFrom<(&Response, &DidConfig)> for RequestFileTransfer {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::RequestFileTransfer || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
-        let sub_func: ModeOfOperation = response.sub_function().unwrap().function()?;
-        let data = &response.data;
+        let sub_func: ModeOfOperation = resp.sub_function().unwrap().function()?;
+        let data = &resp.data;
         let data_len = data.len();
         let mut offset = 0;
         match sub_func {

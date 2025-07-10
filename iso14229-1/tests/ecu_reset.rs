@@ -68,7 +68,7 @@ mod tests {
             sub_func.function::<ECUResetType>()?,
             ECUResetType::EnableRapidPowerShutDown
         );
-        let data = response.data::<response::ECUReset>()?;
+        let data = response.data::<response::ECUReset>(&cfg)?;
         assert_eq!(data.second, Some(1));
 
         Ok(())

@@ -29,7 +29,8 @@ impl From<ResponseOnEvent> for Vec<u8> {
 
 #[allow(unused_variables)]
 impl ResponseData for ResponseOnEvent {
-    fn with_config(data: &[u8], sub_func: Option<u8>, cfg: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => Err(Error::SubFunctionError(Service::ResponseOnEvent)),
             None => Ok(Response {
@@ -40,8 +41,12 @@ impl ResponseData for ResponseOnEvent {
             }),
         }
     }
+}
 
-    fn try_with_config(response: &Response, cfg: &DidConfig) -> Result<Self, Error> {
+#[allow(unused_variables)]
+impl TryFrom<(&Response, &DidConfig)> for ResponseOnEvent {
+    type Error = Error;
+    fn try_from((resp, cfg): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
         Err(Error::NotImplement)
     }
 }

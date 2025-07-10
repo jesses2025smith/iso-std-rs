@@ -28,7 +28,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyCertificateUnidirectional
         );
-        let data = request.data::<request::Authentication>()?;
+        let data = request.data::<request::Authentication>(&cfg)?;
         match data {
             request::Authentication::VerifyCertificateUnidirectional {
                 config,
@@ -49,7 +49,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyCertificateBidirectional
         );
-        let data = request.data::<request::Authentication>()?;
+        let data = request.data::<request::Authentication>(&cfg)?;
         match data {
             request::Authentication::VerifyCertificateBidirectional {
                 config,
@@ -70,7 +70,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::ProofOfOwnership
         );
-        let data = request.data::<request::Authentication>()?;
+        let data = request.data::<request::Authentication>(&cfg)?;
         match data {
             request::Authentication::ProofOfOwnership {
                 proof_of_ownership,
@@ -89,7 +89,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::TransmitCertificate
         );
-        let data = request.data::<request::Authentication>()?;
+        let data = request.data::<request::Authentication>(&cfg)?;
         match data {
             request::Authentication::TransmitCertificate {
                 cert_evaluation_id,
@@ -108,7 +108,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::RequestChallengeForAuthentication
         );
-        let data = request.data::<request::Authentication>()?;
+        let data = request.data::<request::Authentication>(&cfg)?;
         match data {
             request::Authentication::RequestChallengeForAuthentication {
                 config,
@@ -127,7 +127,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyProofOfOwnershipUnidirectional
         );
-        let data = request.data::<request::Authentication>()?;
+        let data = request.data::<request::Authentication>(&cfg)?;
         match data {
             request::Authentication::VerifyProofOfOwnershipUnidirectional {
                 algo_indicator,
@@ -150,7 +150,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyProofOfOwnershipBidirectional
         );
-        let data = request.data::<request::Authentication>()?;
+        let data = request.data::<request::Authentication>(&cfg)?;
         match data {
             request::Authentication::VerifyProofOfOwnershipBidirectional {
                 algo_indicator,
@@ -173,7 +173,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::AuthenticationConfiguration
         );
-        let data = request.data::<request::Authentication>()?;
+        let data = request.data::<request::Authentication>(&cfg)?;
         match data {
             request::Authentication::AuthenticationConfiguration => {}
             _ => panic!("Unexpected data"),
@@ -193,7 +193,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::DeAuthenticate
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::DeAuthenticate(v) => {
                 assert_eq!(v, response::AuthReturnValue::RequestAccepted)
@@ -208,7 +208,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyCertificateUnidirectional
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::VerifyCertificateUnidirectional {
                 value,
@@ -229,7 +229,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyCertificateBidirectional
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::VerifyCertificateBidirectional {
                 value,
@@ -254,7 +254,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::ProofOfOwnership
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::ProofOfOwnership {
                 value,
@@ -273,7 +273,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::TransmitCertificate
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::TransmitCertificate(value) => {
                 assert_eq!(value, response::AuthReturnValue::RequestAccepted);
@@ -288,7 +288,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::RequestChallengeForAuthentication
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::RequestChallengeForAuthentication {
                 value,
@@ -311,7 +311,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyProofOfOwnershipUnidirectional
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::VerifyProofOfOwnershipUnidirectional {
                 value,
@@ -332,7 +332,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::VerifyProofOfOwnershipBidirectional
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::VerifyProofOfOwnershipBidirectional {
                 value,
@@ -355,7 +355,7 @@ mod tests {
             sub_func.function::<AuthenticationTask>()?,
             AuthenticationTask::AuthenticationConfiguration
         );
-        let data = response.data::<response::Authentication>()?;
+        let data = response.data::<response::Authentication>(&cfg)?;
         match data {
             response::Authentication::AuthenticationConfiguration(value) => {
                 assert_eq!(value, response::AuthReturnValue::RequestAccepted);

@@ -1,10 +1,6 @@
 //! response of Service 36
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, ResponseData, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static TRANSFER_DATA_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -35,7 +31,8 @@ impl From<TransferData> for Vec<u8> {
 }
 
 impl ResponseData for TransferData {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::TransferData)),
             None => {
@@ -50,14 +47,17 @@ impl ResponseData for TransferData {
             }
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::TransferData || response.sub_func.is_some() {
+impl TryFrom<(&Response, &DidConfig)> for TransferData {
+    type Error = Error;
+    fn try_from((res, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = res.service();
+        if service != Service::TransferData || res.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &res.data;
         let mut offset = 0;
         let sequence = data[offset];
         offset += 1;

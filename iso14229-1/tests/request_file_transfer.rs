@@ -22,7 +22,7 @@ mod tests {
             sub_func.function::<ModeOfOperation>()?,
             ModeOfOperation::AddFile
         );
-        let data = request.data::<request::RequestFileTransfer>()?;
+        let data = request.data::<request::RequestFileTransfer>(&cfg)?;
         match data {
             request::RequestFileTransfer::AddFile {
                 filepath,
@@ -54,7 +54,7 @@ mod tests {
             sub_func.function::<ModeOfOperation>()?,
             ModeOfOperation::AddFile
         );
-        let data = response.data::<response::RequestFileTransfer>()?;
+        let data = response.data::<response::RequestFileTransfer>(&cfg)?;
         match data {
             response::RequestFileTransfer::AddFile {
                 lfi,

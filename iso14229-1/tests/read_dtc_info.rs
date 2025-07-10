@@ -18,7 +18,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportNumberOfDTCByStatusMask
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportNumberOfDTCByStatusMask(v) => assert_eq!(v, 0x00),
             _ => panic!("Unexpected data: {:?}", data),
@@ -31,7 +31,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCByStatusMask
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportDTCByStatusMask(v) => assert_eq!(v, 0x00),
             _ => panic!("Unexpected data: {:?}", data),
@@ -44,7 +44,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCSnapshotIdentification
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportDTCSnapshotIdentification => {}
             _ => panic!("Unexpected data: {:?}", data),
@@ -57,7 +57,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCSnapshotRecordByDTCNumber
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportDTCSnapshotRecordByDTCNumber {
                 mask_record,
@@ -76,7 +76,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCStoredDataByRecordNumber
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportDTCStoredDataByRecordNumber { stored_num } => {
                 assert_eq!(stored_num, 0x01);
@@ -91,7 +91,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCExtDataRecordByDTCNumber
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportDTCExtDataRecordByDTCNumber {
                 mask_record,
@@ -110,7 +110,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportNumberOfDTCBySeverityMaskRecord
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportNumberOfDTCBySeverityMaskRecord {
                 severity_mask,
@@ -129,7 +129,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCBySeverityMaskRecord
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportDTCBySeverityMaskRecord {
                 severity_mask,
@@ -148,7 +148,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportSeverityInformationOfDTC
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportSeverityInformationOfDTC { mask_record } => {
                 assert_eq!(mask_record, U24::new(0x010203));
@@ -163,7 +163,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportSupportedDTC
         );
-        let data = request.data::<request::DTCInfo>()?;
+        let data = request.data::<request::DTCInfo>(&cfg)?;
         match data {
             request::DTCInfo::ReportSupportedDTC => {}
             _ => panic!("Unexpected data: {:?}", data),
@@ -178,7 +178,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportMirrorMemoryDTCByStatusMask
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportMirrorMemoryDTCByStatusMask(v) => assert_eq!(v, 0x00),
                 _ => panic!("Unexpected data: {:?}", data),
@@ -194,7 +194,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportMirrorMemoryDTCExtDataRecordByDTCNumber
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportMirrorMemoryDTCExtDataRecordByDTCNumber {
                     mask_record,
@@ -216,7 +216,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportDTCExtDataRecordByRecordNumber
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportDTCExtDataRecordByRecordNumber { extra_num } => {
                     assert_eq!(extra_num, 0x00)
@@ -234,7 +234,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCByStatusMask
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportUserDefMemoryDTCByStatusMask {
                     status_mask,
@@ -256,7 +256,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber {
                     mask_record,
@@ -280,7 +280,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCExtDataRecordByDTCNumber
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportUserDefMemoryDTCExtDataRecordByDTCNumber {
                     mask_record,
@@ -304,7 +304,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportSupportedDTCExtDataRecord
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportSupportedDTCExtDataRecord { extra_num } => {
                     assert_eq!(extra_num, 0x01);
@@ -322,7 +322,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportWWHOBDDTCByMaskRecord
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportWWHOBDDTCByMaskRecord {
                     func_gid,
@@ -346,7 +346,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportWWHOBDDTCWithPermanentStatus
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportWWHOBDDTCWithPermanentStatus { func_gid } => {
                     assert_eq!(func_gid, 0x00);
@@ -364,7 +364,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportDTCInformationByDTCReadinessGroupIdentifier
             );
-            let data = request.data::<request::DTCInfo>()?;
+            let data = request.data::<request::DTCInfo>(&cfg)?;
             match data {
                 request::DTCInfo::ReportDTCInformationByDTCReadinessGroupIdentifier {
                     func_gid,
@@ -392,7 +392,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportNumberOfDTCByStatusMask
         );
-        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+        let data = response.data::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportNumberOfDTCByStatusMask {
                 avl_mask,
@@ -416,7 +416,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCByStatusMask
         );
-        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+        let data = response.data::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCByStatusMask { avl_mask, records } => {
                 assert_eq!(avl_mask, 0x00);
@@ -432,7 +432,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCByStatusMask
         );
-        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+        let data = response.data::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCByStatusMask { avl_mask, records } => {
                 assert_eq!(avl_mask, 0x01);
@@ -454,7 +454,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCSnapshotIdentification
         );
-        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+        let data = response.data::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCSnapshotIdentification { records } => {
                 assert_eq!(
@@ -475,7 +475,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCSnapshotRecordByDTCNumber
         );
-        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+        let data = response.data::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCSnapshotRecordByDTCNumber {
                 status_record,
@@ -516,7 +516,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCBySeverityMaskRecord
         );
-        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+        let data = response.data::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCBySeverityMaskRecord {
                 avl_mask,
@@ -545,7 +545,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportSeverityInformationOfDTC
         );
-        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+        let data = response.data::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportSeverityInformationOfDTC { avl_mask, records } => {
                 assert_eq!(avl_mask, 0x00);
@@ -569,7 +569,7 @@ mod tests {
             sub_func.function::<DTCReportType>()?,
             DTCReportType::ReportDTCFaultDetectionCounter
         );
-        let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+        let data = response.data::<response::DTCInfo>(&cfg)?;
         match data {
             response::DTCInfo::ReportDTCFaultDetectionCounter { records } => {
                 assert_eq!(
@@ -597,7 +597,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCByStatusMask
             );
-            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+            let data = response.data::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportUserDefMemoryDTCByStatusMask {
                     mem_selection,
@@ -627,7 +627,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber
             );
-            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+            let data = response.data::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportUserDefMemoryDTCSnapshotRecordByDTCNumber {
                     mem_selection,
@@ -675,7 +675,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportSupportedDTCExtDataRecord
             );
-            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+            let data = response.data::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportSupportedDTCExtDataRecord {
                     avl_mask,
@@ -705,7 +705,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportWWHOBDDTCByMaskRecord
             );
-            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+            let data = response.data::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportWWHOBDDTCByMaskRecord {
                     func_gid,
@@ -743,7 +743,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportWWHOBDDTCWithPermanentStatus
             );
-            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+            let data = response.data::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportWWHOBDDTCWithPermanentStatus {
                     func_gid,
@@ -778,7 +778,7 @@ mod tests {
                 sub_func.function::<DTCReportType>()?,
                 DTCReportType::ReportDTCInformationByDTCReadinessGroupIdentifier
             );
-            let data = response.data_with_config::<response::DTCInfo>(&cfg)?;
+            let data = response.data::<response::DTCInfo>(&cfg)?;
             match data {
                 response::DTCInfo::ReportDTCInformationByDTCReadinessGroupIdentifier {
                     func_gid,

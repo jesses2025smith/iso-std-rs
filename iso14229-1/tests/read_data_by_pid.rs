@@ -13,7 +13,7 @@ mod tests {
         let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function();
         assert_eq!(sub_func, None);
-        let data = request.data::<request::ReadDataByPeriodId>()?;
+        let data = request.data::<request::ReadDataByPeriodId>(&cfg)?;
         assert_eq!(
             data,
             request::ReadDataByPeriodId {
@@ -26,7 +26,7 @@ mod tests {
         let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function();
         assert_eq!(sub_func, None);
-        let data = request.data::<request::ReadDataByPeriodId>()?;
+        let data = request.data::<request::ReadDataByPeriodId>(&cfg)?;
         assert_eq!(
             data,
             request::ReadDataByPeriodId {
@@ -39,7 +39,7 @@ mod tests {
         let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function();
         assert_eq!(sub_func, None);
-        let data = request.data::<request::ReadDataByPeriodId>()?;
+        let data = request.data::<request::ReadDataByPeriodId>(&cfg)?;
         assert_eq!(
             data,
             request::ReadDataByPeriodId {
@@ -52,7 +52,7 @@ mod tests {
         let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function();
         assert_eq!(sub_func, None);
-        let data = request.data::<request::ReadDataByPeriodId>()?;
+        let data = request.data::<request::ReadDataByPeriodId>(&cfg)?;
         assert_eq!(
             data,
             request::ReadDataByPeriodId {
@@ -82,7 +82,7 @@ mod tests {
         let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function();
         assert_eq!(sub_func, None);
-        let data = response.data::<response::ReadDataByPeriodId>()?;
+        let data = response.data::<response::ReadDataByPeriodId>(&cfg)?;
         assert_eq!(
             data,
             response::ReadDataByPeriodId {

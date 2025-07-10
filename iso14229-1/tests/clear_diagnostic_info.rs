@@ -16,7 +16,7 @@ mod tests {
         let sub_func = request.sub_function();
         assert_eq!(sub_func, None);
 
-        let data = request.data::<request::ClearDiagnosticInfo>()?;
+        let data = request.data::<request::ClearDiagnosticInfo>(&cfg)?;
         assert_eq!(
             data,
             request::ClearDiagnosticInfo::new(U24::from_be_bytes([0xFF, 0xFF, 0x33]),)
@@ -35,7 +35,7 @@ mod tests {
         let sub_func = request.sub_function();
         assert_eq!(sub_func, None);
 
-        let data = request.data::<request::ClearDiagnosticInfo>()?;
+        let data = request.data::<request::ClearDiagnosticInfo>(&cfg)?;
         assert_eq!(
             data,
             request::ClearDiagnosticInfo::new(U24::from_be_bytes([0xFF, 0xFF, 0x33]), Some(0x01))

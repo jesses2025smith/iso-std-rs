@@ -12,7 +12,7 @@ mod tests {
 
         let source = hex::decode("280203")?;
         let request = request::Request::try_from((&source, &cfg))?;
-        let data = request.data::<request::CommunicationCtrl>()?;
+        let data = request.data::<request::CommunicationCtrl>(&cfg)?;
 
         assert_eq!(
             data,
@@ -39,7 +39,7 @@ mod tests {
             sub_func.function::<CommunicationCtrlType>()?,
             CommunicationCtrlType::EnableRxAndDisableTx
         );
-        let data = response.data::<response::CommunicationCtrl>()?;
+        let data = response.data::<response::CommunicationCtrl>(&cfg)?;
         assert!(data.data.is_empty());
 
         Ok(())

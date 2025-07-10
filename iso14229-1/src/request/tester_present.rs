@@ -1,10 +1,6 @@
 //! request of Service 3E
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, RequestData, Service, TesterPresentType,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, RequestData, Service, TesterPresentType};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TesterPresent {
@@ -18,7 +14,8 @@ impl From<TesterPresent> for Vec<u8> {
 }
 
 impl RequestData for TesterPresent {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -35,15 +32,18 @@ impl RequestData for TesterPresent {
             None => Err(Error::SubFunctionError(Service::TesterPresent)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::TesterPresent || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for TesterPresent {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::TesterPresent || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
         Ok(Self {
-            data: request.data.clone(),
+            data: req.data.clone(),
         })
     }
 }

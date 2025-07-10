@@ -17,7 +17,7 @@ mod tests {
             sub_func.function::<RoutineCtrlType>()?,
             RoutineCtrlType::StartRoutine
         );
-        let data = request.data::<request::RoutineCtrl>()?;
+        let data = request.data::<request::RoutineCtrl>(&cfg)?;
         assert_eq!(data.routine_id, CheckProgrammingDependencies);
         assert_eq!(data.option_record, vec![]);
 
@@ -28,7 +28,7 @@ mod tests {
             sub_func.function::<RoutineCtrlType>()?,
             RoutineCtrlType::StartRoutine
         );
-        let data = request.data::<request::RoutineCtrl>()?;
+        let data = request.data::<request::RoutineCtrl>(&cfg)?;
         assert_eq!(data.routine_id, CheckProgrammingDependencies);
         assert_eq!(data.option_record, hex::decode("112233445566")?);
 
@@ -46,7 +46,7 @@ mod tests {
             sub_func.function::<RoutineCtrlType>()?,
             RoutineCtrlType::StartRoutine
         );
-        let data = response.data::<response::RoutineCtrl>()?;
+        let data = response.data::<response::RoutineCtrl>(&cfg)?;
         assert_eq!(data.routine_id, CheckProgrammingDependencies);
         assert_eq!(data.routine_info, None);
         assert_eq!(data.routine_status, vec![]);
@@ -58,7 +58,7 @@ mod tests {
             sub_func.function::<RoutineCtrlType>()?,
             RoutineCtrlType::StartRoutine
         );
-        let data = response.data::<response::RoutineCtrl>()?;
+        let data = response.data::<response::RoutineCtrl>(&cfg)?;
 
         assert_eq!(data.routine_id, CheckProgrammingDependencies);
         assert_eq!(data.routine_info, Some(0x11));

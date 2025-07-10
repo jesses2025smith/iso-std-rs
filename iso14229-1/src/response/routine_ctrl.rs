@@ -1,10 +1,6 @@
 //! response of Service 31
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, ResponseData, RoutineCtrlType, RoutineId, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, ResponseData, RoutineCtrlType, RoutineId, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static ROUTINE_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -60,7 +56,8 @@ impl From<RoutineCtrl> for Vec<u8> {
 }
 
 impl ResponseData for RoutineCtrl {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 utils::data_length_check(data.len(), 2, false)?;
@@ -77,15 +74,18 @@ impl ResponseData for RoutineCtrl {
             None => Err(Error::SubFunctionError(Service::RoutineCtrl)),
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service;
-        if service != Service::RoutineCtrl || response.sub_func.is_none() {
+impl TryFrom<(&Response, &DidConfig)> for RoutineCtrl {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service;
+        if service != Service::RoutineCtrl || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
         // let sub_func: RoutineCtrlType = response.sub_function().unwrap().function()?;
 
-        let data = &response.data;
+        let data = &resp.data;
         let data_len = data.len();
         let mut offset = 0;
         let routine_id = u16::from_be_bytes([data[offset], data[offset + 1]]);

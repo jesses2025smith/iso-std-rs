@@ -1,10 +1,6 @@
 //! request of Service 3D
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, AddressAndLengthFormatIdentifier, MemoryLocation, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, AddressAndLengthFormatIdentifier, DidConfig, MemoryLocation, RequestData, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WriteMemByAddr {
@@ -54,7 +50,8 @@ impl From<WriteMemByAddr> for Vec<u8> {
 }
 
 impl RequestData for WriteMemByAddr {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::WriteMemByAddr)),
             None => {
@@ -68,14 +65,17 @@ impl RequestData for WriteMemByAddr {
             }
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::WriteMemByAddr || request.sub_func.is_some() {
+impl TryFrom<(&Request, &DidConfig)> for WriteMemByAddr {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::WriteMemByAddr || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let mut offset = 0;
         let mem_loc = MemoryLocation::from_slice(data)?;
         offset += mem_loc.len();

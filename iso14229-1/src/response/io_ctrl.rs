@@ -46,7 +46,8 @@ impl From<IOCtrl> for Vec<u8> {
 }
 
 impl ResponseData for IOCtrl {
-    fn with_config(data: &[u8], sub_func: Option<u8>, cfg: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, cfg: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::IOCtrl)),
             None => {
@@ -70,14 +71,17 @@ impl ResponseData for IOCtrl {
             }
         }
     }
+}
 
-    fn try_with_config(response: &Response, cfg: &DidConfig) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::IOCtrl || response.sub_func.is_some() {
+impl TryFrom<(&Response, &DidConfig)> for IOCtrl {
+    type Error = Error;
+    fn try_from((resp, cfg): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::IOCtrl || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &resp.data;
         let data_len = data.len();
         utils::data_length_check(data_len, 2, false)?;
         let mut offset = 0;

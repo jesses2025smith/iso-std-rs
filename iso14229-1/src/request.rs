@@ -125,36 +125,36 @@ impl Request {
         cfg: &DidConfig,
     ) -> Result<Self, Error> {
         match service {
-            Service::SessionCtrl => SessionCtrl::without_config(&data, sub_func),
-            Service::ECUReset => ECUReset::without_config(&data, sub_func),
-            Service::ClearDiagnosticInfo => ClearDiagnosticInfo::without_config(&data, sub_func),
-            Service::ReadDTCInfo => DTCInfo::without_config(&data, sub_func),
-            Service::ReadDID => ReadDID::without_config(&data, sub_func),
-            Service::ReadMemByAddr => ReadMemByAddr::without_config(&data, sub_func),
-            Service::ReadScalingDID => ReadScalingDID::without_config(&data, sub_func),
-            Service::SecurityAccess => SecurityAccess::without_config(&data, sub_func),
-            Service::CommunicationCtrl => CommunicationCtrl::without_config(&data, sub_func),
+            Service::SessionCtrl => SessionCtrl::new_request(data, sub_func, cfg),
+            Service::ECUReset => ECUReset::new_request(data, sub_func, cfg),
+            Service::ClearDiagnosticInfo => ClearDiagnosticInfo::new_request(data, sub_func, cfg),
+            Service::ReadDTCInfo => DTCInfo::new_request(data, sub_func, cfg),
+            Service::ReadDID => ReadDID::new_request(data, sub_func, cfg),
+            Service::ReadMemByAddr => ReadMemByAddr::new_request(data, sub_func, cfg),
+            Service::ReadScalingDID => ReadScalingDID::new_request(data, sub_func, cfg),
+            Service::SecurityAccess => SecurityAccess::new_request(data, sub_func, cfg),
+            Service::CommunicationCtrl => CommunicationCtrl::new_request(data, sub_func, cfg),
             #[cfg(any(feature = "std2020"))]
-            Service::Authentication => Authentication::without_config(&data, sub_func),
-            Service::ReadDataByPeriodId => ReadDataByPeriodId::without_config(&data, sub_func),
-            Service::DynamicalDefineDID => DynamicallyDefineDID::without_config(&data, sub_func),
-            Service::WriteDID => WriteDID::with_config(&data, sub_func, cfg),
-            Service::IOCtrl => IOCtrl::without_config(&data, sub_func),
-            Service::RoutineCtrl => RoutineCtrl::without_config(&data, sub_func),
-            Service::RequestDownload => RequestDownload::without_config(&data, sub_func),
-            Service::RequestUpload => RequestUpload::without_config(&data, sub_func),
-            Service::TransferData => TransferData::without_config(&data, sub_func),
-            Service::RequestTransferExit => RequestTransferExit::without_config(&data, sub_func),
+            Service::Authentication => Authentication::new_request(data, sub_func, cfg),
+            Service::ReadDataByPeriodId => ReadDataByPeriodId::new_request(data, sub_func, cfg),
+            Service::DynamicalDefineDID => DynamicallyDefineDID::new_request(data, sub_func, cfg),
+            Service::WriteDID => WriteDID::new_request(data, sub_func, cfg),
+            Service::IOCtrl => IOCtrl::new_request(data, sub_func, cfg),
+            Service::RoutineCtrl => RoutineCtrl::new_request(data, sub_func, cfg),
+            Service::RequestDownload => RequestDownload::new_request(data, sub_func, cfg),
+            Service::RequestUpload => RequestUpload::new_request(data, sub_func, cfg),
+            Service::TransferData => TransferData::new_request(data, sub_func, cfg),
+            Service::RequestTransferExit => RequestTransferExit::new_request(data, sub_func, cfg),
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Service::RequestFileTransfer => RequestFileTransfer::without_config(&data, sub_func),
-            Service::WriteMemByAddr => WriteMemByAddr::without_config(&data, sub_func),
-            Service::TesterPresent => TesterPresent::without_config(&data, sub_func),
+            Service::RequestFileTransfer => RequestFileTransfer::new_request(data, sub_func, cfg),
+            Service::WriteMemByAddr => WriteMemByAddr::new_request(data, sub_func, cfg),
+            Service::TesterPresent => TesterPresent::new_request(data, sub_func, cfg),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Service::AccessTimingParam => AccessTimingParameter::without_config(&data, sub_func),
-            Service::SecuredDataTrans => SecuredDataTrans::without_config(&data, sub_func),
-            Service::CtrlDTCSetting => CtrlDTCSetting::without_config(&data, sub_func),
-            Service::ResponseOnEvent => ResponseOnEvent::without_config(&data, sub_func),
-            Service::LinkCtrl => LinkCtrl::without_config(&data, sub_func),
+            Service::AccessTimingParam => AccessTimingParameter::new_request(data, sub_func, cfg),
+            Service::SecuredDataTrans => SecuredDataTrans::new_request(data, sub_func, cfg),
+            Service::CtrlDTCSetting => CtrlDTCSetting::new_request(data, sub_func, cfg),
+            Service::ResponseOnEvent => ResponseOnEvent::new_request(data, sub_func, cfg),
+            Service::LinkCtrl => LinkCtrl::new_request(data, sub_func, cfg),
             Service::NRC => Err(Error::OtherError("got an NRC service from request".into())),
         }
     }
@@ -175,29 +175,22 @@ impl Request {
     }
 
     #[inline]
-    pub fn data<T>(&self) -> Result<T, Error>
+    pub fn data<T>(&self, cfg: &DidConfig) -> Result<T, Error>
     where
         T: RequestData,
     {
-        T::try_without_config(self)
+        T::try_from((self, cfg))
     }
 
     #[inline]
-    pub fn data_with_config<T>(&self, cfg: &DidConfig) -> Result<T, Error>
-    where
-        T: RequestData,
-    {
-        T::try_with_config(self, cfg)
-    }
-
-    #[inline]
-    fn inner_new(
-        data: &[u8],
+    fn inner_new<T: AsRef<[u8]>>(
+        data: T,
         data_len: usize,
         mut offset: usize,
         service: Service,
         cfg: &DidConfig,
     ) -> Result<Self, Error> {
+        let data = data.as_ref();
         utils::data_length_check(data_len, offset + 1, false)?;
         let sub_func = data[offset];
         offset += 1;
@@ -240,13 +233,13 @@ impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
             | Service::CtrlDTCSetting
             | Service::TesterPresent
             | Service::LinkCtrl
-            | Service::DynamicalDefineDID => Self::inner_new(&data, data_len, offset, service, cfg),
+            | Service::DynamicalDefineDID => Self::inner_new(data, data_len, offset, service, cfg),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Service::AccessTimingParam => Self::inner_new(&data, data_len, offset, service, cfg),
+            Service::AccessTimingParam => Self::inner_new(data, data_len, offset, service, cfg),
             #[cfg(any(feature = "std2020"))]
-            Service::Authentication => Self::inner_new(&data, data_len, offset, service, cfg),
+            Service::Authentication => Self::inner_new(data, data_len, offset, service, cfg),
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Service::RequestFileTransfer => Self::inner_new(&data, data_len, offset, service, cfg),
+            Service::RequestFileTransfer => Self::inner_new(data, data_len, offset, service, cfg),
             Service::ClearDiagnosticInfo
             | Service::ReadDID
             | Service::ReadMemByAddr

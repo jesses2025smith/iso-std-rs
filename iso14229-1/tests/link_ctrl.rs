@@ -18,7 +18,7 @@ mod tests {
             sub_func.function::<LinkCtrlType>()?,
             LinkCtrlType::VerifyModeTransitionWithFixedParameter
         );
-        let data = request.data::<request::LinkCtrl>()?;
+        let data = request.data::<request::LinkCtrl>(&cfg)?;
         match data {
             request::LinkCtrl::VerifyModeTransitionWithFixedParameter(v) => {
                 assert_eq!(v, LinkCtrlMode::CAN1MBaud)
@@ -33,7 +33,7 @@ mod tests {
             sub_func.function::<LinkCtrlType>()?,
             LinkCtrlType::VerifyModeTransitionWithSpecificParameter
         );
-        let data = request.data::<request::LinkCtrl>()?;
+        let data = request.data::<request::LinkCtrl>(&cfg)?;
         match data {
             request::LinkCtrl::VerifyModeTransitionWithSpecificParameter(v) => {
                 assert_eq!(v, U24::new(0x112233))
@@ -48,7 +48,7 @@ mod tests {
             sub_func.function::<LinkCtrlType>()?,
             LinkCtrlType::TransitionMode
         );
-        let data = request.data::<request::LinkCtrl>()?;
+        let data = request.data::<request::LinkCtrl>(&cfg)?;
         match data {
             request::LinkCtrl::TransitionMode => {}
             _ => panic!("Unexpected data {:?}", data),
@@ -68,7 +68,7 @@ mod tests {
             sub_func.function::<LinkCtrlType>()?,
             LinkCtrlType::VerifyModeTransitionWithFixedParameter
         );
-        let data = response.data::<response::LinkCtrl>()?;
+        let data = response.data::<response::LinkCtrl>(&cfg)?;
         assert!(data.data.is_empty());
 
         let source = hex::decode("C70100")?;

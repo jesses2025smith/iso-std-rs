@@ -1,10 +1,6 @@
 //! request of Service 31
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, RequestData, RoutineCtrlType, RoutineId, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, RequestData, RoutineCtrlType, RoutineId, Service};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RoutineCtrl {
@@ -23,7 +19,8 @@ impl From<RoutineCtrl> for Vec<u8> {
 }
 
 impl RequestData for RoutineCtrl {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -40,16 +37,19 @@ impl RequestData for RoutineCtrl {
             None => Err(Error::SubFunctionError(Service::RoutineCtrl)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::RoutineCtrl || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for RoutineCtrl {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<RoutineCtrl, Error> {
+        let service = req.service();
+        if service != Service::RoutineCtrl || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
         // let sub_func: RoutineCtrlType = request.sub_function().unwrap().function()?;
 
-        let data = &request.data;
+        let data = &req.data;
         let mut offset = 0;
         let routine_id = u16::from_be_bytes([data[offset], data[offset + 1]]);
         offset += 2;

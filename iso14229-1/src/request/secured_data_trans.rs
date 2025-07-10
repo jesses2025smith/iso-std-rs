@@ -1,10 +1,6 @@
 //! request of Service 84
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, AdministrativeParameter, RequestData, Service, SignatureEncryptionCalculation,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, AdministrativeParameter, DidConfig, RequestData, Service, SignatureEncryptionCalculation};
 
 #[derive(Debug, Clone)]
 pub struct SecuredDataTrans {
@@ -64,7 +60,8 @@ impl From<SecuredDataTrans> for Vec<u8> {
 }
 
 impl RequestData for SecuredDataTrans {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::SecuredDataTrans)),
             None => {
@@ -78,14 +75,17 @@ impl RequestData for SecuredDataTrans {
             }
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::SecuredDataTrans || request.sub_func.is_some() {
+impl TryFrom<(&Request, &DidConfig)> for SecuredDataTrans {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::SecuredDataTrans || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let data_len = data.len();
         let mut offset = 0;
         let apar =

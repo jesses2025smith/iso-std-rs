@@ -13,7 +13,7 @@ mod tests {
         let source = hex::decode("2312481305")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::ReadMemByAddr>()?;
+        let data = request.data::<request::ReadMemByAddr>(&cfg)?;
         assert_eq!(
             data.0,
             MemoryLocation::new(AddressAndLengthFormatIdentifier::new(2, 1)?, 0x4813, 0x05,)?
@@ -22,7 +22,7 @@ mod tests {
         let source = hex::decode("2324204813920103")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::ReadMemByAddr>()?;
+        let data = request.data::<request::ReadMemByAddr>(&cfg)?;
         assert_eq!(
             data.0,
             MemoryLocation::new(
@@ -42,7 +42,7 @@ mod tests {
         let source = hex::decode("630102")?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::ReadMemByAddr>()?;
+        let data = response.data::<response::ReadMemByAddr>(&cfg)?;
         assert_eq!(data.data, vec![0x01, 0x02]);
 
         Ok(())
@@ -81,7 +81,7 @@ mod tests {
         let source = hex::decode("3D4420481213000000051122334455")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::WriteMemByAddr>()?;
+        let data = request.data::<request::WriteMemByAddr>(&cfg)?;
         assert_eq!(
             data,
             request::WriteMemByAddr::new(
@@ -102,7 +102,7 @@ mod tests {
         let source = hex::decode("7D12481305")?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::WriteMemByAddr>()?;
+        let data = response.data::<response::WriteMemByAddr>(&cfg)?;
         assert_eq!(
             data.0,
             MemoryLocation::new(AddressAndLengthFormatIdentifier::new(2, 1)?, 0x4813, 0x05,)?

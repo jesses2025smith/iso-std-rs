@@ -1,10 +1,6 @@
 //! request of Service 36
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, RequestData, Service, SessionType,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, RequestData, Service, SessionType};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TransferData {
@@ -21,7 +17,8 @@ impl From<TransferData> for Vec<u8> {
 }
 
 impl RequestData for TransferData {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::TransferData)),
             None => {
@@ -35,14 +32,17 @@ impl RequestData for TransferData {
             }
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::TransferData || request.sub_func.is_some() {
+impl TryFrom<(&Request, &DidConfig)> for TransferData {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::TransferData || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let mut offset = 0;
         let sequence = data[offset];
         offset += 1;

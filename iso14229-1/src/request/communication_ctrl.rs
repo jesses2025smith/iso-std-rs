@@ -1,10 +1,6 @@
 //! request of Service 28
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, CommunicationCtrlType, CommunicationType, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, CommunicationCtrlType, CommunicationType, DidConfig, RequestData, Service};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct NodeId(u16);
@@ -69,7 +65,8 @@ impl From<CommunicationCtrl> for Vec<u8> {
 }
 
 impl RequestData for CommunicationCtrl {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -91,16 +88,19 @@ impl RequestData for CommunicationCtrl {
             None => Err(Error::SubFunctionError(Service::CommunicationCtrl)),
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service;
-        if service != Service::CommunicationCtrl || request.sub_func.is_none() {
+impl TryFrom<(&Request, &DidConfig)> for CommunicationCtrl {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service;
+        if service != Service::CommunicationCtrl || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
-        let sub_func: CommunicationCtrlType = request.sub_function().unwrap().function()?;
+        let sub_func: CommunicationCtrlType = req.sub_function().unwrap().function()?;
 
-        let data = &request.data;
+        let data = &req.data;
         let data_len = data.len();
 
         let mut offset = 0;

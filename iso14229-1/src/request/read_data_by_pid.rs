@@ -1,10 +1,6 @@
 //! request of Service 2A
 
-use crate::{
-    error::Error,
-    request::{Request, SubFunction},
-    utils, RequestData, Service,
-};
+use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, RequestData, Service};
 
 rsutil::enum_extend!(
     /// Table C.10 — transmissionMode parameter definitions
@@ -56,7 +52,8 @@ impl From<ReadDataByPeriodId> for Vec<u8> {
 }
 
 impl RequestData for ReadDataByPeriodId {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ReadDataByPeriodId)),
             None => {
@@ -70,14 +67,17 @@ impl RequestData for ReadDataByPeriodId {
             }
         }
     }
+}
 
-    fn try_without_config(request: &Request) -> Result<Self, Error> {
-        let service = request.service();
-        if service != Service::ReadDataByPeriodId || request.sub_func.is_some() {
+impl TryFrom<(&Request, &DidConfig)> for ReadDataByPeriodId {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::ReadDataByPeriodId || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let mut offset = 0;
         let mode = TransmissionMode::try_from(data[offset])?;
         offset += 1;

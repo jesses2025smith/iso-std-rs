@@ -1,10 +1,6 @@
 //! response of Service 28
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, CommunicationCtrlType, ResponseData, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, utils, CommunicationCtrlType, DidConfig, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static COMMUNICATION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -28,7 +24,8 @@ impl From<CommunicationCtrl> for Vec<u8> {
 }
 
 impl ResponseData for CommunicationCtrl {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let _ = CommunicationCtrlType::try_from(sub_func)?;
@@ -45,17 +42,19 @@ impl ResponseData for CommunicationCtrl {
             None => Err(Error::SubFunctionError(Service::CommunicationCtrl)),
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service;
-        if service != Service::CommunicationCtrl || response.sub_func.is_none() {
+impl TryFrom<(&Response, &DidConfig)> for CommunicationCtrl {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service;
+        if service != Service::CommunicationCtrl || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
         // let sub_func: CommunicationCtrlType = response.sub_function().unwrap().function()?;
-
         Ok(Self {
-            data: response.data.clone(),
+            data: resp.data.clone(),
         })
     }
 }

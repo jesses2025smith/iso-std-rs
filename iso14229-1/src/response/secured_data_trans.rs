@@ -1,10 +1,6 @@
 //! response of Service 84
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, AdministrativeParameter, ResponseData, Service, SignatureEncryptionCalculation,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, utils, AdministrativeParameter, DidConfig, ResponseData, Service, SignatureEncryptionCalculation};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static SECURED_DATA_TRANS_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -151,7 +147,8 @@ impl From<SecuredDataTrans> for Vec<u8> {
 }
 
 impl ResponseData for SecuredDataTrans {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::SecuredDataTrans)),
             None => {
@@ -166,14 +163,17 @@ impl ResponseData for SecuredDataTrans {
             }
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service;
-        if service != Service::SecuredDataTrans || response.sub_func.is_some() {
+impl TryFrom<(&Response, &DidConfig)> for SecuredDataTrans {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service;
+        if service != Service::SecuredDataTrans || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &resp.data;
         let data_len = data.len();
         let mut offset = 0;
         let apar =

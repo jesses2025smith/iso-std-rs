@@ -11,7 +11,7 @@ mod tests {
         let source = hex::decode("360100112233445566778899")?;
         let request = request::Request::try_from((&source, &cfg))?;
         assert_eq!(request.sub_function(), None);
-        let data = request.data::<request::TransferData>()?;
+        let data = request.data::<request::TransferData>(&cfg)?;
         assert_eq!(data.sequence, 0x01);
         assert_eq!(
             data.data,
@@ -28,7 +28,7 @@ mod tests {
         let source = hex::decode("760100112233445566778899")?;
         let response = response::Response::try_from((&source, &cfg))?;
         assert_eq!(response.sub_function(), None);
-        let data = response.data::<response::TransferData>()?;
+        let data = response.data::<response::TransferData>(&cfg)?;
         assert_eq!(data.sequence, 0x01);
         assert_eq!(
             data.data,

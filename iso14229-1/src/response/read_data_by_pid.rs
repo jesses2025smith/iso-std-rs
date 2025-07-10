@@ -1,10 +1,6 @@
 //! response of Service 2A
 
-use crate::{
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, ResponseData, Service,
-};
+use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, ResponseData, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static READ_DATA_BY_PERIOD_ID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -32,7 +28,8 @@ impl From<ReadDataByPeriodId> for Vec<u8> {
 }
 
 impl ResponseData for ReadDataByPeriodId {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ReadDataByPeriodId)),
             None => {
@@ -48,14 +45,17 @@ impl ResponseData for ReadDataByPeriodId {
             }
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::ReadDataByPeriodId || response.sub_func.is_some() {
+impl TryFrom<(&Response, &DidConfig)> for ReadDataByPeriodId {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::ReadDataByPeriodId || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &resp.data;
         let mut offset = 0;
 
         let did = data[offset];

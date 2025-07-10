@@ -1,11 +1,6 @@
 //! response of Service 10
 
-use crate::{
-    constant::{P2_MAX, P2_STAR_MAX},
-    error::Error,
-    response::{Code, Response, SubFunction},
-    utils, ResponseData, Service, SessionType,
-};
+use crate::{constant::{P2_MAX, P2_STAR_MAX}, error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, ResponseData, Service, SessionType};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static SESSION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -109,7 +104,8 @@ impl From<SessionCtrl> for Vec<u8> {
 }
 
 impl ResponseData for SessionCtrl {
-    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let _ = SessionType::try_from(sub_func)?;
@@ -126,14 +122,17 @@ impl ResponseData for SessionCtrl {
             None => Err(Error::SubFunctionError(Service::SessionCtrl)),
         }
     }
+}
 
-    fn try_without_config(response: &Response) -> Result<Self, Error> {
-        let service = response.service();
-        if service != Service::SessionCtrl || response.sub_func.is_none() {
+impl TryFrom<(&Response, &DidConfig)> for SessionCtrl {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::SessionCtrl || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
-        let timing = SessionTiming::try_from(response.data.as_slice())?;
+        let timing = SessionTiming::try_from(resp.data.as_slice())?;
 
         Ok(Self(timing))
     }
