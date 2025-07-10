@@ -1,9 +1,9 @@
 //! request of Service 84
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, AdministrativeParameter, Iso14229Error, RequestData, Service,
-    SignatureEncryptionCalculation,
+    utils, AdministrativeParameter, RequestData, Service, SignatureEncryptionCalculation,
 };
 
 #[derive(Debug, Clone)]
@@ -25,9 +25,9 @@ impl SecuredDataTrans {
         service: u8,
         service_data: Vec<u8>,
         signature_data: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         if signature_data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam(
+            return Err(Error::InvalidParam(
                 "length of `Signature/MAC Byte` is out of range".to_string(),
             ));
         }
@@ -64,12 +64,9 @@ impl From<SecuredDataTrans> for Vec<u8> {
 }
 
 impl RequestData for SecuredDataTrans {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::SecuredDataTrans)),
+            Some(_) => Err(Error::SubFunctionError(Service::SecuredDataTrans)),
             None => {
                 utils::data_length_check(data.len(), 8, false)?;
 
@@ -82,10 +79,10 @@ impl RequestData for SecuredDataTrans {
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::SecuredDataTrans || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &request.data;
@@ -95,7 +92,7 @@ impl RequestData for SecuredDataTrans {
             AdministrativeParameter::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
         if !apar.is_request() {
-            return Err(Iso14229Error::InvalidData(hex::encode(data)));
+            return Err(Error::InvalidData(hex::encode(data)));
         }
         let signature = SignatureEncryptionCalculation::try_from(data[offset])?;
         offset += 1;

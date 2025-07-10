@@ -1,8 +1,9 @@
 //! request of Service 85
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, DTCSettingType, Iso14229Error, RequestData, Service,
+    utils, DTCSettingType, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -17,10 +18,7 @@ impl From<CtrlDTCSetting> for Vec<u8> {
 }
 
 impl RequestData for CtrlDTCSetting {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -32,14 +30,14 @@ impl RequestData for CtrlDTCSetting {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::CtrlDTCSetting)),
+            None => Err(Error::SubFunctionError(Service::CtrlDTCSetting)),
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service;
         if service != Service::CtrlDTCSetting || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         // let sub_func: DTCSettingType = request.sub_function().unwrap().function()?;

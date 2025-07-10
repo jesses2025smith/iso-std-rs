@@ -1,6 +1,6 @@
 //! Commons of Service 24
 
-use crate::{utils, Iso14229Error};
+use crate::{error::Error, utils};
 
 /// see `ISO-14229(2020) Table C.8(page#429)`
 #[derive(Debug, Copy, Clone, Eq)]
@@ -18,7 +18,7 @@ impl PartialEq for ScalingByteExtensionUnit {
 }
 
 impl TryFrom<u8> for ScalingByteExtensionUnit {
-    type Error = Iso14229Error;
+    type Error = Error;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0x00 => Ok(ScalingByteExtensionUnit {
@@ -557,7 +557,7 @@ impl TryFrom<u8> for ScalingByteExtensionUnit {
                 description:
                     "Second/Minute/Hour/Month/Day/Year/Local minute offset/Local hour offset",
             }),
-            v => Err(Iso14229Error::ReservedError(v)),
+            v => Err(Error::ReservedError(v)),
         }
     }
 }

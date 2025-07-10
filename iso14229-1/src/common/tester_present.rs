@@ -1,6 +1,6 @@
 //! Commons of Service 3E
 
-use crate::Iso14229Error;
+use crate::error::Error;
 
 rsutil::enum_extend!(
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -8,6 +8,6 @@ rsutil::enum_extend!(
         Zero = 0x00,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );

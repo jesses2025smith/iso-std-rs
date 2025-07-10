@@ -1,8 +1,9 @@
 //! response of Service 85
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    utils, DTCSettingType, Iso14229Error, ResponseData, Service,
+    utils, DTCSettingType, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -27,10 +28,7 @@ impl From<CtrlDTCSetting> for Vec<u8> {
 }
 
 impl ResponseData for CtrlDTCSetting {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 let _ = DTCSettingType::try_from(sub_func)?;
@@ -44,14 +42,14 @@ impl ResponseData for CtrlDTCSetting {
                     data: vec![],
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::CtrlDTCSetting)),
+            None => Err(Error::SubFunctionError(Service::CtrlDTCSetting)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service;
         if service != Service::CtrlDTCSetting || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         // let sub_func: DTCSettingType = request.sub_function().unwrap().function()?;

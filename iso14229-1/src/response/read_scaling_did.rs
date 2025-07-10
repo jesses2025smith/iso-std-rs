@@ -1,7 +1,7 @@
 //! response of Service 24
 
 use crate::{
-    error::Iso14229Error,
+    error::Error,
     response::{Code, Response, SubFunction},
     utils, DataIdentifier, ResponseData, Service,
 };
@@ -37,7 +37,7 @@ rsutil::enum_extend!(
         StateAndConnectionType = 0xB0, // 1 byte
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );
 
@@ -144,12 +144,9 @@ impl From<ReadScalingDID> for Vec<u8> {
 }
 
 impl ResponseData for ReadScalingDID {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadScalingDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadScalingDID)),
             None => {
                 let data_len = data.len();
                 utils::data_length_check(data_len, 2, false)?;
@@ -164,10 +161,10 @@ impl ResponseData for ReadScalingDID {
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::ReadScalingDID || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &response.data;

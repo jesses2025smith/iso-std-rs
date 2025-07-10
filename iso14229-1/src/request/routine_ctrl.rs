@@ -1,8 +1,9 @@
 //! request of Service 31
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, Iso14229Error, RequestData, RoutineCtrlType, RoutineId, Service,
+    utils, RequestData, RoutineCtrlType, RoutineId, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -22,10 +23,7 @@ impl From<RoutineCtrl> for Vec<u8> {
 }
 
 impl RequestData for RoutineCtrl {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -39,14 +37,14 @@ impl RequestData for RoutineCtrl {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::RoutineCtrl)),
+            None => Err(Error::SubFunctionError(Service::RoutineCtrl)),
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::RoutineCtrl || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         // let sub_func: RoutineCtrlType = request.sub_function().unwrap().function()?;

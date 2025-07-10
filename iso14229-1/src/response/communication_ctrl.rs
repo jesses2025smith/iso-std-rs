@@ -1,8 +1,9 @@
 //! response of Service 28
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    utils, CommunicationCtrlType, Iso14229Error, ResponseData, Service,
+    utils, CommunicationCtrlType, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -27,10 +28,7 @@ impl From<CommunicationCtrl> for Vec<u8> {
 }
 
 impl ResponseData for CommunicationCtrl {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 let _ = CommunicationCtrlType::try_from(sub_func)?;
@@ -44,14 +42,14 @@ impl ResponseData for CommunicationCtrl {
                     data: vec![],
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::CommunicationCtrl)),
+            None => Err(Error::SubFunctionError(Service::CommunicationCtrl)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service;
         if service != Service::CommunicationCtrl || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         // let sub_func: CommunicationCtrlType = response.sub_function().unwrap().function()?;

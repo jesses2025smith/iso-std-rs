@@ -1,8 +1,9 @@
 //! request of Service 86
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    EventType, Iso14229Error, RequestData, ResponseOnEventType, Service,
+    EventType, RequestData, ResponseOnEventType, Service,
 };
 use bitfield_struct::bitfield;
 
@@ -16,7 +17,7 @@ rsutil::enum_extend!(
         NotEqual = 0x04,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );
 
@@ -126,12 +127,9 @@ impl From<ResponseOnEvent> for Vec<u8> {
 }
 
 impl RequestData for ResponseOnEvent {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ResponseOnEvent)),
+            Some(_) => Err(Error::SubFunctionError(Service::ResponseOnEvent)),
             None => Ok(Request {
                 service: Service::ResponseOnEvent,
                 sub_func: None,
@@ -140,12 +138,12 @@ impl RequestData for ResponseOnEvent {
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::ResponseOnEvent || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
-        Err(Iso14229Error::NotImplement)
+        Err(Error::NotImplement)
     }
 }

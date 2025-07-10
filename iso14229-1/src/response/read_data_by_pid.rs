@@ -1,7 +1,7 @@
 //! response of Service 2A
 
 use crate::{
-    error::Iso14229Error,
+    error::Error,
     response::{Code, Response, SubFunction},
     utils, ResponseData, Service,
 };
@@ -32,12 +32,9 @@ impl From<ReadDataByPeriodId> for Vec<u8> {
 }
 
 impl ResponseData for ReadDataByPeriodId {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDataByPeriodId)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadDataByPeriodId)),
             None => {
                 let data_len = data.len();
                 utils::data_length_check(data_len, 2, false)?;
@@ -52,10 +49,10 @@ impl ResponseData for ReadDataByPeriodId {
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::ReadDataByPeriodId || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &response.data;

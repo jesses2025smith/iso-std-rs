@@ -1,8 +1,9 @@
 //! request of Service 2A
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, Iso14229Error, RequestData, Service,
+    utils, RequestData, Service,
 };
 
 rsutil::enum_extend!(
@@ -15,7 +16,7 @@ rsutil::enum_extend!(
         StopSending = 0x04,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );
 
@@ -26,9 +27,9 @@ pub struct ReadDataByPeriodId {
 }
 
 impl ReadDataByPeriodId {
-    pub fn new(mode: TransmissionMode, did: Vec<u8>) -> Result<Self, Iso14229Error> {
+    pub fn new(mode: TransmissionMode, did: Vec<u8>) -> Result<Self, Error> {
         if did.is_empty() {
-            return Err(Iso14229Error::InvalidParam("empty period_id".to_string()));
+            return Err(Error::InvalidParam("empty period_id".to_string()));
         }
 
         Ok(Self { mode, did })
@@ -55,12 +56,9 @@ impl From<ReadDataByPeriodId> for Vec<u8> {
 }
 
 impl RequestData for ReadDataByPeriodId {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDataByPeriodId)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadDataByPeriodId)),
             None => {
                 utils::data_length_check(data.len(), 2, false)?;
 
@@ -73,10 +71,10 @@ impl RequestData for ReadDataByPeriodId {
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::ReadDataByPeriodId || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &request.data;

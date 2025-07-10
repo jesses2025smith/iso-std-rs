@@ -1,8 +1,9 @@
 //! request of Service 87
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, Iso14229Error, LinkCtrlMode, LinkCtrlType, RequestData, Service,
+    utils, LinkCtrlMode, LinkCtrlType, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -39,10 +40,7 @@ impl From<LinkCtrl> for Vec<u8> {
 }
 
 impl RequestData for LinkCtrl {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -67,14 +65,14 @@ impl RequestData for LinkCtrl {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::LinkCtrl)),
+            None => Err(Error::SubFunctionError(Service::LinkCtrl)),
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::LinkCtrl || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let sub_func: LinkCtrlType = request.sub_function().unwrap().function()?;

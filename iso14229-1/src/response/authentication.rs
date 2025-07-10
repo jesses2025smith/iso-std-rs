@@ -2,9 +2,9 @@
 
 use crate::response::{Response, SubFunction};
 use crate::{
-    parse_algo_indicator, parse_not_nullable, parse_nullable, response::Code, utils,
-    AlgorithmIndicator, AuthenticationTask, Iso14229Error, NotNullableData,
-    NullableData, ResponseData, Service, ALGORITHM_INDICATOR_LENGTH,
+    error::Error, parse_algo_indicator, parse_not_nullable, parse_nullable, response::Code, utils,
+    AlgorithmIndicator, AuthenticationTask, NotNullableData, NullableData, ResponseData, Service,
+    ALGORITHM_INDICATOR_LENGTH,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -206,10 +206,7 @@ impl From<Authentication> for Vec<u8> {
 }
 
 impl ResponseData for Authentication {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 let data_len = data.len();
@@ -250,14 +247,14 @@ impl ResponseData for Authentication {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::Authentication)),
+            None => Err(Error::SubFunctionError(Service::Authentication)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service;
         if service != Service::Authentication || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
         let sub_func: AuthenticationTask = response.sub_function().unwrap().function()?;
 
@@ -316,7 +313,7 @@ impl ResponseData for Authentication {
             AuthenticationTask::VerifyProofOfOwnershipUnidirectional => {
                 let algo_indicator = parse_algo_indicator(data, &mut offset);
                 let session_keyinfo = parse_nullable(data, data_len, &mut offset)
-                    .map_err(|_| Iso14229Error::InvalidData(hex::encode(data)))?;
+                    .map_err(|_| Error::InvalidData(hex::encode(data)))?;
 
                 Ok(Self::VerifyProofOfOwnershipUnidirectional {
                     value,

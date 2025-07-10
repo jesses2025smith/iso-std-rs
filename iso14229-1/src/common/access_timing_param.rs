@@ -1,6 +1,6 @@
 //! Commons of Service 83
 
-use crate::{Iso14229Error, RequestData, ResponseData, Service};
+use crate::{error::Error, RequestData, ResponseData, Service};
 
 rsutil::enum_extend!(
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -11,6 +11,6 @@ rsutil::enum_extend!(
         SetTimingParametersToGivenValues = 0x04,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );

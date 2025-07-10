@@ -1,6 +1,6 @@
 //! Commons of Service 2F
 
-use crate::Iso14229Error;
+use crate::error::Error;
 
 rsutil::enum_extend!(
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -11,7 +11,7 @@ rsutil::enum_extend!(
         ShortTermAdjustment = 0x03,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );
 

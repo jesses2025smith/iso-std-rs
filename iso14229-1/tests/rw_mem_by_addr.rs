@@ -2,7 +2,9 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, AddressAndLengthFormatIdentifier, DidConfig, MemoryLocation, Service};
+    use iso14229_1::{
+        request, response, AddressAndLengthFormatIdentifier, DidConfig, MemoryLocation, Service,
+    };
 
     #[test]
     fn test_read_request() -> anyhow::Result<()> {

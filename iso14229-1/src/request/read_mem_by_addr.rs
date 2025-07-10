@@ -1,8 +1,9 @@
 //! request of Service 23
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, Iso14229Error, MemoryLocation, RequestData, Service,
+    utils, MemoryLocation, RequestData, Service,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -15,12 +16,9 @@ impl From<ReadMemByAddr> for Vec<u8> {
 }
 
 impl RequestData for ReadMemByAddr {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadMemByAddr)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadMemByAddr)),
             None => {
                 utils::data_length_check(data.len(), 3, false)?;
 
@@ -33,10 +31,10 @@ impl RequestData for ReadMemByAddr {
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::ReadMemByAddr || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &request.data;

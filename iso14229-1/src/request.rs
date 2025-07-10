@@ -72,9 +72,7 @@ mod request_file_transfer; // 0x38
 #[cfg(any(feature = "std2013", feature = "std2020"))]
 pub use request_file_transfer::*;
 
-use crate::{
-    error::Iso14229Error, request, utils, DidConfig, RequestData, Service, SUPPRESS_POSITIVE,
-};
+use crate::{error::Error, request, utils, DidConfig, RequestData, Service, SUPPRESS_POSITIVE};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SubFunction {
@@ -91,7 +89,7 @@ impl SubFunction {
     }
 
     #[inline]
-    pub fn function<T: TryFrom<u8, Error = Iso14229Error>>(&self) -> Result<T, Iso14229Error> {
+    pub fn function<T: TryFrom<u8, Error = Error>>(&self) -> Result<T, Error> {
         T::try_from(self.function)
     }
 
@@ -125,7 +123,7 @@ impl Request {
         sub_func: Option<u8>,
         data: Vec<u8>,
         cfg: &DidConfig,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         match service {
             Service::SessionCtrl => SessionCtrl::without_config(&data, sub_func),
             Service::ECUReset => ECUReset::without_config(&data, sub_func),
@@ -157,9 +155,7 @@ impl Request {
             Service::CtrlDTCSetting => CtrlDTCSetting::without_config(&data, sub_func),
             Service::ResponseOnEvent => ResponseOnEvent::without_config(&data, sub_func),
             Service::LinkCtrl => LinkCtrl::without_config(&data, sub_func),
-            Service::NRC => Err(Iso14229Error::OtherError(
-                "got an NRC service from request".into(),
-            )),
+            Service::NRC => Err(Error::OtherError("got an NRC service from request".into())),
         }
     }
 
@@ -179,7 +175,7 @@ impl Request {
     }
 
     #[inline]
-    pub fn data<T>(&self) -> Result<T, Iso14229Error>
+    pub fn data<T>(&self) -> Result<T, Error>
     where
         T: RequestData,
     {
@@ -187,7 +183,7 @@ impl Request {
     }
 
     #[inline]
-    pub fn data_with_config<T>(&self, cfg: &DidConfig) -> Result<T, Iso14229Error>
+    pub fn data_with_config<T>(&self, cfg: &DidConfig) -> Result<T, Error>
     where
         T: RequestData,
     {
@@ -201,7 +197,7 @@ impl Request {
         mut offset: usize,
         service: Service,
         cfg: &DidConfig,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         utils::data_length_check(data_len, offset + 1, false)?;
         let sub_func = data[offset];
         offset += 1;
@@ -225,7 +221,7 @@ impl From<Request> for Vec<u8> {
 }
 
 impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
-    type Error = Iso14229Error;
+    type Error = Error;
     fn try_from((data, cfg): (T, &DidConfig)) -> Result<Self, Self::Error> {
         let data = data.as_ref();
         let data_len = data.len();
@@ -265,9 +261,7 @@ impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
             | Service::WriteMemByAddr
             | Service::SecuredDataTrans
             | Service::ResponseOnEvent => Self::new(service, None, data[offset..].to_vec(), cfg),
-            Service::NRC => Err(Iso14229Error::OtherError(
-                "got an NRC service from request".into(),
-            )),
+            Service::NRC => Err(Error::OtherError("got an NRC service from request".into())),
         }
     }
 }

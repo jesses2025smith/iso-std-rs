@@ -1,6 +1,6 @@
 //! Commons of Service 23|3D
 
-use crate::{utils, AddressAndLengthFormatIdentifier, Iso14229Error};
+use crate::{error::Error, utils, AddressAndLengthFormatIdentifier};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct MemoryLocation {
@@ -22,14 +22,8 @@ impl From<MemoryLocation> for Vec<u8> {
     /// bit 7 - 4: Length (number of bytes) of the memorySize parameter
     /// bit 3 - 0: Length (number of bytes) of the memoryAddress parameter
     fn from(v: MemoryLocation) -> Self {
-        let mut mem_addr = utils::u128_to_vec(
-            v.mem_addr,
-            v.alfi.length_of_memory_address(),
-        );
-        let mut mem_size = utils::u128_to_vec(
-            v.mem_size,
-            v.alfi.length_of_memory_size(),
-        );
+        let mut mem_addr = utils::u128_to_vec(v.mem_addr, v.alfi.length_of_memory_address());
+        let mut mem_size = utils::u128_to_vec(v.mem_size, v.alfi.length_of_memory_size());
 
         let mut result = vec![v.alfi.into()];
         result.append(&mut mem_addr);
@@ -44,11 +38,9 @@ impl MemoryLocation {
         alfi: AddressAndLengthFormatIdentifier,
         mem_addr: u128,
         mem_size: u128,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         if mem_addr == 0 || mem_size == 0 {
-            return Err(Iso14229Error::InvalidParam(
-                "invalid memory address or size".into(),
-            ));
+            return Err(Error::InvalidParam("invalid memory address or size".into()));
         }
 
         Ok(Self {
@@ -66,7 +58,7 @@ impl MemoryLocation {
         self.mem_size
     }
 
-    pub fn from_slice(data: &[u8]) -> Result<Self, Iso14229Error> {
+    pub fn from_slice(data: &[u8]) -> Result<Self, Error> {
         let data_len = data.len();
         utils::data_length_check(data_len, 3, false)?;
 

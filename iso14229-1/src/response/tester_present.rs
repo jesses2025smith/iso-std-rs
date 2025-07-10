@@ -1,8 +1,9 @@
 //! response of Service 3E
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    utils, Iso14229Error, ResponseData, Service, TesterPresentType,
+    utils, ResponseData, Service, TesterPresentType,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -25,10 +26,7 @@ impl From<TesterPresent> for Vec<u8> {
 }
 
 impl ResponseData for TesterPresent {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 let _ = TesterPresentType::try_from(sub_func)?;
@@ -42,14 +40,14 @@ impl ResponseData for TesterPresent {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::TesterPresent)),
+            None => Err(Error::SubFunctionError(Service::TesterPresent)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::TesterPresent || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         Ok(Self {

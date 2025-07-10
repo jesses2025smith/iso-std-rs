@@ -2,7 +2,9 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, DidConfig, Iso14229Error, Service, SessionType, P2_STAR_MAX};
+    use iso14229_1::{
+        request, response, DidConfig, Iso14229Error, Service, SessionType, P2_STAR_MAX,
+    };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {

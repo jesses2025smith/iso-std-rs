@@ -1,6 +1,6 @@
 //! Commons of Service 22|2E
 
-use crate::{error::Iso14229Error, utils, DidConfig, Service};
+use crate::{error::Error, utils, DidConfig, Service};
 
 /// Table C.1 — DID data-parameter definitions
 #[repr(u16)]
@@ -190,14 +190,8 @@ pub struct DIDData {
 }
 
 impl DIDData {
-    pub fn new(
-        did: DataIdentifier,
-        data: Vec<u8>,
-        cfg: &DidConfig,
-    ) -> Result<Self, Iso14229Error> {
-        let &did_len = cfg
-            .get(&did)
-            .ok_or(Iso14229Error::DidNotSupported(did))?;
+    pub fn new(did: DataIdentifier, data: Vec<u8>, cfg: &DidConfig) -> Result<Self, Error> {
+        let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
         utils::data_length_check(data.len(), did_len, true)?;
 
         Ok(Self { did, data })

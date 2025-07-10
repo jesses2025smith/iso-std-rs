@@ -1,7 +1,7 @@
 //! response of Service 31
 
 use crate::{
-    error::Iso14229Error,
+    error::Error,
     response::{Code, Response, SubFunction},
     utils, ResponseData, RoutineCtrlType, RoutineId, Service,
 };
@@ -31,9 +31,9 @@ impl RoutineCtrl {
         routine_id: RoutineId,
         routine_info: Option<u8>,
         routine_status: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         if routine_info.is_none() && !routine_status.is_empty() {
-            return Err(Iso14229Error::InvalidData(
+            return Err(Error::InvalidData(
                 "`routineStatusRecord` mut be empty when `routineInfo` is None".to_string(),
             ));
         }
@@ -60,10 +60,7 @@ impl From<RoutineCtrl> for Vec<u8> {
 }
 
 impl ResponseData for RoutineCtrl {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 utils::data_length_check(data.len(), 2, false)?;
@@ -77,14 +74,14 @@ impl ResponseData for RoutineCtrl {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::RoutineCtrl)),
+            None => Err(Error::SubFunctionError(Service::RoutineCtrl)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service;
         if service != Service::RoutineCtrl || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
         // let sub_func: RoutineCtrlType = response.sub_function().unwrap().function()?;
 

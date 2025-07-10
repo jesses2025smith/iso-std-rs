@@ -1,8 +1,9 @@
 //! request of Service 83
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, Iso14229Error, RequestData, Service, TimingParameterAccessType,
+    utils, RequestData, Service, TimingParameterAccessType,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -17,10 +18,7 @@ impl From<AccessTimingParameter> for Vec<u8> {
 }
 
 impl RequestData for AccessTimingParameter {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -29,7 +27,7 @@ impl RequestData for AccessTimingParameter {
                 match TimingParameterAccessType::try_from(sub_func)? {
                     TimingParameterAccessType::SetTimingParametersToGivenValues => {
                         if data.is_empty() {
-                            return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                            return Err(Error::InvalidData(hex::encode(data)));
                         }
 
                         Ok(Request {
@@ -40,7 +38,7 @@ impl RequestData for AccessTimingParameter {
                     }
                     _ => {
                         if !data.is_empty() {
-                            return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                            return Err(Error::InvalidData(hex::encode(data)));
                         }
 
                         Ok(Request {
@@ -51,14 +49,14 @@ impl RequestData for AccessTimingParameter {
                     }
                 }
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::AccessTimingParam)),
+            None => Err(Error::SubFunctionError(Service::AccessTimingParam)),
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::AccessTimingParam || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         Ok(Self {

@@ -1,6 +1,10 @@
 //! response of Service 22
 
-use crate::{error::Iso14229Error, response::{Code, Response, SubFunction}, utils, DIDData, DataIdentifier, DidConfig, ResponseData, Service};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DIDData, DataIdentifier, DidConfig, ResponseData, Service,
+};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static READ_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -32,13 +36,9 @@ impl From<ReadDID> for Vec<u8> {
 }
 
 impl ResponseData for ReadDID {
-    fn with_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-        cfg: &DidConfig,
-    ) -> Result<Response, Iso14229Error> {
+    fn with_config(data: &[u8], sub_func: Option<u8>, cfg: &DidConfig) -> Result<Response, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadDID)),
             None => {
                 let data_len = data.len();
                 let mut offset = 0;
@@ -46,9 +46,7 @@ impl ResponseData for ReadDID {
                 let did =
                     DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                 offset += 2;
-                let &did_len = cfg
-                    .get(&did)
-                    .ok_or(Iso14229Error::DidNotSupported(did))?;
+                let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
                 utils::data_length_check(data_len, offset + did_len, false)?;
                 offset += did_len;
 
@@ -57,9 +55,7 @@ impl ResponseData for ReadDID {
                     let did =
                         DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                     offset += 2;
-                    let &did_len = cfg
-                        .get(&did)
-                        .ok_or(Iso14229Error::DidNotSupported(did))?;
+                    let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
                     utils::data_length_check(data_len, offset + did_len, false)?;
                     offset += did_len;
                 }
@@ -74,10 +70,10 @@ impl ResponseData for ReadDID {
         }
     }
 
-    fn try_with_config(response: &Response, cfg: &DidConfig) -> Result<Self, Iso14229Error> {
+    fn try_with_config(response: &Response, cfg: &DidConfig) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::ReadDID || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &response.data;
@@ -86,9 +82,7 @@ impl ResponseData for ReadDID {
 
         let did = DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
-        let &did_len = cfg
-            .get(&did)
-            .ok_or(Iso14229Error::DidNotSupported(did))?;
+        let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
 
         let context = DIDData {
             did,
@@ -100,9 +94,7 @@ impl ResponseData for ReadDID {
         while data_len > offset {
             let did = DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
             offset += 2;
-            let &did_len = cfg
-                .get(&did)
-                .ok_or(Iso14229Error::DidNotSupported(did))?;
+            let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
 
             others.push(DIDData {
                 did,

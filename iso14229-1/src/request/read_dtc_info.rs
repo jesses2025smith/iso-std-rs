@@ -2,8 +2,9 @@
 #![allow(clippy::non_minimal_cfg)]
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, DTCReportType, Iso14229Error, RequestData, Service,
+    utils, DTCReportType, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -238,10 +239,7 @@ impl From<DTCInfo> for Vec<u8> {
 }
 
 impl RequestData for DTCInfo {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -356,14 +354,14 @@ impl RequestData for DTCInfo {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::ReadDTCInfo)),
+            None => Err(Error::SubFunctionError(Service::ReadDTCInfo)),
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::ReadDTCInfo || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let sub_func: DTCReportType = request.sub_function().unwrap().function()?;
@@ -472,7 +470,7 @@ impl RequestData for DTCInfo {
             DTCReportType::ReportDTCExtDataRecordByRecordNumber => {
                 let extra_num = data[offset];
                 if extra_num > 0xEF {
-                    return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                    return Err(Error::InvalidData(hex::encode(data)));
                 }
 
                 Ok(Self::ReportDTCExtDataRecordByRecordNumber { extra_num })
@@ -512,7 +510,7 @@ impl RequestData for DTCInfo {
             DTCReportType::ReportSupportedDTCExtDataRecord => {
                 let extra_num = data[offset];
                 if !(1..=0xFD).contains(&extra_num) {
-                    return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                    return Err(Error::InvalidData(hex::encode(data)));
                 }
 
                 Ok(Self::ReportSupportedDTCExtDataRecord { extra_num })
@@ -522,7 +520,7 @@ impl RequestData for DTCInfo {
                 let func_gid = data[offset];
                 offset += 1;
                 if func_gid > 0xFE {
-                    return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                    return Err(Error::InvalidData(hex::encode(data)));
                 }
 
                 Ok(Self::ReportWWHOBDDTCByMaskRecord {
@@ -535,7 +533,7 @@ impl RequestData for DTCInfo {
             DTCReportType::ReportWWHOBDDTCWithPermanentStatus => {
                 let func_gid = data[offset];
                 if func_gid > 0xFE {
-                    return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                    return Err(Error::InvalidData(hex::encode(data)));
                 }
 
                 Ok(Self::ReportWWHOBDDTCWithPermanentStatus { func_gid })
@@ -545,12 +543,12 @@ impl RequestData for DTCInfo {
                 let func_gid = data[offset];
                 offset += 1;
                 if func_gid > 0xFE {
-                    return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                    return Err(Error::InvalidData(hex::encode(data)));
                 }
 
                 let readiness_gid = data[offset];
                 if readiness_gid > 0xFE {
-                    return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                    return Err(Error::InvalidData(hex::encode(data)));
                 }
 
                 Ok(Self::ReportDTCInformationByDTCReadinessGroupIdentifier {

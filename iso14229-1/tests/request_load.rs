@@ -2,7 +2,10 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, AddressAndLengthFormatIdentifier, DataFormatIdentifier, DidConfig, LengthFormatIdentifier, MemoryLocation, Service};
+    use iso14229_1::{
+        request, response, AddressAndLengthFormatIdentifier, DataFormatIdentifier, DidConfig,
+        LengthFormatIdentifier, MemoryLocation, Service,
+    };
 
     #[test]
     fn test_download_request() -> anyhow::Result<()> {

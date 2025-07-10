@@ -1,8 +1,9 @@
 //! request of Service 37
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, Iso14229Error, RequestData, Service,
+    utils, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -17,14 +18,9 @@ impl From<RequestTransferExit> for Vec<u8> {
 }
 
 impl RequestData for RequestTransferExit {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(
-                Service::RequestTransferExit,
-            )),
+            Some(_) => Err(Error::SubFunctionError(Service::RequestTransferExit)),
             None => {
                 // utils::data_length_check(data.len(), 0, true)?;
 
@@ -37,10 +33,10 @@ impl RequestData for RequestTransferExit {
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::RequestTransferExit || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         Ok(Self {

@@ -1,9 +1,9 @@
 //! request of Service 3D
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, AddressAndLengthFormatIdentifier, Iso14229Error, MemoryLocation,
-    RequestData, Service,
+    utils, AddressAndLengthFormatIdentifier, MemoryLocation, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -19,9 +19,9 @@ impl WriteMemByAddr {
         mem_addr: u128,
         mem_size: u128,
         data: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         if data.len() != mem_size as usize {
-            return Err(Iso14229Error::InvalidParam(
+            return Err(Error::InvalidParam(
                 "the length of data must be equal to mem_size and the mem_size must rather than 0"
                     .to_string(),
             ));
@@ -54,12 +54,9 @@ impl From<WriteMemByAddr> for Vec<u8> {
 }
 
 impl RequestData for WriteMemByAddr {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteMemByAddr)),
+            Some(_) => Err(Error::SubFunctionError(Service::WriteMemByAddr)),
             None => {
                 utils::data_length_check(data.len(), 5, false)?;
 
@@ -72,10 +69,10 @@ impl RequestData for WriteMemByAddr {
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::WriteMemByAddr || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &request.data;

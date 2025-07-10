@@ -2,8 +2,9 @@
 #![allow(clippy::non_minimal_cfg)]
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, Iso14229Error, RequestData, Service,
+    utils, RequestData, Service,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -49,14 +50,9 @@ impl From<ClearDiagnosticInfo> for Vec<u8> {
 
 impl RequestData for ClearDiagnosticInfo {
     #[inline]
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(
-                Service::ClearDiagnosticInfo,
-            )),
+            Some(_) => Err(Error::SubFunctionError(Service::ClearDiagnosticInfo)),
             None => {
                 #[cfg(any(feature = "std2020"))]
                 utils::data_length_check(data.len(), 3, false)?;
@@ -73,10 +69,10 @@ impl RequestData for ClearDiagnosticInfo {
     }
 
     #[cfg(any(feature = "std2020"))]
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::ClearDiagnosticInfo || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &request.data;
@@ -96,10 +92,10 @@ impl RequestData for ClearDiagnosticInfo {
     }
 
     #[cfg(any(feature = "std2006", feature = "std2013"))]
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::ClearDiagnosticInfo || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &request.data;

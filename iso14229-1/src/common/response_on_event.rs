@@ -1,6 +1,6 @@
 //! Commons of Service 86
 
-use crate::{constant::POSITIVE_OFFSET, error::Iso14229Error, Service};
+use crate::{constant::POSITIVE_OFFSET, error::Error, Service};
 use std::{collections::HashSet, sync::LazyLock};
 
 /// Table 91 — Recommended services to be used with the ResponseOnEvent service(2006)
@@ -31,7 +31,7 @@ rsutil::enum_extend!(
         ReportDTCRecordInformationOnDtcStatusChange = 0x09,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );
 

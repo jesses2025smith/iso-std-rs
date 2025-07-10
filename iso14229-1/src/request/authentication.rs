@@ -2,9 +2,8 @@
 
 use crate::request::{Request, SubFunction};
 use crate::{
-    parse_algo_indicator, parse_not_nullable, parse_nullable, utils, AlgorithmIndicator,
-    AuthenticationTask, Iso14229Error, NotNullableData, NullableData, RequestData,
-    Service,
+    error::Error, parse_algo_indicator, parse_not_nullable, parse_nullable, utils,
+    AlgorithmIndicator, AuthenticationTask, NotNullableData, NullableData, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -128,10 +127,7 @@ impl From<Authentication> for Vec<u8> {
 }
 
 impl RequestData for Authentication {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -173,14 +169,14 @@ impl RequestData for Authentication {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::Authentication)),
+            None => Err(Error::SubFunctionError(Service::Authentication)),
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service;
         if service != Service::Authentication || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
         let sub_func: AuthenticationTask = request.sub_function().unwrap().function()?;
 

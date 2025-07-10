@@ -8,7 +8,7 @@ pub mod response;
 pub mod utils;
 pub use constant::*;
 mod error;
-pub use error::*;
+pub use error::Error as Iso14229Error;
 
 use std::{
     collections::HashMap,
@@ -56,7 +56,7 @@ rsutil::enum_extend!(
         NRC = 0x7F,
     },
     u8,
-    Iso14229Error,
+    error::Error,
     ReservedError
 );
 
@@ -102,33 +102,27 @@ pub type DidConfig = HashMap<DataIdentifier, usize>;
 
 #[allow(unused)]
 pub trait RequestData: Into<Vec<u8>> {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<request::Request, Iso14229Error> {
-        Err(Iso14229Error::NotImplement)
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<request::Request, error::Error> {
+        Err(error::Error::NotImplement)
     }
     fn with_config(
         data: &[u8],
         sub_func: Option<u8>,
-        cfg: &DidConfig
-    ) -> Result<request::Request, Iso14229Error> {
-        Err(Iso14229Error::NotImplement)
+        cfg: &DidConfig,
+    ) -> Result<request::Request, error::Error> {
+        Err(error::Error::NotImplement)
     }
-    fn try_without_config(request: &request::Request) -> Result<Self, Iso14229Error>
+    fn try_without_config(request: &request::Request) -> Result<Self, error::Error>
     where
-        Self: Sized
+        Self: Sized,
     {
-        Err(Iso14229Error::NotImplement)
+        Err(error::Error::NotImplement)
     }
-    fn try_with_config(
-        request: &request::Request,
-        cfg: &DidConfig
-    ) -> Result<Self, Iso14229Error>
+    fn try_with_config(request: &request::Request, cfg: &DidConfig) -> Result<Self, error::Error>
     where
-        Self: Sized
+        Self: Sized,
     {
-        Err(Iso14229Error::NotImplement)
+        Err(error::Error::NotImplement)
     }
 }
 
@@ -137,29 +131,26 @@ pub trait ResponseData: Into<Vec<u8>> {
     fn without_config(
         data: &[u8],
         sub_func: Option<u8>,
-    ) -> Result<response::Response, Iso14229Error> {
-        Err(Iso14229Error::NotImplement)
+    ) -> Result<response::Response, error::Error> {
+        Err(error::Error::NotImplement)
     }
     fn with_config(
         data: &[u8],
         sub_func: Option<u8>,
-        cfg: &DidConfig
-    ) -> Result<response::Response, Iso14229Error> {
-        Err(Iso14229Error::NotImplement)
+        cfg: &DidConfig,
+    ) -> Result<response::Response, error::Error> {
+        Err(error::Error::NotImplement)
     }
-    fn try_without_config(response: &response::Response) -> Result<Self, Iso14229Error>
+    fn try_without_config(response: &response::Response) -> Result<Self, error::Error>
     where
-        Self: Sized
+        Self: Sized,
     {
-        Err(Iso14229Error::NotImplement)
+        Err(error::Error::NotImplement)
     }
-    fn try_with_config(
-        response: &response::Response,
-        cfg: &DidConfig
-    ) -> Result<Self, Iso14229Error>
+    fn try_with_config(response: &response::Response, cfg: &DidConfig) -> Result<Self, error::Error>
     where
-        Self: Sized
+        Self: Sized,
     {
-        Err(Iso14229Error::NotImplement)
+        Err(error::Error::NotImplement)
     }
 }

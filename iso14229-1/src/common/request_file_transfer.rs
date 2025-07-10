@@ -1,6 +1,6 @@
 //! Commons of Service 38
 
-use crate::Iso14229Error;
+use crate::error::Error;
 
 rsutil::enum_extend!(
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -13,6 +13,6 @@ rsutil::enum_extend!(
         ResumeFile = 0x06,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );

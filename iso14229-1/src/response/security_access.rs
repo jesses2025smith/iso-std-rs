@@ -1,8 +1,9 @@
 //! response of Service 27
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    Iso14229Error, ResponseData, SecurityAccessLevel, Service,
+    ResponseData, SecurityAccessLevel, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -31,14 +32,11 @@ impl From<SecurityAccess> for Vec<u8> {
 }
 
 impl ResponseData for SecurityAccess {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(level) => {
                 if level % 2 != 0 && data.is_empty() {
-                    return Err(Iso14229Error::InvalidParam(
+                    return Err(Error::InvalidParam(
                         "Security access response does not contain a security key".to_owned(),
                     ));
                 }
@@ -50,14 +48,14 @@ impl ResponseData for SecurityAccess {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::SecurityAccess)),
+            None => Err(Error::SubFunctionError(Service::SecurityAccess)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::SecurityAccess || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         Ok(Self {

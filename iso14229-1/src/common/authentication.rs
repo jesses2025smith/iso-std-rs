@@ -1,6 +1,6 @@
 //! Commons of Service 29
 
-use crate::{utils, Iso14229Error};
+use crate::{error::Error, utils};
 
 pub(crate) const ALGORITHM_INDICATOR_LENGTH: usize = 16;
 
@@ -18,7 +18,7 @@ rsutil::enum_extend!(
         AuthenticationConfiguration = 0x08,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );
 
@@ -27,9 +27,9 @@ pub struct NotNullableData(pub(crate) Vec<u8>);
 
 impl NotNullableData {
     #[inline]
-    pub fn new(data: Vec<u8>) -> Result<Self, Iso14229Error> {
+    pub fn new(data: Vec<u8>) -> Result<Self, Error> {
         if data.is_empty() || data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam("Data must not be empty, and the length of the data must be less than or equal to 0xFFFF".to_string()));
+            return Err(Error::InvalidParam("Data must not be empty, and the length of the data must be less than or equal to 0xFFFF".to_string()));
         }
 
         Ok(Self(data))
@@ -52,9 +52,9 @@ pub struct NullableData(pub(crate) Vec<u8>);
 
 impl NullableData {
     #[inline]
-    pub fn new(data: Vec<u8>) -> Result<Self, Iso14229Error> {
+    pub fn new(data: Vec<u8>) -> Result<Self, Error> {
         if data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam(
+            return Err(Error::InvalidParam(
                 "the length of data must be less than or equal to 0xFFFF!".to_string(),
             ));
         }
@@ -89,7 +89,7 @@ pub(crate) fn parse_nullable(
     data: &[u8],
     data_len: usize,
     offset: &mut usize,
-) -> Result<NullableData, Iso14229Error> {
+) -> Result<NullableData, Error> {
     utils::data_length_check(data_len, *offset + 2, false)?;
 
     let len = u16::from_be_bytes([data[*offset], data[*offset + 1]]) as usize;
@@ -107,13 +107,13 @@ pub(crate) fn parse_not_nullable(
     data: &[u8],
     data_len: usize,
     offset: &mut usize,
-) -> Result<NotNullableData, Iso14229Error> {
+) -> Result<NotNullableData, Error> {
     utils::data_length_check(data_len, *offset + 2, false)?;
 
     let len = u16::from_be_bytes([data[*offset], data[*offset + 1]]) as usize;
     *offset += 2;
     if len == 0 {
-        return Err(Iso14229Error::InvalidData(hex::encode(data)));
+        return Err(Error::InvalidData(hex::encode(data)));
     }
     utils::data_length_check(data_len, *offset + len, false)?;
 

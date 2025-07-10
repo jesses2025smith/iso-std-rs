@@ -1,8 +1,9 @@
 //! response of Service 87
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    utils, Iso14229Error, LinkCtrlType, ResponseData, Service,
+    utils, LinkCtrlType, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -28,10 +29,7 @@ impl From<LinkCtrl> for Vec<u8> {
 }
 
 impl ResponseData for LinkCtrl {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 let _ = LinkCtrlType::try_from(sub_func)?;
@@ -45,14 +43,14 @@ impl ResponseData for LinkCtrl {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::LinkCtrl)),
+            None => Err(Error::SubFunctionError(Service::LinkCtrl)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::LinkCtrl || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         // let sub_func: LinkCtrlType = response.sub_function().unwrap().function()?;

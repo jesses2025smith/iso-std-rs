@@ -1,4 +1,4 @@
-use crate::{Iso14229Error, SUPPRESS_POSITIVE};
+use crate::{error::Error, SUPPRESS_POSITIVE};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct U24(pub(crate) u32);
@@ -26,7 +26,7 @@ impl U24 {
 }
 
 impl<'a> TryFrom<&'a [u8]> for U24 {
-    type Error = Iso14229Error;
+    type Error = Error;
 
     #[inline]
     fn try_from(data: &'a [u8]) -> Result<Self, Self::Error> {
@@ -63,20 +63,16 @@ impl From<U24> for u32 {
 }
 
 #[inline]
-pub(crate) fn data_length_check(
-    actual: usize,
-    expect: usize,
-    equal: bool,
-) -> Result<(), Iso14229Error> {
+pub(crate) fn data_length_check(actual: usize, expect: usize, equal: bool) -> Result<(), Error> {
     match equal {
         true => {
             if actual != expect {
-                return Err(Iso14229Error::InvalidDataLength { expect, actual });
+                return Err(Error::InvalidDataLength { expect, actual });
             }
         }
         false => {
             if actual < expect {
-                return Err(Iso14229Error::InvalidDataLength { expect, actual });
+                return Err(Error::InvalidDataLength { expect, actual });
             }
         }
     }

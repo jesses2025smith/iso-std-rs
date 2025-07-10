@@ -4,7 +4,10 @@
 #[cfg(any(feature = "std2020"))]
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData, NullableData, Service};
+    use iso14229_1::{
+        request, response, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData,
+        NullableData, Service,
+    };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {

@@ -3,7 +3,9 @@
 #[cfg(any(feature = "std2013", feature = "std2020"))]
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, DataFormatIdentifier, DidConfig, ModeOfOperation, Service};
+    use iso14229_1::{
+        request, response, DataFormatIdentifier, DidConfig, ModeOfOperation, Service,
+    };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {

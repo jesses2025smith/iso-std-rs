@@ -1,6 +1,6 @@
 //! Commons of Service 19
 
-use crate::Iso14229Error;
+use crate::error::Error;
 use bitflags::bitflags;
 
 bitflags! {
@@ -65,6 +65,6 @@ rsutil::enum_extend!(
         ReportDTCInformationByDTCReadinessGroupIdentifier = 0x56,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );

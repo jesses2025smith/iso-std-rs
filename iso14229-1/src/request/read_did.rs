@@ -1,8 +1,9 @@
 //! request of Service 22
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, DataIdentifier, Iso14229Error, RequestData, Service,
+    utils, DataIdentifier, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -31,12 +32,9 @@ impl From<ReadDID> for Vec<u8> {
 }
 
 impl RequestData for ReadDID {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadDID)),
             None => {
                 let data_len = data.len();
                 let mut offset = 0;
@@ -56,10 +54,10 @@ impl RequestData for ReadDID {
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::ReadDID || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &request.data;

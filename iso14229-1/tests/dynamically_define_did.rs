@@ -2,7 +2,9 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, DefinitionType, DidConfig, DynamicallyDID, DynamicallyMemAddr, Service};
+    use iso14229_1::{
+        request, response, DefinitionType, DidConfig, DynamicallyDID, DynamicallyMemAddr, Service,
+    };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {

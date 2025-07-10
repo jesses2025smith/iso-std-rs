@@ -1,8 +1,9 @@
 //! response of Service 2C
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    DefinitionType, DynamicallyDID, Iso14229Error, ResponseData, Service,
+    DefinitionType, DynamicallyDID, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -29,10 +30,7 @@ impl From<DynamicallyDefineDID> for Vec<u8> {
 }
 
 impl ResponseData for DynamicallyDefineDID {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 let _ = DefinitionType::try_from(sub_func)?;
@@ -41,7 +39,7 @@ impl ResponseData for DynamicallyDefineDID {
                 match data_len {
                     0 | 2 => {}
                     _ => {
-                        return Err(Iso14229Error::InvalidDataLength {
+                        return Err(Error::InvalidDataLength {
                             expect: 0,
                             actual: data_len,
                         })
@@ -55,14 +53,14 @@ impl ResponseData for DynamicallyDefineDID {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::DynamicalDefineDID)),
+            None => Err(Error::SubFunctionError(Service::DynamicalDefineDID)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service;
         if service != Service::DynamicalDefineDID || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &response.data;
@@ -75,7 +73,7 @@ impl ResponseData for DynamicallyDefineDID {
                 data[offset],
                 data[offset + 1],
             ]))?)),
-            v => Err(Iso14229Error::InvalidDataLength {
+            v => Err(Error::InvalidDataLength {
                 expect: 2,
                 actual: v,
             }),

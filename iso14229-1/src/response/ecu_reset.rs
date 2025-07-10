@@ -1,8 +1,9 @@
 //! response of Service 11
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    utils, ECUResetType, Iso14229Error, ResponseData, Service,
+    utils, ECUResetType, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -32,10 +33,7 @@ impl From<ECUReset> for Vec<u8> {
 }
 
 impl ResponseData for ECUReset {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 let data_len = data.len();
@@ -53,14 +51,14 @@ impl ResponseData for ECUReset {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::ECUReset)),
+            None => Err(Error::SubFunctionError(Service::ECUReset)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::ECUReset || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let sub_func: ECUResetType = response.sub_function().unwrap().function()?;

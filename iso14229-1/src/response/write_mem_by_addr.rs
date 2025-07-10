@@ -1,7 +1,7 @@
 //! response of Service 3D
 
 use crate::{
-    error::Iso14229Error,
+    error::Error,
     response::{Code, Response, SubFunction},
     utils, MemoryLocation, ResponseData, Service,
 };
@@ -28,12 +28,9 @@ impl From<WriteMemByAddr> for Vec<u8> {
 }
 
 impl ResponseData for WriteMemByAddr {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteMemByAddr)),
+            Some(_) => Err(Error::SubFunctionError(Service::WriteMemByAddr)),
             None => {
                 utils::data_length_check(data.len(), 3, false)?;
 
@@ -47,10 +44,10 @@ impl ResponseData for WriteMemByAddr {
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::WriteMemByAddr || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         Ok(Self(MemoryLocation::from_slice(&response.data)?))

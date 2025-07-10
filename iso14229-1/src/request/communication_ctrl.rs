@@ -1,20 +1,20 @@
 //! request of Service 28
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, CommunicationCtrlType, CommunicationType, Iso14229Error, RequestData,
-    Service,
+    utils, CommunicationCtrlType, CommunicationType, RequestData, Service,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct NodeId(u16);
 
 impl TryFrom<u16> for NodeId {
-    type Error = Iso14229Error;
+    type Error = Error;
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0x0001..=0xFFFF => Ok(Self(value)),
-            v => Err(Iso14229Error::ReservedError(v as u8)),
+            v => Err(Error::ReservedError(v as u8)),
         }
     }
 }
@@ -36,7 +36,7 @@ impl CommunicationCtrl {
         ctrl_type: CommunicationCtrlType,
         comm_type: CommunicationType,
         node_id: Option<NodeId>,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         match ctrl_type {
             CommunicationCtrlType::EnableRxAndDisableTxWithEnhancedAddressInformation
             | CommunicationCtrlType::EnableRxAndTxWithEnhancedAddressInformation => match node_id {
@@ -44,7 +44,7 @@ impl CommunicationCtrl {
                     comm_type,
                     node_id: Some(v),
                 }),
-                None => Err(Iso14229Error::InvalidParam(
+                None => Err(Error::InvalidParam(
                     "`nodeIdentificationNumber` is required".to_string(),
                 )),
             },
@@ -69,10 +69,7 @@ impl From<CommunicationCtrl> for Vec<u8> {
 }
 
 impl RequestData for CommunicationCtrl {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -91,14 +88,14 @@ impl RequestData for CommunicationCtrl {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::CommunicationCtrl)),
+            None => Err(Error::SubFunctionError(Service::CommunicationCtrl)),
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service;
         if service != Service::CommunicationCtrl || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let sub_func: CommunicationCtrlType = request.sub_function().unwrap().function()?;

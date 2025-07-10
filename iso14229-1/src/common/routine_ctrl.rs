@@ -1,6 +1,6 @@
 //! Commons of Service 31
 
-use crate::{constant::ISO_SAE_RESERVED, error::Iso14229Error, utils, Service};
+use crate::{constant::ISO_SAE_RESERVED, error::Error, utils, Service};
 
 rsutil::enum_extend!(
     #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -10,7 +10,7 @@ rsutil::enum_extend!(
         RequestRoutineResults = 3,
     },
     u8,
-    Iso14229Error,
+    Error,
     ReservedError
 );
 

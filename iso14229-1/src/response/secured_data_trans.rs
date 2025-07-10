@@ -1,10 +1,9 @@
 //! response of Service 84
 
 use crate::{
-    error::Iso14229Error,
+    error::Error,
     response::{Code, Response, SubFunction},
-    utils, AdministrativeParameter, ResponseData, Service,
-    SignatureEncryptionCalculation,
+    utils, AdministrativeParameter, ResponseData, Service, SignatureEncryptionCalculation,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -47,9 +46,9 @@ impl SecuredDataTransPositive {
         response: u8,
         response_params: Vec<u8>,
         signature_data: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         if signature_data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam(
+            return Err(Error::InvalidParam(
                 "length of `Signature/MAC Byte` is out of range".to_string(),
             ));
         }
@@ -92,9 +91,9 @@ impl SecuredDataTransNegative {
         service: u8,
         response: u8,
         signature_data: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         if signature_data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam(
+            return Err(Error::InvalidParam(
                 "length of `Signature/MAC Byte` is out of range".to_string(),
             ));
         }
@@ -152,12 +151,9 @@ impl From<SecuredDataTrans> for Vec<u8> {
 }
 
 impl ResponseData for SecuredDataTrans {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::SecuredDataTrans)),
+            Some(_) => Err(Error::SubFunctionError(Service::SecuredDataTrans)),
             None => {
                 utils::data_length_check(data.len(), 8, false)?;
 
@@ -171,10 +167,10 @@ impl ResponseData for SecuredDataTrans {
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service;
         if service != Service::SecuredDataTrans || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &response.data;
@@ -184,7 +180,7 @@ impl ResponseData for SecuredDataTrans {
             AdministrativeParameter::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
         if apar.is_request() {
-            return Err(Iso14229Error::InvalidData(hex::encode(data)));
+            return Err(Error::InvalidData(hex::encode(data)));
         }
         let signature = SignatureEncryptionCalculation::try_from(data[offset])?;
         offset += 1;

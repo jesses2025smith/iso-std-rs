@@ -2,7 +2,7 @@
 
 use crate::{
     constant::{P2_MAX, P2_STAR_MAX},
-    error::Iso14229Error,
+    error::Error,
     response::{Code, Response, SubFunction},
     utils, ResponseData, Service, SessionType,
 };
@@ -56,7 +56,7 @@ impl Default for SessionTiming {
 // }
 
 impl<'a> TryFrom<&'a [u8]> for SessionTiming {
-    type Error = Iso14229Error;
+    type Error = Error;
     #[allow(unused_mut)]
     fn try_from(data: &'a [u8]) -> Result<Self, Self::Error> {
         let data_len = data.len();
@@ -80,7 +80,7 @@ impl<'a> TryFrom<&'a [u8]> for SessionTiming {
         }
         #[cfg(feature = "session_data_check")]
         if p2 > P2_MAX || p2_star > P2_STAR_MAX {
-            return Err(Iso14229Error::InvalidSessionData(format!(
+            return Err(Error::InvalidSessionData(format!(
                 "P2: {}, P2*: {}",
                 p2, p2_star
             )));
@@ -109,10 +109,7 @@ impl From<SessionCtrl> for Vec<u8> {
 }
 
 impl ResponseData for SessionCtrl {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 let _ = SessionType::try_from(sub_func)?;
@@ -126,14 +123,14 @@ impl ResponseData for SessionCtrl {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::SessionCtrl)),
+            None => Err(Error::SubFunctionError(Service::SessionCtrl)),
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::SessionCtrl || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let timing = SessionTiming::try_from(response.data.as_slice())?;

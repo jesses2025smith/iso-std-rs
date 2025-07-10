@@ -2,7 +2,9 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, CommunicationCtrlType, CommunicationType, DidConfig, Service};
+    use iso14229_1::{
+        request, response, CommunicationCtrlType, CommunicationType, DidConfig, Service,
+    };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {

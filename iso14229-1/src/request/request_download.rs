@@ -1,9 +1,9 @@
 //! request of Service 34
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, DataFormatIdentifier, Iso14229Error, MemoryLocation, RequestData,
-    Service,
+    utils, DataFormatIdentifier, MemoryLocation, RequestData, Service,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -22,12 +22,9 @@ impl From<RequestDownload> for Vec<u8> {
 }
 
 impl RequestData for RequestDownload {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::RequestDownload)),
+            Some(_) => Err(Error::SubFunctionError(Service::RequestDownload)),
             None => {
                 utils::data_length_check(data.len(), 2, false)?;
 
@@ -40,10 +37,10 @@ impl RequestData for RequestDownload {
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service();
         if service != Service::RequestDownload || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &request.data;

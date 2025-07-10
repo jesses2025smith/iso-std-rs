@@ -1,7 +1,7 @@
 //! response of Service 35
 
 use crate::{
-    error::Iso14229Error,
+    error::Error,
     response::{Code, Response, SubFunction},
     utils, LengthFormatIdentifier, ResponseData, Service,
 };
@@ -25,9 +25,9 @@ pub struct RequestUpload {
 }
 
 impl RequestUpload {
-    pub fn new(max_num_of_block_len: u128) -> Result<Self, Iso14229Error> {
+    pub fn new(max_num_of_block_len: u128) -> Result<Self, Error> {
         if max_num_of_block_len == 0 {
-            return Err(Iso14229Error::InvalidParam(
+            return Err(Error::InvalidParam(
                 "`maxNumberOfBlockLength` must be rather than 0".to_string(),
             ));
         }
@@ -55,12 +55,9 @@ impl From<RequestUpload> for Vec<u8> {
 }
 
 impl ResponseData for RequestUpload {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::RequestUpload)),
+            Some(_) => Err(Error::SubFunctionError(Service::RequestUpload)),
             None => {
                 utils::data_length_check(data.len(), 1, false)?;
 
@@ -74,10 +71,10 @@ impl ResponseData for RequestUpload {
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::RequestUpload || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &response.data;
@@ -90,7 +87,7 @@ impl ResponseData for RequestUpload {
 
         let max_num_of_block_len = utils::slice_to_u128(remain);
         if max_num_of_block_len == 0 {
-            return Err(Iso14229Error::InvalidParam(
+            return Err(Error::InvalidParam(
                 "`maxNumberOfBlockLength` must be rather than 0".to_string(),
             ));
         }

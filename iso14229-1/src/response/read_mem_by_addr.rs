@@ -1,8 +1,9 @@
 //! response of Service 23
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    Iso14229Error, ResponseData, Service,
+    ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -28,12 +29,9 @@ impl From<ReadMemByAddr> for Vec<u8> {
 }
 
 impl ResponseData for ReadMemByAddr {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadMemByAddr)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadMemByAddr)),
             None => Ok(Response {
                 service: Service::ReadMemByAddr,
                 negative: false,
@@ -43,10 +41,10 @@ impl ResponseData for ReadMemByAddr {
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::ReadMemByAddr || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         Ok(Self {

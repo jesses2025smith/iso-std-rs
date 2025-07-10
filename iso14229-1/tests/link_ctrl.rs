@@ -3,7 +3,9 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::utils::U24;
-    use iso14229_1::{request, response, DidConfig, Iso14229Error, LinkCtrlMode, LinkCtrlType, Service};
+    use iso14229_1::{
+        request, response, DidConfig, Iso14229Error, LinkCtrlMode, LinkCtrlType, Service,
+    };
 
     #[test]
     fn new() -> anyhow::Result<()> {

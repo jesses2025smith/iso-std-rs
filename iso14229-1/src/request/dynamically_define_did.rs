@@ -1,9 +1,9 @@
 //! request of Service 2C
 
 use crate::{
+    error::Error,
     request::{Request, SubFunction},
-    utils, DefinitionType, DynamicallyDID, DynamicallyMemAddr, Iso14229Error,
-    RequestData, Service,
+    utils, DefinitionType, DynamicallyDID, DynamicallyMemAddr, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -87,10 +87,7 @@ impl From<DynamicallyDefineDID> for Vec<u8> {
 }
 
 impl RequestData for DynamicallyDefineDID {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Request, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -106,7 +103,7 @@ impl RequestData for DynamicallyDefineDID {
                     DefinitionType::ClearDynamicallyDefinedDataIdentifier => match data_len {
                         0 | 2 => {}
                         _ => {
-                            return Err(Iso14229Error::InvalidDataLength {
+                            return Err(Error::InvalidDataLength {
                                 expect: 0,
                                 actual: data_len,
                             })
@@ -120,14 +117,14 @@ impl RequestData for DynamicallyDefineDID {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::DynamicalDefineDID)),
+            None => Err(Error::SubFunctionError(Service::DynamicalDefineDID)),
         }
     }
 
-    fn try_without_config(request: &Request) -> Result<Self, Iso14229Error> {
+    fn try_without_config(request: &Request) -> Result<Self, Error> {
         let service = request.service;
         if service != Service::DynamicalDefineDID || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let sub_func: DefinitionType = request.sub_function().unwrap().function()?;
@@ -167,11 +164,9 @@ impl RequestData for DynamicallyDefineDID {
                 let mem_size_len = ((alfi & 0xF0) >> 4) as usize;
                 utils::data_length_check(data_len, offset + mem_addr_len + mem_size_len, false)?;
 
-                let mem_addr =
-                    utils::slice_to_u128(&data[offset..offset + mem_addr_len]);
+                let mem_addr = utils::slice_to_u128(&data[offset..offset + mem_addr_len]);
                 offset += mem_addr_len;
-                let mem_size =
-                    utils::slice_to_u128(&data[offset..offset + mem_size_len]);
+                let mem_size = utils::slice_to_u128(&data[offset..offset + mem_size_len]);
                 offset += mem_size_len;
 
                 let mut others = Vec::new();
@@ -182,11 +177,9 @@ impl RequestData for DynamicallyDefineDID {
                         false,
                     )?;
 
-                    let mem_addr =
-                        utils::slice_to_u128(&data[offset..offset + mem_addr_len]);
+                    let mem_addr = utils::slice_to_u128(&data[offset..offset + mem_addr_len]);
                     offset += mem_addr_len;
-                    let mem_size =
-                        utils::slice_to_u128(&data[offset..offset + mem_size_len]);
+                    let mem_size = utils::slice_to_u128(&data[offset..offset + mem_size_len]);
                     offset += mem_size_len;
                     others.push((mem_addr, mem_size));
                 }
@@ -204,7 +197,7 @@ impl RequestData for DynamicallyDefineDID {
                         data[offset],
                         data[offset + 1],
                     ]))?)),
-                    v => Err(Iso14229Error::InvalidDataLength {
+                    v => Err(Error::InvalidDataLength {
                         expect: 2,
                         actual: v,
                     }),

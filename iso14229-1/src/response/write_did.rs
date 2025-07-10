@@ -1,8 +1,9 @@
 //! response of Service 2E
 
 use crate::{
+    error::Error,
     response::{Code, Response, SubFunction},
-    utils, DIDData, DataIdentifier, Iso14229Error, ResponseData, Service,
+    utils, DIDData, DataIdentifier, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -27,12 +28,9 @@ impl From<WriteDID> for Vec<u8> {
 }
 
 impl ResponseData for WriteDID {
-    fn without_config(
-        data: &[u8],
-        sub_func: Option<u8>,
-    ) -> Result<Response, Iso14229Error> {
+    fn without_config(data: &[u8], sub_func: Option<u8>) -> Result<Response, Error> {
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::WriteDID)),
             None => {
                 let data_len = data.len();
                 utils::data_length_check(data_len, 2, true)?;
@@ -47,10 +45,10 @@ impl ResponseData for WriteDID {
         }
     }
 
-    fn try_without_config(response: &Response) -> Result<Self, Iso14229Error> {
+    fn try_without_config(response: &Response) -> Result<Self, Error> {
         let service = response.service();
         if service != Service::WriteDID || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service));
+            return Err(Error::ServiceError(service));
         }
 
         let data = &response.data;

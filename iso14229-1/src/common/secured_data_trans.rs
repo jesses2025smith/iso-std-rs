@@ -1,6 +1,6 @@
 //! Commons of Service 84
 
-use crate::{utils, Iso14229Error};
+use crate::{error::Error, utils};
 use bitfield_struct::bitfield;
 use std::ops::{BitAnd, BitXorAssign};
 
@@ -104,13 +104,13 @@ pub enum SignatureEncryptionCalculation {
 }
 
 impl TryFrom<u8> for SignatureEncryptionCalculation {
-    type Error = Iso14229Error;
+    type Error = Error;
     #[inline]
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0x00..=0x7F => Ok(Self::VehicleManufacturerSpecific(value)),
             0x80..=0x8F => Ok(Self::SystemSupplier(value)),
-            v => Err(Iso14229Error::ReservedError(v)),
+            v => Err(Error::ReservedError(v)),
         }
     }
 }
