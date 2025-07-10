@@ -1,5 +1,5 @@
 #[derive(Debug, thiserror::Error)]
-pub enum Iso13400Error {
+pub enum Error {
     #[error("ISO 13400-2 - input error: {0}")]
     InvalidParam(String),
 

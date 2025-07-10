@@ -100,7 +100,7 @@ pub use constants::*;
 mod common;
 pub use common::*;
 mod error;
-pub use error::*;
+pub use error::Error as Iso13400Error;
 pub mod request;
 pub mod response;
 
@@ -110,9 +110,9 @@ pub(crate) mod utils;
 pub struct Id(pub(crate) u64);
 
 impl Id {
-    pub fn new(id: u64) -> Result<Self, Iso13400Error> {
+    pub fn new(id: u64) -> Result<Self, error::Error> {
         if (id & 0xFFFF0000_00000000) > 0 {
-            return Err(Iso13400Error::InvalidParam(format!(
+            return Err(error::Error::InvalidParam(format!(
                 "id: {} out of range",
                 id
             )));
@@ -128,7 +128,7 @@ impl Id {
 }
 
 impl TryFrom<&[u8]> for Id {
-    type Error = Iso13400Error;
+    type Error = error::Error;
 
     #[inline]
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
@@ -174,7 +174,7 @@ pub enum PayloadType {
 }
 
 impl TryFrom<u16> for PayloadType {
-    type Error = Iso13400Error;
+    type Error = error::Error;
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             HEADER_NEGATIVE => Ok(Self::RespHeaderNegative),
@@ -193,7 +193,7 @@ impl TryFrom<u16> for PayloadType {
             TCP_DIAGNOSTIC => Ok(Self::Diagnostic),
             TCP_RESP_DIAGNOSTIC_POSITIVE => Ok(Self::RespDiagPositive),
             TCP_RESP_DIAGNOSTIC_NEGATIVE => Ok(Self::RespDiagNegative),
-            _ => Err(Iso13400Error::InvalidPayloadType(value)),
+            _ => Err(error::Error::InvalidPayloadType(value)),
         }
     }
 }

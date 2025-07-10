@@ -1,4 +1,4 @@
-use crate::{constants::*, utils, Eid, Iso13400Error, LogicAddress, RoutingActiveType};
+use crate::{constants::*, error::Error, utils, Eid, LogicAddress, RoutingActiveType};
 use getset::{CopyGetters, Getters};
 
 /****** --- UDP --- ********/
@@ -13,7 +13,7 @@ impl VehicleID {
 }
 
 impl TryFrom<&[u8]> for VehicleID {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let _ = utils::data_len_check(data, Self::length(), true)?;
 
@@ -33,7 +33,8 @@ impl From<VehicleID> for Vec<u8> {
 
 #[derive(Debug, Clone, Eq, PartialEq, CopyGetters)]
 #[get_copy = "pub"]
-pub struct VehicleIDWithEID {    // 0x0002
+pub struct VehicleIDWithEID {
+    // 0x0002
     pub(crate) eid: Eid,
 }
 
@@ -49,7 +50,7 @@ impl VehicleIDWithEID {
 }
 
 impl TryFrom<&[u8]> for VehicleIDWithEID {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let _ = utils::data_len_check(data, Self::length(), true)?;
         let eid = Eid::try_from(data)?;
@@ -71,15 +72,16 @@ impl From<VehicleIDWithEID> for Vec<u8> {
 
 #[derive(Debug, Clone, Eq, PartialEq, Getters)]
 #[get = "pub"]
-pub struct VehicleIDWithVIN {     // 0x0003
+pub struct VehicleIDWithVIN {
+    // 0x0003
     pub(crate) vin: String,
 }
 
 impl VehicleIDWithVIN {
-    pub fn new(vin: &str) -> Result<Self, Iso13400Error> {
+    pub fn new(vin: &str) -> Result<Self, Error> {
         let vin_len = vin.len();
         if vin_len != Self::length() {
-            return Err(Iso13400Error::InvalidParam(format!(
+            return Err(Error::InvalidParam(format!(
                 "length of vin must equal {}",
                 Self::length()
             )));
@@ -97,7 +99,7 @@ impl VehicleIDWithVIN {
 }
 
 impl TryFrom<&[u8]> for VehicleIDWithVIN {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (_, offset) = utils::data_len_check(data, Self::length(), true)?;
         let vin = match String::from_utf8(data[offset..].to_vec()) {
@@ -124,7 +126,7 @@ impl From<VehicleIDWithVIN> for Vec<u8> {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct EntityStatus;   // 0x4001
+pub struct EntityStatus; // 0x4001
 
 impl EntityStatus {
     #[inline]
@@ -134,7 +136,7 @@ impl EntityStatus {
 }
 
 impl TryFrom<&[u8]> for EntityStatus {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let _ = utils::data_len_check(data, Self::length(), true)?;
 
@@ -163,7 +165,7 @@ impl DiagnosticPowerMode {
 }
 
 impl TryFrom<&[u8]> for DiagnosticPowerMode {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let _ = utils::data_len_check(data, Self::length(), true)?;
 
@@ -186,7 +188,8 @@ impl From<DiagnosticPowerMode> for Vec<u8> {
 /****** --- TCP --- ********/
 #[derive(Debug, Clone, Eq, PartialEq, CopyGetters)]
 #[get_copy = "pub"]
-pub struct RoutingActive {  // 0x0005
+pub struct RoutingActive {
+    // 0x0005
     pub(crate) src_addr: LogicAddress,
     pub(crate) active: RoutingActiveType,
     pub(crate) reserved: u32,
@@ -211,7 +214,7 @@ impl RoutingActive {
 }
 
 impl TryFrom<&[u8]> for RoutingActive {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (data_len, mut offset) = utils::data_len_check(data, Self::length(), false)?;
         let src_addr =
@@ -228,7 +231,7 @@ impl TryFrom<&[u8]> for RoutingActive {
             4 => Ok(Some(u32::from_be_bytes(
                 data[offset..offset + 4].try_into().unwrap(),
             ))),
-            _ => Err(Iso13400Error::InvalidLength {
+            _ => Err(Error::InvalidLength {
                 actual: data_len,
                 expected: Self::length() + 4,
             }),
@@ -264,7 +267,7 @@ impl From<RoutingActive> for Vec<u8> {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub struct AliveCheck;     // 0x0007
+pub struct AliveCheck; // 0x0007
 
 impl AliveCheck {
     #[inline]
@@ -274,7 +277,7 @@ impl AliveCheck {
 }
 
 impl TryFrom<&[u8]> for AliveCheck {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let _ = utils::data_len_check(data, Self::length(), true)?;
 

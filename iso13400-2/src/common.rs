@@ -1,4 +1,4 @@
-use crate::{constants::*, request, response, utils, Iso13400Error, PayloadType};
+use crate::{constants::*, error::Error, request, response, utils, PayloadType};
 use getset::{CopyGetters, Getters};
 use std::fmt::{Display, Formatter};
 
@@ -49,11 +49,11 @@ impl From<u8> for Version {
 }
 
 impl TryFrom<&[u8]> for Version {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let data_len = data.len();
         if data_len < SIZE_OF_VERSION {
-            return Err(Iso13400Error::InvalidLength {
+            return Err(Error::InvalidLength {
                 actual: data_len,
                 expected: SIZE_OF_VERSION,
             });
@@ -62,7 +62,7 @@ impl TryFrom<&[u8]> for Version {
         let version = data[0];
         let reverse = data[1];
         if !version != reverse {
-            return Err(Iso13400Error::InvalidVersion { version, reverse });
+            return Err(Error::InvalidVersion { version, reverse });
         }
 
         Ok(Self::from(version))
@@ -283,10 +283,7 @@ impl From<u8> for SyncStatus {
             0x00 => Self::VINorGIDSync,
             0x10 => Self::VINorGIDNotSync,
             _ => {
-                rsutil::warn!(
-                    "ISO 13400-2 - used reserved VIN/GID sync. status: {}",
-                    v
-                );
+                rsutil::warn!("ISO 13400-2 - used reserved VIN/GID sync. status: {}", v);
                 Self::Reserved(v)
             }
         }
@@ -570,7 +567,7 @@ impl Diagnostic {
 }
 
 impl TryFrom<&[u8]> for Diagnostic {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (_, mut offset) = utils::data_len_check(data, Self::length(), false)?;
         let dst_addr =
@@ -679,13 +676,13 @@ impl From<Message> for Vec<u8> {
 }
 
 impl TryFrom<&[u8]> for Message {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         rsutil::debug!("ISO 13400-2 - parsing data: {}", hex::encode(data));
         let data_len = data.len();
         let expected = SIZE_OF_VERSION + SIZE_OF_DATA_TYPE + SIZE_OF_LENGTH;
         if data_len < expected {
-            return Err(Iso13400Error::InvalidLength {
+            return Err(Error::InvalidLength {
                 actual: data_len,
                 expected,
             });
@@ -702,7 +699,7 @@ impl TryFrom<&[u8]> for Message {
         offset += SIZE_OF_LENGTH;
         let expected = data_len - offset;
         if (payload_len as usize) != expected {
-            return Err(Iso13400Error::InvalidPayloadLength {
+            return Err(Error::InvalidPayloadLength {
                 actual: payload_len as usize,
                 expected,
             });
