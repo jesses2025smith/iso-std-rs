@@ -117,7 +117,7 @@ pub trait EventListener: Send + Sync {
     async fn buffer_data(&self) -> Option<Event>;
     async fn clear_buffer(&self);
     async fn on_iso_tp_event(&self, event: Event);
-    async fn update_p2_ctx(&self, p2: u16, p2_star: u32);
+    // async fn update_p2_ctx(&self, p2: u16, p2_star: u32);
 }
 
 /// Flow control type define.
