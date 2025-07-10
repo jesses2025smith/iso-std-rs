@@ -1,7 +1,8 @@
 use rs_can::{CanDevice, CanFrame, CanListener};
-use std::{collections::HashMap, fmt::Display, sync::Arc, time::Duration};
+use std::{collections::HashMap, fmt::Display, sync::Arc, time::{Duration, Instant}};
 use tokio::{
     sync::{
+        broadcast,
         mpsc::{channel, Receiver, Sender},
         Mutex,
     },
@@ -18,8 +19,7 @@ pub struct CanAdapter<D, C, F> {
     pub(crate) sender: Sender<F>,
     pub(crate) receiver: Arc<Mutex<Receiver<F>>>,
     pub(crate) listeners: Listeners<C, F>,
-    pub(crate) stop_tx: Sender<()>,
-    pub(crate) stop_rx: Arc<Mutex<Receiver<()>>>,
+    pub(crate) stop_tx: broadcast::Sender<()>,
     pub(crate) send_task: Arc<Option<JoinHandle<()>>>,
     pub(crate) receive_task: Arc<Option<JoinHandle<()>>>,
     pub(crate) interval: Option<u64>,
@@ -33,14 +33,13 @@ where
 {
     pub fn new(device: D) -> Self {
         let (tx, rx) = channel(10240);
-        let (stop_tx, stop_rx) = channel(10240);
+        let (stop_tx, _) = broadcast::channel(16);
         Self {
             device,
             sender: tx,
             receiver: Arc::new(Mutex::new(rx)),
             listeners: Arc::new(Mutex::new(HashMap::new())),
             stop_tx,
-            stop_rx: Arc::new(Mutex::new(stop_rx)),
             send_task: Default::default(),
             receive_task: Default::default(),
             interval: Default::default(),
@@ -49,13 +48,13 @@ where
 
     #[inline]
     pub async fn register_listener(&self, name: String, listener: Box<dyn CanListener<C, F>>) {
-        rsutil::trace!("SyncISO-TP - register listener {}", name);
+        rsutil::trace!("ISO-TP - register listener {}", name);
         self.listeners.lock().await.insert(name, listener);
     }
 
     #[inline]
     pub async fn unregister_listener(&self, name: &str) {
-        rsutil::trace!("SyncISO-TP - unregister listener {}", name);
+        rsutil::trace!("ISO-TP - unregister listener {}", name);
         self.listeners.lock().await.remove(name);
     }
 
@@ -87,21 +86,22 @@ where
 
     pub async fn start(&mut self, interval_us: u64) {
         self.interval = Some(interval_us);
-        let device = Arc::new(Mutex::new(self.device.clone()));
 
+        let stop_rx = self.stop_tx.subscribe();
         let tx_task = Self::transmit_task(
-            device.clone(),
+            self.device.clone(),
+            self.receiver.clone(),
             self.listeners.clone(),
-            self.stop_rx.clone(),
+            stop_rx,
             interval_us,
         )
         .await;
 
+        let stop_rx = self.stop_tx.subscribe();
         let rx_task = Self::receive_task(
-            device.clone(),
-            self.receiver.clone(),
+            self.device.clone(),
             self.listeners.clone(),
-            self.stop_rx.clone(),
+            stop_rx,
             interval_us,
         )
         .await;
@@ -111,104 +111,167 @@ where
     }
 
     pub async fn stop(&mut self) {
-        rsutil::info!("SyncISO-TP - stopping adapter");
-        if let Err(e) = self.stop_tx.send(()).await {
-            rsutil::warn!("SyncISO-TP - error {} when stopping transmit", e);
+        rsutil::debug!("ISO-TP - stopping adapter");
+
+        if let Err(e) = self.stop_tx.send(()) {
+            rsutil::warn!("ISO-TP - error {} when sending stop signal", e);
         }
 
-        sleep(Duration::from_micros(
-            2 * self.interval.unwrap_or(DEFAULT_STOP_DELAY),
-        ))
-        .await;
+        let timeout = Duration::from_millis(DEFAULT_STOP_DELAY);
+        let start_time = Instant::now();
+        let mut send_task_finished = false;
+        let mut receive_task_finished = false;
 
-        if let Some(task) = &*self.send_task {
-            if !task.is_finished() {
-                rsutil::warn!("SyncISO-TP - transmit task is running after stop signal");
+        while start_time.elapsed() < timeout  {
+            send_task_finished = if let Some(task) = &*self.send_task {
+                task.is_finished()
+            } else {
+                true
+            };
+
+            receive_task_finished = if let Some(task) = &*self.receive_task {
+                task.is_finished()
+            } else {
+                true
+            };
+
+            if send_task_finished && receive_task_finished {
+                rsutil::info!("ISO-TP - all tasks stopped successfully");
+                break;
             }
+
+            sleep(Duration::from_millis(10)).await;
         }
 
-        if let Some(task) = &*self.receive_task {
-            if !task.is_finished() {
-                rsutil::warn!("SyncISO-TP - receive task is running after stop signal");
-            }
+        if !send_task_finished {
+            rsutil::warn!("ISO-TP - transmit task is still running after stop signal");
         }
+
+        if !receive_task_finished {
+            rsutil::warn!("ISO-TP - receive task is still running after stop signal");
+        }
+
+        self.send_task = Arc::new(None);
+        self.receive_task = Arc::new(None);
 
         self.device.shutdown();
     }
 
     async fn transmit_task(
-        device: Arc<Mutex<D>>,
-        listeners: Listeners<C, F>,
-        stop_rx: Arc<Mutex<Receiver<()>>>,
-        interval: u64,
-    ) -> JoinHandle<()> {
-        spawn(async move {
-            let device = device.clone();
-            loop {
-                if device.lock().await.is_closed() {
-                    rsutil::info!("SyncISO-TP - device closed");
-                    break;
-                }
-
-                let dev_mutex = device.lock().await;
-                let channels = dev_mutex.opened_channels();
-                for chl in channels {
-                    if let Ok(messages) = dev_mutex.receive(chl.clone(), Some(100)).await {
-                        if !messages.is_empty() {
-                            for listener in listeners.lock().await.values() {
-                                listener.on_frame_received(chl.clone(), &messages).await;
-                            }
-                        }
-                    }
-                }
-
-                if let Some(()) = stop_rx.lock().await.recv().await {
-                    rsutil::info!("SyncISO-TP - stop sync");
-                    break;
-                }
-
-                sleep(Duration::from_micros(interval)).await;
-            }
-        })
-    }
-
-    async fn receive_task(
-        device: Arc<Mutex<D>>,
+        device: D,
         receiver: Arc<Mutex<Receiver<F>>>,
         listeners: Listeners<C, F>,
-        stop_rx: Arc<Mutex<Receiver<()>>>,
+        mut stop_rx: broadcast::Receiver<()>,
         interval: u64,
     ) -> JoinHandle<()> {
         spawn(async move {
             let device = device.clone();
             let receiver = receiver.clone();
             loop {
-                if device.lock().await.is_closed() {
-                    rsutil::info!("SyncISO-TP - device closed");
+                if device.is_closed() {
+                    rsutil::info!("ISO-TP - device closed");
                     break;
                 }
 
                 if let Some(msg) = receiver.lock().await.recv().await {
-                    rsutil::trace!("SyncISO-TP - transmitting: {}", msg);
+                    rsutil::trace!("ISO-TP - transmitting: {}", msg);
                     let id = msg.id();
                     let chl = msg.channel();
                     for listener in listeners.lock().await.values() {
                         listener.on_frame_transmitting(chl.clone(), &msg).await;
                     }
-
-                    if let Ok(_) = device.lock().await.transmit(msg, Some(100)).await {
+                    if let Ok(_) = device.transmit(msg, Some(100)).await {
                         for listener in listeners.lock().await.values() {
                             listener.on_frame_transmitted(chl.clone(), id).await;
                         }
                     }
                 }
 
-                if let Some(()) = stop_rx.lock().await.recv().await {
-                    rsutil::info!("SyncISO-TP - stop sync");
+                if let Ok(()) = stop_rx.recv().await {
+                    rsutil::trace!("ISO-TP - transmit task stopped");
                     break;
                 }
 
                 sleep(Duration::from_micros(interval)).await;
+
+                // tokio::select! {
+                //     _ = stop_rx.recv() => {
+                //         rsutil::trace!("ISO-TP - transmit task stopped");
+                //         break;
+                //     }
+                //     _ = async {
+                //         if let Some(msg) = receiver.lock().await.recv().await {
+                //             rsutil::trace!("ISO-TP - transmitting: {}", msg);
+                //             let id = msg.id();
+                //             let chl = msg.channel();
+                //             for listener in listeners.lock().await.values() {
+                //                 listener.on_frame_transmitting(chl.clone(), &msg).await;
+                //             }
+                //             if let Ok(_) = device.transmit(msg, Some(100)).await {
+                //                 for listener in listeners.lock().await.values() {
+                //                     listener.on_frame_transmitted(chl.clone(), id).await;
+                //                 }
+                //             }
+                //         }
+                //     } => {},
+                //     _ = sleep(Duration::from_micros(interval)) => {}
+                // }
+            }
+        })
+    }
+
+    async fn receive_task(
+        device: D,
+        listeners: Listeners<C, F>,
+        mut stop_rx: broadcast::Receiver<()>,
+        interval: u64,
+    ) -> JoinHandle<()> {
+        spawn(async move {
+            let device = device.clone();
+            loop {
+                if device.is_closed() {
+                    rsutil::info!("ISO-TP - device closed");
+                    break;
+                }
+
+                let channels = device.opened_channels();
+                for chl in channels {
+                    if let Ok(messages) = device.receive(chl.clone(), Some(100)).await {
+                        if !messages.is_empty() {
+                            for listener in listeners.lock().await.values() {
+                                // messages.iter().for_each(|f| rsutil::trace!("ISO-TP - received: {}", f));
+                                listener.on_frame_received(chl.clone(), &messages).await;
+                            }
+                        }
+                    }
+                }
+
+                if let Ok(()) = stop_rx.recv().await {
+                    rsutil::trace!("ISO-TP - receive task stopped");
+                    break;
+                }
+
+                sleep(Duration::from_micros(interval)).await;
+
+                // tokio::select! {
+                //     _ = stop_rx.recv() => {
+                //         rsutil::trace!("ISO-TP - receive task stopped");
+                //         break;
+                //     },
+                //     _ = async {
+                //         let channels = device.opened_channels();
+                //         for chl in channels {
+                //             if let Ok(messages) = device.receive(chl.clone(), Some(100)).await {
+                //                 if !messages.is_empty() {
+                //                     for listener in listeners.lock().await.values() {
+                //                         listener.on_frame_received(chl.clone(), &messages).await;
+                //                     }
+                //                 }
+                //             }
+                //         }
+                //     } => {},
+                //     _ = sleep(Duration::from_micros(interval)) => {}
+                // }
             }
         })
     }

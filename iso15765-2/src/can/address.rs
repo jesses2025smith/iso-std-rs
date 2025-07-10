@@ -28,3 +28,13 @@ pub struct Address {
     pub rx_id: u32,
     pub fid: u32,
 }
+
+impl Default for Address {
+    fn default() -> Self {
+        Self {
+            tx_id: 0x7E0,
+            rx_id: 0x7E8,
+            fid: 0x7DF,
+        }
+    }
+}

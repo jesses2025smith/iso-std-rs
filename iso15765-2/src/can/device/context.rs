@@ -4,6 +4,8 @@ use crate::{
     error::Error,
 };
 use bytes::BytesMut;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[derive(Debug, Clone)]
 pub struct P2 {
@@ -55,7 +57,7 @@ pub(crate) struct FlowCtrl {
 }
 
 /// Consecutive frame data context.
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct Consecutive {
     pub(crate) sequence: Option<u8>,
     pub(crate) length: Option<u32>,
@@ -64,58 +66,64 @@ pub(crate) struct Consecutive {
 
 #[derive(Debug, Default, Clone)]
 pub struct Context {
-    pub(crate) p2: P2,
-    pub(crate) flow_ctrl: Option<FlowCtrl>,
-    pub(crate) consecutive: Consecutive,
+    pub(crate) p2: Arc<Mutex<P2>>,
+    pub(crate) flow_ctrl: Arc<Mutex<Option<FlowCtrl>>>,
+    pub(crate) consecutive: Arc<Mutex<Consecutive>>,
 }
 
 impl Context {
     /// reset st_min/consecutive/block_size
     #[inline]
-    pub(crate) fn reset(&mut self) {
-        self.p2 = Default::default();
-        self.clear_flow_ctrl();
-        self.clear_consecutive();
+    pub(crate) async fn reset(&self) {
+        let mut guard = self.p2.lock().await;
+        *guard = Default::default();
+        self.clear_flow_ctrl().await;
+        self.clear_consecutive().await;
     }
     #[inline]
-    pub(crate) fn clear_flow_ctrl(&mut self) {
-        self.flow_ctrl = Default::default();
+    pub(crate) async fn clear_flow_ctrl(&self) {
+        let mut gurad = self.flow_ctrl.lock().await;
+        *gurad = Default::default();
     }
     #[inline]
-    pub(crate) fn update_flow_ctrl(&mut self, ctx: FlowControlContext) {
-        self.flow_ctrl = Some(FlowCtrl {
+    pub(crate) async fn update_flow_ctrl(&self, ctx: FlowControlContext) {
+        let mut gurad = self.flow_ctrl.lock().await;
+        *gurad = Some(FlowCtrl {
             st_min: ctx.st_min_us(),
             block_size: ctx.block_size(),
         });
     }
     #[inline]
-    pub(crate) fn clear_consecutive(&mut self) {
-        self.consecutive.sequence = Default::default();
-        self.consecutive.length = Default::default();
-        self.consecutive.buffer.clear();
+    pub(crate) async fn clear_consecutive(&self) {
+        let mut guard = self.consecutive.lock().await;
+        guard.sequence = Default::default();
+        guard.length = Default::default();
+        guard.buffer.clear();
     }
     #[inline]
-    pub(crate) fn update_consecutive(&mut self, length: u32, mut data: Vec<u8>) {
-        self.consecutive.length = Some(length);
-        self.consecutive.buffer.extend_from_slice(&mut data);
+    pub(crate) async fn update_consecutive(&self, length: u32, mut data: Vec<u8>) {
+        let mut guard = self.consecutive.lock().await;
+        guard.length = Some(length);
+        guard.buffer.extend_from_slice(&mut data);
     }
-    pub(crate) fn append_consecutive(
-        &mut self,
+    pub(crate) async fn append_consecutive(
+        &self,
         sequence: u8,
         mut data: Vec<u8>,
     ) -> Result<Event, Error> {
-        if self.consecutive.length.is_none() {
+        let mut guard = self.consecutive.lock().await;
+        if guard.length.is_none() {
             return Err(Error::MixFramesError);
         }
 
-        let target = match self.consecutive.sequence {
+        let target = match guard.sequence {
             Some(v) => match v {
                 ..=0x0E => v + 1,
                 _ => 0,
             },
             None => CONSECUTIVE_SEQUENCE_START,
         };
-        self.consecutive.sequence = Some(target);
+        guard.sequence = Some(target);
         if sequence != target {
             return Err(Error::InvalidSequence {
                 expect: target,
@@ -123,13 +131,13 @@ impl Context {
             });
         }
 
-        self.consecutive.buffer.extend_from_slice(&mut data);
+        guard.buffer.extend_from_slice(&mut data);
 
-        let buff_len = self.consecutive.buffer.len();
-        let target_len = self.consecutive.length.unwrap() as usize;
+        let buff_len = guard.buffer.len();
+        let target_len = guard.length.unwrap() as usize;
         if buff_len >= target_len {
-            self.consecutive.buffer.resize(target_len, 0);
-            let data = self.consecutive.buffer.clone();
+            guard.buffer.resize(target_len, 0);
+            let data = guard.buffer.clone();
             Ok(Event::DataReceived(data.into()))
         } else {
             Ok(Event::Wait)
