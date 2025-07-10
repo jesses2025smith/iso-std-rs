@@ -1,6 +1,10 @@
 //! response of Service 28
 
-use crate::{error::Error, response::{Code, Response, SubFunction}, utils, CommunicationCtrlType, DidConfig, ResponseData, Service};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, CommunicationCtrlType, DidConfig, ResponseData, Service,
+};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static COMMUNICATION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -24,7 +28,11 @@ impl From<CommunicationCtrl> for Vec<u8> {
 }
 
 impl ResponseData for CommunicationCtrl {
-    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {

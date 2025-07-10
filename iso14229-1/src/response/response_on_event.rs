@@ -29,7 +29,11 @@ impl From<ResponseOnEvent> for Vec<u8> {
 
 #[allow(unused_variables)]
 impl ResponseData for ResponseOnEvent {
-    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => Err(Error::SubFunctionError(Service::ResponseOnEvent)),

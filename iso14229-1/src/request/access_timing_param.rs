@@ -1,6 +1,10 @@
 //! request of Service 83
 
-use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, RequestData, Service, TimingParameterAccessType};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DidConfig, RequestData, Service, TimingParameterAccessType,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AccessTimingParameter {
@@ -14,7 +18,11 @@ impl From<AccessTimingParameter> for Vec<u8> {
 }
 
 impl RequestData for AccessTimingParameter {
-    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);

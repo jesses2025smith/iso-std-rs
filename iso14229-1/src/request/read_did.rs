@@ -1,6 +1,10 @@
 //! request of Service 22
 
-use crate::{error::Error, request::{Request, SubFunction}, utils, DataIdentifier, DidConfig, RequestData, Service};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DataIdentifier, DidConfig, RequestData, Service,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadDID {
@@ -28,7 +32,11 @@ impl From<ReadDID> for Vec<u8> {
 }
 
 impl RequestData for ReadDID {
-    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ReadDID)),

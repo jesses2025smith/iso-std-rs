@@ -1,6 +1,10 @@
 //! response of Service 3D
 
-use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, MemoryLocation, ResponseData, Service};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DidConfig, MemoryLocation, ResponseData, Service,
+};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static WRITE_MEM_BY_ADDR_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -24,7 +28,11 @@ impl From<WriteMemByAddr> for Vec<u8> {
 }
 
 impl ResponseData for WriteMemByAddr {
-    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::WriteMemByAddr)),

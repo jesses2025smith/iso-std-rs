@@ -1,6 +1,10 @@
 //! request of Service 2C
 
-use crate::{error::Error, request::{Request, SubFunction}, utils, DefinitionType, DidConfig, DynamicallyDID, DynamicallyMemAddr, RequestData, Service};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DefinitionType, DidConfig, DynamicallyDID, DynamicallyMemAddr, RequestData, Service,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum DynamicallyDefineDID {
@@ -83,7 +87,11 @@ impl From<DynamicallyDefineDID> for Vec<u8> {
 }
 
 impl RequestData for DynamicallyDefineDID {
-    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {

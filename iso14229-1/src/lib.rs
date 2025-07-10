@@ -100,7 +100,9 @@ impl Display for Service {
 
 pub type DidConfig = HashMap<DataIdentifier, usize>;
 
-pub trait RequestData: Into<Vec<u8>> + for<'a> TryFrom<(&'a request::Request, &'a DidConfig), Error = error::Error> {
+pub trait RequestData:
+    Into<Vec<u8>> + for<'a> TryFrom<(&'a request::Request, &'a DidConfig), Error = error::Error>
+{
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
@@ -109,7 +111,9 @@ pub trait RequestData: Into<Vec<u8>> + for<'a> TryFrom<(&'a request::Request, &'
 }
 
 // TryFrom<(T, &DidConfig)>
-pub trait ResponseData: Into<Vec<u8>> + for<'a> TryFrom<(&'a response::Response, &'a DidConfig), Error = error::Error> {
+pub trait ResponseData:
+    Into<Vec<u8>> + for<'a> TryFrom<(&'a response::Response, &'a DidConfig), Error = error::Error>
+{
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,

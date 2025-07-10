@@ -1,6 +1,10 @@
 //! response of Service 24
 
-use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DataIdentifier, DidConfig, ResponseData, Service};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DataIdentifier, DidConfig, ResponseData, Service,
+};
 use bitfield_struct::bitfield;
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -140,7 +144,11 @@ impl From<ReadScalingDID> for Vec<u8> {
 }
 
 impl ResponseData for ReadScalingDID {
-    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::ReadScalingDID)),

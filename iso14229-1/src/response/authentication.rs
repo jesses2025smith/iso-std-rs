@@ -1,7 +1,12 @@
 //! response of Service 29
 
-use crate::response::{Response, SubFunction};
-use crate::{error::Error, parse_algo_indicator, parse_not_nullable, parse_nullable, response::Code, utils, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData, NullableData, ResponseData, Service, ALGORITHM_INDICATOR_LENGTH};
+use crate::{
+    error::Error,
+    parse_algo_indicator, parse_not_nullable, parse_nullable,
+    response::{Code, Response, SubFunction},
+    utils, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData, NullableData,
+    ResponseData, Service, ALGORITHM_INDICATOR_LENGTH,
+};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static AUTH_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -202,7 +207,11 @@ impl From<Authentication> for Vec<u8> {
 }
 
 impl ResponseData for Authentication {
-    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {

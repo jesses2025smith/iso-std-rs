@@ -1,6 +1,10 @@
 //! response of Service 31
 
-use crate::{error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, ResponseData, RoutineCtrlType, RoutineId, Service};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DidConfig, ResponseData, RoutineCtrlType, RoutineId, Service,
+};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static ROUTINE_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -56,7 +60,11 @@ impl From<RoutineCtrl> for Vec<u8> {
 }
 
 impl ResponseData for RoutineCtrl {
-    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {

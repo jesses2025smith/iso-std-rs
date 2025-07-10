@@ -1,6 +1,10 @@
 //! response of Service 83
 
-use crate::{error::Error, response::{Code, Response, SubFunction}, DidConfig, ResponseData, Service, TimingParameterAccessType};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    DidConfig, ResponseData, Service, TimingParameterAccessType,
+};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static ACCESS_TIMING_PARAM_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -24,7 +28,11 @@ impl From<AccessTimingParameter> for Vec<u8> {
 }
 
 impl ResponseData for AccessTimingParameter {
-    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
         match sub_func {
             Some(sub_func) => {
                 match TimingParameterAccessType::try_from(sub_func)? {

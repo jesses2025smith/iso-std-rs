@@ -1,6 +1,11 @@
 //! response of Service 10
 
-use crate::{constant::{P2_MAX, P2_STAR_MAX}, error::Error, response::{Code, Response, SubFunction}, utils, DidConfig, ResponseData, Service, SessionType};
+use crate::{
+    constant::{P2_MAX, P2_STAR_MAX},
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DidConfig, ResponseData, Service, SessionType,
+};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static SESSION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -104,7 +109,11 @@ impl From<SessionCtrl> for Vec<u8> {
 }
 
 impl ResponseData for SessionCtrl {
-    fn new_response<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Response, Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {

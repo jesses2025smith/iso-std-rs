@@ -74,7 +74,11 @@ impl From<IOCtrl> for Vec<u8> {
 }
 
 impl RequestData for IOCtrl {
-    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::IOCtrl)),

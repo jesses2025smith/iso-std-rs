@@ -1,6 +1,10 @@
 //! request of Service 3E
 
-use crate::{error::Error, request::{Request, SubFunction}, utils, DidConfig, RequestData, Service, TesterPresentType};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DidConfig, RequestData, Service, TesterPresentType,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TesterPresent {
@@ -14,7 +18,11 @@ impl From<TesterPresent> for Vec<u8> {
 }
 
 impl RequestData for TesterPresent {
-    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {

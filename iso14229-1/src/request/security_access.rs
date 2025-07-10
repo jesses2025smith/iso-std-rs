@@ -1,6 +1,10 @@
 //! request of Service 27
 
-use crate::{error::Error, request::{Request, SubFunction}, DidConfig, RequestData, SecurityAccessLevel, Service};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    DidConfig, RequestData, SecurityAccessLevel, Service,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityAccess {
@@ -14,7 +18,11 @@ impl From<SecurityAccess> for Vec<u8> {
 }
 
 impl RequestData for SecurityAccess {
-    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(level) => Ok(Request {

@@ -1,6 +1,11 @@
 //! request of Service 84
 
-use crate::{error::Error, request::{Request, SubFunction}, utils, AdministrativeParameter, DidConfig, RequestData, Service, SignatureEncryptionCalculation};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, AdministrativeParameter, DidConfig, RequestData, Service,
+    SignatureEncryptionCalculation,
+};
 
 #[derive(Debug, Clone)]
 pub struct SecuredDataTrans {
@@ -60,7 +65,11 @@ impl From<SecuredDataTrans> for Vec<u8> {
 }
 
 impl RequestData for SecuredDataTrans {
-    fn new_request<T: AsRef<[u8]>>(data: T, sub_func: Option<u8>, _: &DidConfig) -> Result<Request, Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(_) => Err(Error::SubFunctionError(Service::SecuredDataTrans)),
