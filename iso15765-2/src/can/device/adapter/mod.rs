@@ -4,13 +4,13 @@ use tokio::{
     sync::{
         broadcast,
         mpsc::{channel, Receiver, Sender},
-        Mutex,
+        Mutex, RwLock,
     },
     task::{spawn, JoinHandle},
     time::sleep,
 };
 
-type Listeners<C, F> = Arc<Mutex<HashMap<String, Box<dyn CanListener<C, F>>>>>;
+type Listeners<C, F> = Arc<RwLock<HashMap<String, Arc<Box<dyn CanListener<C, F>>>>>>;
 const DEFAULT_STOP_DELAY: u64 = 500;
 
 #[derive(Clone)]
@@ -38,7 +38,7 @@ where
             device,
             sender: tx,
             receiver: Arc::new(Mutex::new(rx)),
-            listeners: Arc::new(Mutex::new(HashMap::new())),
+            listeners: Default::default(),
             stop_tx,
             send_task: Default::default(),
             receive_task: Default::default(),
@@ -49,23 +49,23 @@ where
     #[inline]
     pub async fn register_listener(&self, name: String, listener: Box<dyn CanListener<C, F>>) {
         rsutil::trace!("ISO-TP - register listener {}", name);
-        self.listeners.lock().await.insert(name, listener);
+        self.listeners.write().await.insert(name, Arc::new(listener));
     }
 
     #[inline]
     pub async fn unregister_listener(&self, name: &str) {
         rsutil::trace!("ISO-TP - unregister listener {}", name);
-        self.listeners.lock().await.remove(name);
+        self.listeners.write().await.remove(name);
     }
 
     #[inline]
     pub async fn unregister_all_listeners(&self) {
-        self.listeners.lock().await.clear();
+        self.listeners.write().await.clear();
     }
 
     #[inline]
     pub async fn listener_names(&self) -> Vec<String> {
-        self.listeners.lock().await.keys().cloned().collect()
+        self.listeners.read().await.keys().cloned().collect()
     }
 
     #[inline]
@@ -74,7 +74,7 @@ where
         name: &str,
         callback: impl FnOnce(&Box<dyn CanListener<C, F>>),
     ) {
-        if let Some(listener) = self.listeners.lock().await.get(name) {
+        if let Some(listener) = self.listeners.read().await.get(name) {
             callback(listener);
         }
     }
@@ -102,7 +102,7 @@ where
             self.device.clone(),
             self.listeners.clone(),
             stop_rx,
-            interval_us,
+            // interval_us,
         )
         .await;
 
@@ -173,49 +173,29 @@ where
                     break;
                 }
 
-                if let Some(msg) = receiver.lock().await.recv().await {
-                    rsutil::trace!("ISO-TP - transmitting: {}", msg);
-                    let id = msg.id();
-                    let chl = msg.channel();
-                    for listener in listeners.lock().await.values() {
-                        listener.on_frame_transmitting(chl.clone(), &msg).await;
-                    }
-                    if let Ok(_) = device.transmit(msg, Some(100)).await {
-                        for listener in listeners.lock().await.values() {
-                            listener.on_frame_transmitted(chl.clone(), id).await;
+                match receiver.lock().await.try_recv() {
+                    Ok(msg) => {
+                        rsutil::trace!("ISO-TP - transmitting: {}", msg);
+                        let id = msg.id();
+                        let chl = msg.channel();
+                        if let Ok(_) = device.transmit(msg, Some(100)).await {
+                            let listeners = {
+                                let guard = listeners.read().await;
+                                guard.values().cloned().collect::<Vec<_>>()
+                            };
+                            for listener in &listeners {
+                                listener.on_frame_transmitted(chl.clone(), id).await;
+                            }
                         }
                     }
+                    Err(_) => sleep(Duration::from_micros(interval)).await,
                 }
 
-                if let Ok(()) = stop_rx.recv().await {
+                if let Ok(()) = stop_rx.try_recv() {
                     rsutil::trace!("ISO-TP - transmit task stopped");
                     break;
                 }
 
-                sleep(Duration::from_micros(interval)).await;
-
-                // tokio::select! {
-                //     _ = stop_rx.recv() => {
-                //         rsutil::trace!("ISO-TP - transmit task stopped");
-                //         break;
-                //     }
-                //     _ = async {
-                //         if let Some(msg) = receiver.lock().await.recv().await {
-                //             rsutil::trace!("ISO-TP - transmitting: {}", msg);
-                //             let id = msg.id();
-                //             let chl = msg.channel();
-                //             for listener in listeners.lock().await.values() {
-                //                 listener.on_frame_transmitting(chl.clone(), &msg).await;
-                //             }
-                //             if let Ok(_) = device.transmit(msg, Some(100)).await {
-                //                 for listener in listeners.lock().await.values() {
-                //                     listener.on_frame_transmitted(chl.clone(), id).await;
-                //                 }
-                //             }
-                //         }
-                //     } => {},
-                //     _ = sleep(Duration::from_micros(interval)) => {}
-                // }
             }
         })
     }
@@ -224,7 +204,7 @@ where
         device: D,
         listeners: Listeners<C, F>,
         mut stop_rx: broadcast::Receiver<()>,
-        interval: u64,
+        // interval: u64,
     ) -> JoinHandle<()> {
         spawn(async move {
             let device = device.clone();
@@ -236,42 +216,27 @@ where
 
                 let channels = device.opened_channels();
                 for chl in channels {
-                    if let Ok(messages) = device.receive(chl.clone(), Some(100)).await {
-                        if !messages.is_empty() {
-                            for listener in listeners.lock().await.values() {
-                                // messages.iter().for_each(|f| rsutil::trace!("ISO-TP - received: {}", f));
-                                listener.on_frame_received(chl.clone(), &messages).await;
+                    if let Ok(frames) = device.receive(chl.clone(), Some(100)).await {
+                        if !frames.is_empty() {
+                            let frames = Arc::new(frames);
+                            let listeners = {
+                                let guard = listeners.read().await;
+                                guard.values().cloned().collect::<Vec<_>>()
+                            };
+                            for listener in &listeners {
+                                // frames.iter().for_each(|f| println!("ISO-TP - received: {}", f));
+                                listener.on_frame_received(Arc::downgrade(&frames)).await;
                             }
                         }
                     }
                 }
 
-                if let Ok(()) = stop_rx.recv().await {
+                if let Ok(()) = stop_rx.try_recv() {
                     rsutil::trace!("ISO-TP - receive task stopped");
                     break;
                 }
 
-                sleep(Duration::from_micros(interval)).await;
-
-                // tokio::select! {
-                //     _ = stop_rx.recv() => {
-                //         rsutil::trace!("ISO-TP - receive task stopped");
-                //         break;
-                //     },
-                //     _ = async {
-                //         let channels = device.opened_channels();
-                //         for chl in channels {
-                //             if let Ok(messages) = device.receive(chl.clone(), Some(100)).await {
-                //                 if !messages.is_empty() {
-                //                     for listener in listeners.lock().await.values() {
-                //                         listener.on_frame_received(chl.clone(), &messages).await;
-                //                     }
-                //                 }
-                //             }
-                //         }
-                //     } => {},
-                //     _ = sleep(Duration::from_micros(interval)) => {}
-                // }
+                // sleep(Duration::from_micros(interval)).await;
             }
         })
     }
