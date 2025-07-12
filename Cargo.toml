@@ -8,7 +8,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0-alpha8"
+version = "0.1.0-b0"
 edition = "2021"
 license = "MIT OR GPL-3.0"
 authors = ["Jesse Smith <jesses2025smith@gmail.com>"]
@@ -18,11 +18,11 @@ repository = "https://github.com/jesses2025smith/iso-std-rs"
 async-trait = "0.1"
 bitfield-struct = "0.11"
 bitflags = "2.9"
-#bytes =  "1.10"
+bytes =  "1.10"
 getset = "0.1"
 hex = "0.4"
 log = "0.4"
-rs-can = { path = "../rust-can/rs-can" }
+rs-can = { version = "0.3.0-b0" }
 rsutil = "0.1"
 #task-supervisor = "0.3"     # tokio任务监视
 thiserror = "2"
