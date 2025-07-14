@@ -162,7 +162,7 @@ where
         self.send_task = Arc::new(None);
         self.receive_task = Arc::new(None);
 
-        self.device.shutdown();
+        // self.device.shutdown();
     }
 
     async fn transmit_task(

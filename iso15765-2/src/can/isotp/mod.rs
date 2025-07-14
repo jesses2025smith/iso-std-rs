@@ -8,20 +8,22 @@ use crate::{
     core::{Event, EventListener, FlowControlContext, FlowControlState, State},
     error::Error,
     frame::Frame,
+    isotp::IsoTp,
+    AddressType,
 };
 use bytes::Bytes;
 use rs_can::{CanDevice, CanFrame, CanId, CanListener};
-use std::{
-    fmt::Display,
-    time::{Duration, Instant},
-};
-use tokio::{sync::mpsc::Sender, time::sleep};
+use std::{fmt::Display, sync::Arc};
+use stream_cancel::Trigger;
+use tokio::sync::{broadcast, RwLock};
 
 #[derive(Clone)]
 pub struct CanIsoTp<D, C, F> {
     pub(crate) adapter: adapter::Adapter<D, C, F>,
     pub(crate) channel: C,
     pub(crate) context: context::Context,
+    pub(crate) sender: broadcast::Sender<F>,
+    pub(crate) triggers: Arc<RwLock<Vec<Trigger>>>,
 }
 
 unsafe impl<D, C, F> Send for CanIsoTp<D, C, F> {}
@@ -34,11 +36,14 @@ where
     F: CanFrame<Channel = C> + Clone + Display + Send + Sync + 'static,
 {
     pub async fn new(device: D, channel: C, address: Address) -> Self {
+        let (tx, _) = broadcast::channel(10240);
         let adapter = adapter::Adapter::new(device);
         let inst = Self {
             channel: channel.clone(),
             adapter: adapter.clone(),
             context: context::Context::new(address),
+            sender: tx,
+            triggers: Default::default(),
         };
         adapter
             .register_listener(format!("IsoTP-{}", channel), Box::new(inst.clone()))
@@ -83,59 +88,58 @@ where
         self.channel.clone()
     }
 
-    #[inline(always)]
-    pub fn transmitter(&self) -> Sender<F> {
-        self.adapter.transmitter()
-    }
-
     #[inline]
     pub async fn update_address(&self, address: Address) {
         let mut guard = self.context.address.write().await;
         *guard = address;
     }
 
-    #[inline(always)]
-    pub async fn start(&mut self, interval_us: u64) {
-        self.adapter.start(interval_us).await
-    }
+    pub async fn transmit<T>(&self, addr_type: AddressType, data: T) -> Result<(), Error>
+    where
+        T: AsRef<[u8]>,
+    {
+        self.context.state_idle().await;
+        self.context.reset().await;
+        rsutil::trace!("ISO-TP - Sending: {}", hex::encode(&data));
 
-    #[inline(always)]
-    pub async fn stop(&mut self) {
-        self.adapter.stop().await
-    }
+        let frames = Frame::from_data(data)?;
+        let frame_len = frames.len();
 
-    pub async fn async_timer(&self, timeout: u64) -> Result<Bytes, Error> {
-        let duration = Duration::from_millis(timeout);
-        let mut start = Instant::now();
+        let (tx_id, fid) = {
+            let guard = self.context.address.read().await;
+            (guard.tx_id, guard.fid)
+        };
+        let can_id = match addr_type {
+            AddressType::Physical => tx_id,
+            AddressType::Functional => fid,
+        };
+        let mut need_flow_ctrl = frame_len > 1;
+        let mut index = 0;
+        for iso_tp_frame in frames {
+            let data = iso_tp_frame.encode(None);
+            let mut frame =
+                F::new(CanId::from_bits(can_id, None), data.as_slice()).ok_or_else(|| {
+                    rsutil::warn!("fail to convert iso-tp frame to can frame");
+                    Error::DeviceError
+                })?;
+            frame.set_channel(self.channel.clone());
 
-        loop {
-            sleep(Duration::from_millis(1)).await;
-
-            if start.elapsed() > duration {
-                self.context.clear_buffer().await;
-                return Err(Error::Timeout {
-                    value: timeout,
-                    unit: "ms",
-                });
+            if need_flow_ctrl {
+                need_flow_ctrl = false;
+                self.context
+                    .state_append(State::Sending | State::WaitFlowCtrl)
+                    .await;
+            } else {
+                self.context.write_waiting(&mut index).await?;
+                self.context.state_append(State::Sending).await;
             }
-
-            match self.context.buffer_data().await {
-                Some(event) => match event {
-                    Event::Wait | Event::FirstFrameReceived => {
-                        start = Instant::now();
-                    }
-                    Event::DataReceived(data) => {
-                        // rsutil::trace!("DoCAN - data received: {}", hex::encode(&data));
-                        return Ok(data);
-                    }
-                    Event::ErrorOccurred(e) => {
-                        self.context.clear_buffer().await;
-                        return Err(e.clone());
-                    }
-                },
-                None => continue,
-            }
+            self.adapter.transmitter.send(frame).await.map_err(|e| {
+                rsutil::warn!("ISO-TP - transmit failed: {:?}", e);
+                Error::DeviceError
+            })?;
         }
+
+        Ok(())
     }
 
     #[inline(always)]

@@ -21,8 +21,10 @@ bytes = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
 rsutil = { workspace = true, features = ["log"] }
+stream-cancel = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt", "sync", "time"] }
+tokio-stream = { workspace = true, features = ["sync"] }
 
 [dependencies.rs-can]
 workspace = true

@@ -4,6 +4,7 @@ mod constants;
 mod core;
 mod error;
 mod frame;
+mod isotp;
 
 #[cfg(feature = "can")]
 pub use crate::can::*;
@@ -13,3 +14,4 @@ pub use crate::core::{
 };
 pub use crate::error::Error as IsoTpError;
 pub use crate::frame::{Frame as IsoTpFrame, FrameType as IsoTpFrameType};
+pub use crate::isotp::*;

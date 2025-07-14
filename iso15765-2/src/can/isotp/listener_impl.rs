@@ -41,39 +41,51 @@ where
             Some(frames) => {
                 for frame in frames.iter() {
                     let channel = frame.channel();
-                    if channel != self.channel || self.context.state_contains(State::Error).await {
+                    if channel != self.channel {
+                        if let Err(e) = self.sender.send(frame.clone()) {
+                            rsutil::warn!("ISO-TP - Error: {} when sending frame that belongs to other channel", e);
+                        }
                         continue;
                     }
 
-                    if frame.id().into_bits() == rx_id {
-                        rsutil::debug!("ISO-TP - Received: {}", frame);
+                    if frame.id().into_bits() != rx_id {
+                        if let Err(e) = self.sender.send(frame.clone()) {
+                            rsutil::warn!("ISO-TP - Error: {} when sending non-IsoTP frame", e);
+                        }
+                        continue;
+                    }
 
-                        match Frame::decode(frame.data()) {
-                            Ok(frame) => match frame {
-                                Frame::SingleFrame { data } => {
-                                    // rsutil::trace!("ISO-TP - received single frame");
-                                    self.on_single_frame(data).await;
-                                }
-                                Frame::FirstFrame { length, data } => {
-                                    // rsutil::trace!("ISO-TP - received first frame");
-                                    self.on_first_frame(tx_id, length, data).await;
-                                }
-                                Frame::ConsecutiveFrame { sequence, data } => {
-                                    // rsutil::trace!("ISO-TP - received consecutive frame");
-                                    self.on_consecutive_frame(sequence, data).await;
-                                }
-                                Frame::FlowControlFrame(ctx) => {
-                                    // rsutil::trace!("ISO-TP - received flow control frame");
-                                    self.on_flow_ctrl_frame(ctx).await;
-                                }
-                            },
-                            Err(e) => {
-                                rsutil::warn!("ISO-TP - data convert to frame failed: {}", e);
-                                self.context.state_append(State::Error).await;
-                                self.iso_tp_event(Event::ErrorOccurred(e)).await;
+                    if self.context.state_contains(State::Error).await {
+                        break;
+                    }
 
-                                break;
+                    rsutil::debug!("ISO-TP - Received: {}", frame);
+
+                    match Frame::decode(frame.data()) {
+                        Ok(frame) => match frame {
+                            Frame::SingleFrame { data } => {
+                                // rsutil::trace!("ISO-TP - received single frame");
+                                self.on_single_frame(data).await;
                             }
+                            Frame::FirstFrame { length, data } => {
+                                // rsutil::trace!("ISO-TP - received first frame");
+                                self.on_first_frame(tx_id, length, data).await;
+                            }
+                            Frame::ConsecutiveFrame { sequence, data } => {
+                                // rsutil::trace!("ISO-TP - received consecutive frame");
+                                self.on_consecutive_frame(sequence, data).await;
+                            }
+                            Frame::FlowControlFrame(ctx) => {
+                                // rsutil::trace!("ISO-TP - received flow control frame");
+                                self.on_flow_ctrl_frame(ctx).await;
+                            }
+                        },
+                        Err(e) => {
+                            rsutil::warn!("ISO-TP - data convert to frame failed: {}", e);
+                            self.context.state_append(State::Error).await;
+                            self.iso_tp_event(Event::ErrorOccurred(e)).await;
+
+                            break;
                         }
                     }
                 }
