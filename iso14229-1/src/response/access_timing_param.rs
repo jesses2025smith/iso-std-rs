@@ -33,6 +33,7 @@ impl ResponseData for AccessTimingParameter {
         sub_func: Option<u8>,
         _: &DidConfig,
     ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 match TimingParameterAccessType::try_from(sub_func)? {

@@ -31,29 +31,28 @@ impl Default for SessionTiming {
     }
 }
 
-// impl SessionTiming {
-//     #[inline]
-//     pub fn new(
-//         p2_ms: u16,
-//         p2_star_ms: u32,
-//     ) -> Result<Self, UdsError> {
-//         if p2_ms > P2_MAX || p2_star_ms > P2_STAR_MAX_MS {
-//             return Err(UdsError::InvalidData(format!("P2: {} or P2*: {}", p2_ms, p2_star_ms)));
-//         }
-//         let p2_star = (p2_star_ms / 10) as u16;
-//         Ok(Self { p2: p2_ms, p2_star })
-//     }
-//
-//     #[inline]
-//     pub fn p2_ms(&self) -> u16 {
-//         self.p2
-//     }
-//
-//     #[inline]
-//     pub fn p2_star_ms(&self) -> u32 {
-//         self.p2_star as u32 * 10
-//     }
-// }
+impl SessionTiming {
+    #[inline]
+    pub fn new(
+        p2_ms: u16,
+        p2_star_ms: u32,
+    ) -> Self {
+        let p2 = if p2_ms > P2_MAX { P2_MAX } else { p2_ms };
+        let p2_star = (p2_star_ms / 10) as u16;
+        let p2_star = if p2_star > P2_STAR_MAX { P2_STAR_MAX } else { p2_star };
+        Self { p2, p2_star }
+    }
+
+    #[inline(always)]
+    pub fn p2_ms(&self) -> u64 {
+        self.p2 as u64
+    }
+
+    #[inline(always)]
+    pub fn p2_star_ms(&self) -> u64 {
+        self.p2_star as u64 * 10
+    }
+}
 
 impl<'a> TryFrom<&'a [u8]> for SessionTiming {
     type Error = Error;

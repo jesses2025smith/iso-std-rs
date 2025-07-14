@@ -23,6 +23,7 @@ impl RequestData for AccessTimingParameter {
         sub_func: Option<u8>,
         _: &DidConfig,
     ) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
