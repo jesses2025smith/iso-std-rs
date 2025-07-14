@@ -9,8 +9,7 @@ mod frame;
 pub use crate::can::*;
 pub use crate::constants::*;
 pub use crate::core::{
-    Event as IsoTpEvent, EventListener as IsoTpEventListener, FlowControlContext, FlowControlState,
-    State as IsoTpState,
+    Event as IsoTpEvent, FlowControlContext, FlowControlState, State as IsoTpState,
 };
 pub use crate::error::Error as IsoTpError;
 pub use crate::frame::{Frame as IsoTpFrame, FrameType as IsoTpFrameType};

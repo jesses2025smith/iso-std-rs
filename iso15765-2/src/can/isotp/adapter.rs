@@ -1,5 +1,10 @@
 use rs_can::{CanDevice, CanFrame, CanListener};
-use std::{collections::HashMap, fmt::Display, sync::Arc, time::{Duration, Instant}};
+use std::{
+    collections::HashMap,
+    fmt::Display,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 use tokio::{
     sync::{
         broadcast,
@@ -14,9 +19,9 @@ type Listeners<C, F> = Arc<RwLock<HashMap<String, Arc<Box<dyn CanListener<C, F>>
 const DEFAULT_STOP_DELAY: u64 = 500;
 
 #[derive(Clone)]
-pub struct CanAdapter<D, C, F> {
+pub struct Adapter<D, C, F> {
     pub(crate) device: D,
-    pub(crate) sender: Sender<F>,
+    pub(crate) transmitter: Sender<F>,
     pub(crate) receiver: Arc<Mutex<Receiver<F>>>,
     pub(crate) listeners: Listeners<C, F>,
     pub(crate) stop_tx: broadcast::Sender<()>,
@@ -25,7 +30,7 @@ pub struct CanAdapter<D, C, F> {
     pub(crate) interval: Option<u64>,
 }
 
-impl<D, C, F> CanAdapter<D, C, F>
+impl<D, C, F> Adapter<D, C, F>
 where
     D: CanDevice<Channel = C, Frame = F> + Clone + Send + Sync + 'static,
     C: Clone + Display + Send + Sync + 'static,
@@ -36,7 +41,7 @@ where
         let (stop_tx, _) = broadcast::channel(16);
         Self {
             device,
-            sender: tx,
+            transmitter: tx,
             receiver: Arc::new(Mutex::new(rx)),
             listeners: Default::default(),
             stop_tx,
@@ -46,29 +51,32 @@ where
         }
     }
 
-    #[inline]
+    #[inline(always)]
     pub async fn register_listener(&self, name: String, listener: Box<dyn CanListener<C, F>>) {
         rsutil::trace!("ISO-TP - register listener {}", name);
-        self.listeners.write().await.insert(name, Arc::new(listener));
+        self.listeners
+            .write()
+            .await
+            .insert(name, Arc::new(listener));
     }
 
-    #[inline]
+    #[inline(always)]
     pub async fn unregister_listener(&self, name: &str) {
         rsutil::trace!("ISO-TP - unregister listener {}", name);
         self.listeners.write().await.remove(name);
     }
 
-    #[inline]
+    #[inline(always)]
     pub async fn unregister_all_listeners(&self) {
         self.listeners.write().await.clear();
     }
 
-    #[inline]
+    #[inline(always)]
     pub async fn listener_names(&self) -> Vec<String> {
         self.listeners.read().await.keys().cloned().collect()
     }
 
-    #[inline]
+    #[inline(always)]
     pub async fn listener_callback(
         &self,
         name: &str,
@@ -79,9 +87,9 @@ where
         }
     }
 
-    #[inline]
-    pub fn sender(&self) -> Sender<F> {
-        self.sender.clone()
+    #[inline(always)]
+    pub fn transmitter(&self) -> Sender<F> {
+        self.transmitter.clone()
     }
 
     pub async fn start(&mut self, interval_us: u64) {
@@ -122,7 +130,7 @@ where
         let mut send_task_finished = false;
         let mut receive_task_finished = false;
 
-        while start_time.elapsed() < timeout  {
+        while start_time.elapsed() < timeout {
             send_task_finished = if let Some(task) = &*self.send_task {
                 task.is_finished()
             } else {
@@ -195,7 +203,6 @@ where
                     rsutil::trace!("ISO-TP - transmit task stopped");
                     break;
                 }
-
             }
         })
     }
