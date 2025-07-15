@@ -1,14 +1,19 @@
 //! Commons of Service 2F
 
-use crate::{enum_extend, Iso14229Error};
+use crate::error::Error;
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum IOCtrlParameter {
         ReturnControlToEcu = 0x00,
         ResetToDefault = 0x01,
         FreezeCurrentState = 0x02,
         ShortTermAdjustment = 0x03,
-    }, u8);
+    },
+    u8,
+    Error,
+    ReservedError
+);
 
 // #[repr(u8)]
 // #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -46,9 +51,8 @@ enum_extend!(
 //     }
 // }
 
-#[derive(Debug, Clone,  Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct IOCtrlOption {
     pub param: IOCtrlParameter,
     pub state: Vec<u8>,
 }
-

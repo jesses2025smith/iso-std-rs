@@ -15,7 +15,7 @@ pub enum Error {
     InvalidParam(String),
 
     #[error("ISO-TP - invalid data length: {actual}, expect: {expect}")]
-    InvalidDataLength { actual: usize, expect: usize, },
+    InvalidDataLength { actual: usize, expect: usize },
 
     #[error("ISO-TP - data length: {0} is out of range")]
     LengthOutOfRange(usize),
@@ -24,7 +24,7 @@ pub enum Error {
     InvalidStMin(u8),
 
     #[error("ISO-TP - invalid sequence: {actual}, expect: {expect}")]
-    InvalidSequence{ actual: u8, expect: u8, },
+    InvalidSequence { actual: u8, expect: u8 },
 
     #[error("ISO-TP - mixed frames")]
     MixFramesError,

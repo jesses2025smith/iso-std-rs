@@ -1,54 +1,70 @@
 //! response of Service 22
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, DataIdentifier, DIDData, error::Iso14229Error, response::{Code, Response, SubFunction}, ResponseData, utils, Service};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DIDData, DataIdentifier, DidConfig, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static!(
-    pub static ref READ_DID_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static READ_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ResponseTooLong,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
-    ]);
-);
+    ])
+});
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadDID {
     pub data: DIDData,
     pub others: Vec<DIDData>,
 }
 
+impl From<ReadDID> for Vec<u8> {
+    fn from(v: ReadDID) -> Self {
+        let mut result: Vec<_> = v.data.into();
+        v.others.into_iter().for_each(|v| {
+            let mut tmp: Vec<_> = v.into();
+            result.append(&mut tmp);
+        });
+
+        result
+    }
+}
+
 impl ResponseData for ReadDID {
-    fn response(data: &[u8], sub_func: Option<u8>, cfg: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        cfg: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadDID)),
             None => {
                 let data_len = data.len();
                 let mut offset = 0;
                 utils::data_length_check(data_len, offset + 2, false)?;
-                let did = DataIdentifier::from(
-                    u16::from_be_bytes([data[offset], data[offset + 1]])
-                );
+                let did =
+                    DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                 offset += 2;
-                let &did_len = cfg.did_cfg.get(&did)
-                    .ok_or(Iso14229Error::DidNotSupported(did))?;
+                let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
                 utils::data_length_check(data_len, offset + did_len, false)?;
                 offset += did_len;
 
                 while data_len > offset {
                     utils::data_length_check(data_len, offset + 2, false)?;
-                    let did = DataIdentifier::from(
-                        u16::from_be_bytes([data[offset], data[offset + 1]])
-                    );
+                    let did =
+                        DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                     offset += 2;
-                    let &did_len = cfg.did_cfg.get(&did)
-                        .ok_or(Iso14229Error::DidNotSupported(did))?;
+                    let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
                     utils::data_length_check(data_len, offset + did_len, false)?;
                     offset += did_len;
                 }
-                
+
                 Ok(Response {
                     service: Service::ReadDID,
                     negative: false,
@@ -58,59 +74,46 @@ impl ResponseData for ReadDID {
             }
         }
     }
+}
 
-    fn try_parse(response: &Response, cfg: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::ReadDID
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for ReadDID {
+    type Error = Error;
+    fn try_from((resp, cfg): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::ReadDID || resp.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &resp.data;
         let data_len = data.len();
         let mut offset = 0;
 
-        let did = DataIdentifier::from(
-            u16::from_be_bytes([data[offset], data[offset + 1]])
-        );
+        let did = DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
-        let &did_len = cfg.did_cfg.get(&did)
-            .ok_or(Iso14229Error::DidNotSupported(did))?;
+        let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
 
         let context = DIDData {
             did,
-            data: data[offset..offset + did_len].to_vec()
+            data: data[offset..offset + did_len].to_vec(),
         };
         offset += did_len;
 
         let mut others = Vec::new();
         while data_len > offset {
-            let did = DataIdentifier::from(
-                u16::from_be_bytes([data[offset], data[offset + 1]])
-            );
+            let did = DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
             offset += 2;
-            let &did_len = cfg.did_cfg.get(&did)
-                .ok_or(Iso14229Error::DidNotSupported(did))?;
+            let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
 
             others.push(DIDData {
                 did,
-                data: data[offset..offset + did_len].to_vec()
+                data: data[offset..offset + did_len].to_vec(),
             });
             offset += did_len;
         }
 
-        Ok(Self { data: context, others })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let mut result: Vec<_> = self.data.into();
-        self.others.into_iter()
-            .for_each(|v| {
-                let mut tmp: Vec<_> = v.into();
-                result.append(&mut tmp);
-            });
-
-        result
+        Ok(Self {
+            data: context,
+            others,
+        })
     }
 }

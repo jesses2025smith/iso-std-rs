@@ -1,21 +1,22 @@
 //! Commons of Service 34|35
 
-
-use crate::Iso14229Error;
+use crate::error::Error;
 
 /// This parameter is a one-byte value with each nibble encoded separately:
 /// ⎯ bit 7 - 4: length (number of bytes) of the maxNumberOfBlockLength parameter;
 /// ⎯ bit 3 - 0: reserved by document, to be set to 0 hex.
 /// The format of this parameter is compatible to the format of the addressAndLengthFormatIdentifier parameter contained
 /// in the request message, except that the lower nibble has to be set to 0 hex.
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub struct LengthFormatIdentifier(pub(crate) u8);
 
 impl LengthFormatIdentifier {
     #[inline]
-    pub fn new(value: u8) -> Result<Self, Iso14229Error>{
+    pub fn new(value: u8) -> Result<Self, Error> {
         if value > 0x0F {
-            return Err(Iso14229Error::InvalidParam("`LengthFormatIdentifier` must be between 0x00 and 0xF0".to_string()));
+            return Err(Error::InvalidParam(
+                "`LengthFormatIdentifier` must be between 0x00 and 0xF0".to_string(),
+            ));
         }
 
         Ok(Self(value << 4))
@@ -34,10 +35,12 @@ impl From<LengthFormatIdentifier> for u8 {
 }
 
 impl TryFrom<u8> for LengthFormatIdentifier {
-    type Error = Iso14229Error;
+    type Error = Error;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         if value > 0xF0 {
-            return Err(Iso14229Error::InvalidParam("`LengthFormatIdentifier` must be between 0x00 and 0xF0".to_string()));
+            return Err(Error::InvalidParam(
+                "`LengthFormatIdentifier` must be between 0x00 and 0xF0".to_string(),
+            ));
         }
 
         Ok(Self(value))
@@ -45,7 +48,7 @@ impl TryFrom<u8> for LengthFormatIdentifier {
 }
 
 /// Defined by the vehicle manufacturer
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub struct DataFormatIdentifier(pub(crate) u8);
 
 impl DataFormatIdentifier {
@@ -65,8 +68,8 @@ impl DataFormatIdentifier {
 
 impl From<u8> for DataFormatIdentifier {
     #[inline]
-    fn from(value: u8) -> Self {
-        Self(value)
+    fn from(v: u8) -> Self {
+        Self(v)
     }
 }
 
@@ -80,11 +83,11 @@ impl From<DataFormatIdentifier> for u8 {
 /// This parameter is a one Byte value with each nibble encoded separately (see Table H.1 for example values):
 /// — bit 7 - 4: Length (number of bytes) of the memorySize parameter
 /// — bit 3 - 0: Length (number of bytes) of the memoryAddress parameter
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct AddressAndLengthFormatIdentifier(u8);
 
 impl AddressAndLengthFormatIdentifier {
-    pub fn new(addr_len: u8, size_len: u8) -> Result<Self, Iso14229Error> {
+    pub fn new(addr_len: u8, size_len: u8) -> Result<Self, Error> {
         let value = (size_len << 4) | addr_len;
         Self::try_from(value)
     }
@@ -107,11 +110,12 @@ impl From<AddressAndLengthFormatIdentifier> for u8 {
 }
 
 impl TryFrom<u8> for AddressAndLengthFormatIdentifier {
-    type Error = Iso14229Error;
+    type Error = Error;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
-        if value & 0x0F == 0
-            || value & 0xF0 == 0 {
-            return Err(Iso14229Error::InvalidParam("all field of `AddressAndLengthFormatIdentifier` must be rather than 0".into()));
+        if value & 0x0F == 0 || value & 0xF0 == 0 {
+            return Err(Error::InvalidParam(
+                "all field of `AddressAndLengthFormatIdentifier` must be rather than 0".into(),
+            ));
         }
 
         Ok(Self(value))

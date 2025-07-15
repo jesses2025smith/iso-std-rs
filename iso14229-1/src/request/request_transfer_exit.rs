@@ -1,16 +1,31 @@
 //! request of Service 37
 
-use crate::{Iso14229Error, request::{Request, SubFunction}, Service, utils, Configuration, RequestData};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DidConfig, RequestData, Service,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RequestTransferExit {
     pub data: Vec<u8>,
 }
 
+impl From<RequestTransferExit> for Vec<u8> {
+    fn from(v: RequestTransferExit) -> Self {
+        v.data
+    }
+}
+
 impl RequestData for RequestTransferExit {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::RequestTransferExit)),
+            Some(_) => Err(Error::SubFunctionError(Service::RequestTransferExit)),
             None => {
                 // utils::data_length_check(data.len(), 0, true)?;
 
@@ -22,19 +37,18 @@ impl RequestData for RequestTransferExit {
             }
         }
     }
+}
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = request.service();
-        if service != Service::RequestTransferExit
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Request, &DidConfig)> for RequestTransferExit {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<RequestTransferExit, Error> {
+        let service = req.service();
+        if service != Service::RequestTransferExit || req.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        Ok(Self { data: request.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
+        Ok(Self {
+            data: req.data.clone(),
+        })
     }
 }

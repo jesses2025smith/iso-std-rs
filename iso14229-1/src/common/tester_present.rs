@@ -1,9 +1,13 @@
 //! Commons of Service 3E
 
-use crate::{enum_extend, Iso14229Error};
+use crate::error::Error;
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum TesterPresentType {
         Zero = 0x00,
-    }, u8);
-
+    },
+    u8,
+    Error,
+    ReservedError
+);

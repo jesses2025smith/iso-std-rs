@@ -1,18 +1,20 @@
 //! response of Service 2A
 
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DidConfig, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, error::Iso14229Error, response::{Code, Response, SubFunction}, ResponseData, utils, Service};
-
-lazy_static!(
-    pub static ref READ_DATA_BY_PERIOD_ID_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static READ_DATA_BY_PERIOD_ID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadDataByPeriodId {
@@ -20,10 +22,24 @@ pub struct ReadDataByPeriodId {
     pub record: Vec<u8>,
 }
 
+impl From<ReadDataByPeriodId> for Vec<u8> {
+    fn from(mut v: ReadDataByPeriodId) -> Self {
+        let mut result = vec![v.did];
+        result.append(&mut v.record);
+
+        result
+    }
+}
+
 impl ResponseData for ReadDataByPeriodId {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDataByPeriodId)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadDataByPeriodId)),
             None => {
                 let data_len = data.len();
                 utils::data_length_check(data_len, 2, false)?;
@@ -37,15 +53,17 @@ impl ResponseData for ReadDataByPeriodId {
             }
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::ReadDataByPeriodId
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for ReadDataByPeriodId {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::ReadDataByPeriodId || resp.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &resp.data;
         let mut offset = 0;
 
         let did = data[offset];
@@ -53,13 +71,5 @@ impl ResponseData for ReadDataByPeriodId {
         let record = data[offset..].to_vec();
 
         Ok(Self { did, record })
-    }
-
-    #[inline]
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let mut result = vec![self.did];
-        result.append(&mut self.record);
-
-        result
     }
 }

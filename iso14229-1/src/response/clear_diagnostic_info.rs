@@ -1,29 +1,42 @@
 //! response of Service 14
 
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DidConfig, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, Iso14229Error, response::{Code, Response, SubFunction}, Service, utils, ResponseData};
-
-lazy_static!(
-    pub static ref CLEAR_DIAGNOSTIC_INFO_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static CLEAR_DIAGNOSTIC_INFO_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         #[cfg(any(feature = "std2013", feature = "std2020"))]
         Code::GeneralProgrammingFailure,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ClearDiagnosticInfo {
-    pub data: Vec<u8>,  // should empty
+    pub data: Vec<u8>, // should empty
+}
+
+impl From<ClearDiagnosticInfo> for Vec<u8> {
+    fn from(v: ClearDiagnosticInfo) -> Self {
+        v.data
+    }
 }
 
 impl ResponseData for ClearDiagnosticInfo {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ClearDiagnosticInfo)),
+            Some(_) => Err(Error::SubFunctionError(Service::ClearDiagnosticInfo)),
             None => {
                 utils::data_length_check(data.len(), 0, true)?;
 
@@ -36,19 +49,18 @@ impl ResponseData for ClearDiagnosticInfo {
             }
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::ClearDiagnosticInfo
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for ClearDiagnosticInfo {
+    type Error = Error;
+    fn try_from((res, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = res.service();
+        if service != Service::ClearDiagnosticInfo || res.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        Ok(Self { data: response.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
+        Ok(Self {
+            data: res.data.clone(),
+        })
     }
 }

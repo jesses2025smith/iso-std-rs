@@ -1,40 +1,54 @@
 //! request of Service 24
 
-
-use crate::{Configuration, DataIdentifier, Iso14229Error, request::{Request, SubFunction}, RequestData, utils, Service};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DataIdentifier, DidConfig, RequestData, Service,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ReadScalingDID(pub DataIdentifier);
 
+impl From<ReadScalingDID> for Vec<u8> {
+    fn from(v: ReadScalingDID) -> Self {
+        let did: u16 = v.0.into();
+        did.to_be_bytes().to_vec()
+    }
+}
+
 impl RequestData for ReadScalingDID {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadScalingDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadScalingDID)),
             None => {
                 utils::data_length_check(data.len(), 2, true)?;
 
-                Ok(Request { service: Service::ReadScalingDID, sub_func: None, data: data.to_vec(), })
+                Ok(Request {
+                    service: Service::ReadScalingDID,
+                    sub_func: None,
+                    data: data.to_vec(),
+                })
             }
         }
     }
+}
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = request.service();
-        if service != Service::ReadScalingDID
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Request, &DidConfig)> for ReadScalingDID {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<ReadScalingDID, Error> {
+        let service = req.service();
+        if service != Service::ReadScalingDID || req.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
-        let did = DataIdentifier::from(
-            u16::from_be_bytes([data[0], data[1]])
-        );
+        let data = &req.data;
+        let did = DataIdentifier::from(u16::from_be_bytes([data[0], data[1]]));
 
         Ok(Self(did))
-    }
-
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let did: u16 = self.0.into();
-        did.to_be_bytes().to_vec()
     }
 }

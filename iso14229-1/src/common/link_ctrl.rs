@@ -1,8 +1,9 @@
 //! Commons of Service 87
 
-use crate::{enum_extend, Iso14229Error, utils};
+use crate::{error::Error, utils};
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum LinkCtrlMode {
         PC9600Baud = 0x01,
         PC19200Baud = 0x02,
@@ -16,15 +17,18 @@ enum_extend!(
         CAN1MBaud = 0x13,
 
         ProgrammingSetup = 0x20,
-    }, u8);
-
+    },
+    u8,
+    Error,
+    ReservedError
+);
 
 /// Different name in ISO-14229(2006).
 /// VerifyBaudrateTransitionWithFixedBaudrate
 /// VerifyBaudrateTransitionWithSpecificBaudrate
 /// TransitionBaudrate
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum LinkCtrlType {
     VerifyModeTransitionWithFixedParameter = 0x01,
     VerifyModeTransitionWithSpecificParameter = 0x02,
@@ -36,7 +40,7 @@ pub enum LinkCtrlType {
 }
 
 impl TryFrom<u8> for LinkCtrlType {
-    type Error = Iso14229Error;
+    type Error = Error;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
@@ -47,7 +51,7 @@ impl TryFrom<u8> for LinkCtrlType {
             0x40..=0x5F => Ok(Self::VehicleManufacturerSpecific(value)),
             0x60..=0x7E => Ok(Self::SystemSupplierSpecific(value)),
             0x7F => Ok(Self::Reserved(value)),
-            v => Err(Iso14229Error::ReservedError(v.to_string())),
+            v => Err(Error::ReservedError(v)),
         }
     }
 }
@@ -65,7 +69,3 @@ impl From<LinkCtrlType> for u8 {
         }
     }
 }
-
-
-
-

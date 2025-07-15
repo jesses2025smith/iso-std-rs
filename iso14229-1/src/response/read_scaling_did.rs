@@ -1,60 +1,66 @@
 //! response of Service 24
 
-
-use std::collections::HashSet;
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DataIdentifier, DidConfig, ResponseData, Service,
+};
 use bitfield_struct::bitfield;
-use lazy_static::lazy_static;
-use crate::{enum_extend, Service};
-use crate::{Configuration, DataIdentifier, error::Iso14229Error, response::{Code, Response, SubFunction}, ResponseData, utils};
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static!(
-    pub static ref READ_SCALING_DID_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static READ_SCALING_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
         #[cfg(any(feature = "std2020"))]
         Code::AuthenticationRequired,
-    ]);
-);
+    ])
+});
 
-enum_extend! (
+rsutil::enum_extend!(
     /// Table C.2 — scalingByte (High Nibble) parameter definitions
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum ScalingByteType {
-        UnSignedNumeric = 0x00,             // (1 to 4 bytes)
-        SignedNumeric = 0x10,               // (1 to 4 bytes)
-        BitMappedReportedWithOutMask = 0x20,// 1 byte at least
-        BitMappedReportedWithMask = 0x30,   // 0 byte
-        BinaryCodedDecimal = 0x40,          // n bytes(BCD code)
-        StateEncodedVariable = 0x50,        // always 1 byte(Codes "00", "01", "02" and "03" may indicate ignition off, locked, run, and start, respectively)
-        ASCII = 0x60,                       // 1 ~ 15 bytes
-        SignedFloatingPoint = 0x70,         //
+        UnSignedNumeric = 0x00,              // (1 to 4 bytes)
+        SignedNumeric = 0x10,                // (1 to 4 bytes)
+        BitMappedReportedWithOutMask = 0x20, // 1 byte at least
+        BitMappedReportedWithMask = 0x30,    // 0 byte
+        BinaryCodedDecimal = 0x40,           // n bytes(BCD code)
+        StateEncodedVariable = 0x50, // always 1 byte(Codes "00", "01", "02" and "03" may indicate ignition off, locked, run, and start, respectively)
+        ASCII = 0x60,                // 1 ~ 15 bytes
+        SignedFloatingPoint = 0x70,  //
         Packet = 0x80,
         Formula = 0x90,
         UnitFormat = 0xA0,
-        StateAndConnectionType = 0xB0,      // 1 byte
-    }, u8);
+        StateAndConnectionType = 0xB0, // 1 byte
+    },
+    u8,
+    Error,
+    ReservedError
+);
 
 /// Table C.6 — formulaIdentifier encoding
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Formula {
-    Formula0,     // y = C0 * x + C1
-    Formula1,     // y = C0 * (x + C1)
-    Formula2,     // y = C0 / (x + C1) + C2
-    Formula3,     // y = x / C0 + C1
-    Formula4,     // y = (x + C0) / C1
-    Formula5,     // y = (x + C0) / C1 + C2
-    Formula6,     // y = C0 * x
-    Formula7,     // y = x / C0
-    Formula8,     // y = x + C0
-    Formula9,     // y = x * C0 / C1
+    Formula0, // y = C0 * x + C1
+    Formula1, // y = C0 * (x + C1)
+    Formula2, // y = C0 / (x + C1) + C2
+    Formula3, // y = x / C0 + C1
+    Formula4, // y = (x + C0) / C1
+    Formula5, // y = (x + C0) / C1 + C2
+    Formula6, // y = C0 * x
+    Formula7, // y = x / C0
+    Formula8, // y = x + C0
+    Formula9, // y = x * C0 / C1
     Reserved(u8),
     VehicleManufacturerSpecific(u8),
 }
 
 impl From<u8> for Formula {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::Formula0,
             0x01 => Self::Formula1,
             0x02 => Self::Formula2,
@@ -65,8 +71,8 @@ impl From<u8> for Formula {
             0x07 => Self::Formula7,
             0x08 => Self::Formula8,
             0x09 => Self::Formula9,
-            0x0A..=0x7F => Self::Reserved(value),
-            0x80..=0xFF => Self::VehicleManufacturerSpecific(value),
+            0x0A..=0x7F => Self::Reserved(v),
+            0x80..=0xFF => Self::VehicleManufacturerSpecific(v),
         }
     }
 }
@@ -105,24 +111,47 @@ impl TwoByteRealNumber {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ScalingByteData {
     pub byte_type: ScalingByteType,
     pub byte_len: u8,
     pub extensions: Vec<u8>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadScalingDID {
     pub did: DataIdentifier,
     pub data: ScalingByteData,
     pub others: Vec<ScalingByteData>, // at least one
 }
 
+impl From<ReadScalingDID> for Vec<u8> {
+    fn from(v: ReadScalingDID) -> Self {
+        let did: u16 = v.did.into();
+        let mut result = did.to_be_bytes().to_vec();
+
+        let byte_type: u8 = v.data.byte_type.into();
+        result.push(byte_type | v.data.byte_len);
+
+        v.others.into_iter().for_each(|mut v| {
+            let byte_type: u8 = v.byte_type.into();
+            result.push(byte_type | v.byte_len);
+            result.append(&mut v.extensions);
+        });
+
+        result
+    }
+}
+
 impl ResponseData for ReadScalingDID {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadScalingDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadScalingDID)),
             None => {
                 let data_len = data.len();
                 utils::data_length_check(data_len, 2, false)?;
@@ -136,20 +165,20 @@ impl ResponseData for ReadScalingDID {
             }
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::ReadScalingDID
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for ReadScalingDID {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::ReadScalingDID || resp.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
+        let data = &resp.data;
         let data_len = data.len();
         let mut offset = 0;
-        let did = DataIdentifier::from(
-            u16::from_be_bytes([data[offset], data[offset + 1]])
-        );
+        let did = DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
 
         let byte_context = data[offset];
@@ -159,15 +188,15 @@ impl ResponseData for ReadScalingDID {
         let mut extensions = Vec::new();
 
         match byte_type {
-            ScalingByteType::BitMappedReportedWithOutMask |
-            ScalingByteType::Formula |
-            ScalingByteType::UnitFormat => {
+            ScalingByteType::BitMappedReportedWithOutMask
+            | ScalingByteType::Formula
+            | ScalingByteType::UnitFormat => {
                 utils::data_length_check(data_len, offset + byte_len, false)?;
 
                 extensions.extend(&data[offset..offset + byte_len]);
                 offset += byte_len;
-            },
-            _ => {},
+            }
+            _ => {}
         }
 
         let mut others = Vec::new();
@@ -179,39 +208,32 @@ impl ResponseData for ReadScalingDID {
             let mut extensions = Vec::new();
 
             match byte_type {
-                ScalingByteType::BitMappedReportedWithOutMask |
-                ScalingByteType::Formula |
-                ScalingByteType::UnitFormat => {
+                ScalingByteType::BitMappedReportedWithOutMask
+                | ScalingByteType::Formula
+                | ScalingByteType::UnitFormat => {
                     utils::data_length_check(data_len, offset + byte_len, false)?;
 
                     extensions.extend(&data[offset..offset + byte_len]);
                     offset += byte_len;
-                },
-                _ => {},
+                }
+                _ => {}
             }
 
-            others.push(ScalingByteData { byte_type, byte_len: byte_len as u8, extensions });
+            others.push(ScalingByteData {
+                byte_type,
+                byte_len: byte_len as u8,
+                extensions,
+            });
         }
 
-        Ok(Self { did, data: ScalingByteData { byte_type, byte_len: byte_len as u8, extensions }, others })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let did: u16 = self.did.into();
-        let mut result = did.to_be_bytes().to_vec();
-
-        let byte_type: u8 = self.data.byte_type.into();
-        result.push(byte_type | self.data.byte_len);
-
-        self.others
-            .into_iter()
-            .for_each(|mut v| {
-                let byte_type: u8 = v.byte_type.into();
-                result.push(byte_type | v.byte_len);
-                result.append(&mut v.extensions);
-            });
-
-        result
+        Ok(Self {
+            did,
+            data: ScalingByteData {
+                byte_type,
+                byte_len: byte_len as u8,
+                extensions,
+            },
+            others,
+        })
     }
 }

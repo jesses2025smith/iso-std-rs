@@ -1,26 +1,24 @@
 //! Commons of Service 86
 
+use crate::{constant::POSITIVE_OFFSET, error::Error, Service};
+use std::{collections::HashSet, sync::LazyLock};
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{constant::POSITIVE_OFFSET, error::Iso14229Error, Service};
-use crate::enum_extend;
-
-lazy_static!(
-    /// Table 91 — Recommended services to be used with the ResponseOnEvent service(2006)
-    /// Table 96 — Recommended services to be used with the ResponseOnEvent service(2013)
-    /// Table 137 — Recommended services to be used with the ResponseOnEvent service(2020)
-    pub static ref RECOMMENDED_SERVICES: HashSet<Service> = HashSet::from([
+/// Table 91 — Recommended services to be used with the ResponseOnEvent service(2006)
+/// Table 96 — Recommended services to be used with the ResponseOnEvent service(2013)
+/// Table 137 — Recommended services to be used with the ResponseOnEvent service(2020)
+pub static RECOMMENDED_SERVICES: LazyLock<HashSet<Service>> = LazyLock::new(|| {
+    HashSet::from([
         Service::ReadDID,
         Service::ReadDTCInfo,
         #[cfg(any(feature = "std2006", feature = "std2013"))]
         Service::RoutineCtrl,
         #[cfg(any(feature = "std2006", feature = "std2013"))]
         Service::IOCtrl,
-    ]);
-);
+    ])
+});
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum ResponseOnEventType {
         StopResponseOnEvent = 0x00,
         OnDTCStatusChange = 0x01,
@@ -31,7 +29,11 @@ enum_extend!(
         OnComparisonOfValues = 0x07,
         ReportMostRecentDtcOnStatusChange = 0x08,
         ReportDTCRecordInformationOnDtcStatusChange = 0x09,
-    }, u8);
+    },
+    u8,
+    Error,
+    ReservedError
+);
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct EventType {
@@ -41,11 +43,11 @@ pub struct EventType {
 
 impl EventType {
     #[inline]
-    pub fn new(
-        store_event: bool,
-        event_type: ResponseOnEventType
-    ) -> Self {
-        Self { store_event, event_type }
+    pub fn new(store_event: bool, event_type: ResponseOnEventType) -> Self {
+        Self {
+            store_event,
+            event_type,
+        }
     }
 
     #[inline]
@@ -70,4 +72,3 @@ impl From<EventType> for u8 {
         result
     }
 }
-

@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter};
+use crate::{error::Error, utils, *};
 use getset::{CopyGetters, Getters};
-use crate::{*, utils};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone, Eq, PartialEq, CopyGetters)]
 #[get_copy = "pub"]
@@ -20,7 +20,7 @@ impl HeaderNegative {
 }
 
 impl TryFrom<&[u8]> for HeaderNegative {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (_, offset) = utils::data_len_check(data, Self::length(), true)?;
         let code = data[offset];
@@ -47,7 +47,8 @@ impl From<HeaderNegative> for Vec<u8> {
 /// send response 3 times with interval 500ms
 /// the RoutingActive from client must be 0xE0 when further_act = 0x10.
 #[derive(Debug, Clone, Eq, PartialEq, Getters, CopyGetters)]
-pub struct VehicleID {  // 0x0004
+pub struct VehicleID {
+    // 0x0004
     #[get = "pub"]
     pub(crate) vin: String,
     #[get_copy = "pub"]
@@ -70,15 +71,23 @@ impl VehicleID {
         gid: Eid,
         further_act: FurtherAction,
         sync_status: Option<SyncStatus>,
-    ) -> Result<Self, Iso13400Error> {
+    ) -> Result<Self, Error> {
         let vin_len = vin.len();
         if vin_len != LENGTH_OF_VIN {
-            return Err(Iso13400Error::InputError(
-                format!("length of vin must equal {}", LENGTH_OF_VIN)
-            ));
+            return Err(Error::InvalidParam(format!(
+                "length of vin must equal {}",
+                LENGTH_OF_VIN
+            )));
         }
 
-        Ok(Self { vin, address, eid, gid, further_act, sync_status })
+        Ok(Self {
+            vin,
+            address,
+            eid,
+            gid,
+            further_act,
+            sync_status,
+        })
     }
 
     /// min length
@@ -89,10 +98,10 @@ impl VehicleID {
 }
 
 impl TryFrom<&[u8]> for VehicleID {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (data_len, mut offset) = utils::data_len_check(data, Self::length(), false)?;
-        let vin = match String::from_utf8(data[offset..offset+LENGTH_OF_VIN].to_vec()) {
+        let vin = match String::from_utf8(data[offset..offset + LENGTH_OF_VIN].to_vec()) {
             Ok(v) => v,
             Err(_) => {
                 rsutil::warn!("invalid UTF-8 string: {}", hex::encode(data));
@@ -100,7 +109,8 @@ impl TryFrom<&[u8]> for VehicleID {
             }
         };
         offset += LENGTH_OF_VIN;
-        let address = u16::from_be_bytes(data[offset..offset+SIZE_OF_ADDRESS].try_into().unwrap());
+        let address =
+            u16::from_be_bytes(data[offset..offset + SIZE_OF_ADDRESS].try_into().unwrap());
         offset += SIZE_OF_ADDRESS;
         let address = LogicAddress::from(address);
         let eid = Eid::try_from(&data[offset..])?;
@@ -112,10 +122,20 @@ impl TryFrom<&[u8]> for VehicleID {
         let sync_status = match data_len - offset {
             0 => Ok(None),
             1 => Ok(Some(SyncStatus::from(data[offset]))),
-            _ => Err(Iso13400Error::InvalidLength { actual: data_len, expected: Self::length()+1 })
+            _ => Err(Error::InvalidLength {
+                actual: data_len,
+                expected: Self::length() + 1,
+            }),
         }?;
 
-        Ok(Self { vin, address, eid, gid, further_act, sync_status })
+        Ok(Self {
+            vin,
+            address,
+            eid,
+            gid,
+            further_act,
+            sync_status,
+        })
     }
 }
 
@@ -143,24 +163,25 @@ impl From<VehicleID> for Vec<u8> {
 
 #[derive(Debug, Clone, Eq, PartialEq, CopyGetters)]
 #[get_copy = "pub"]
-pub struct EntityStatus {   // 0x4002
+pub struct EntityStatus {
+    // 0x4002
     pub(crate) node_type: NodeType,
     /// 1 ~ 255
-    pub(crate) mcts: u8,    // Max. concurrent TCP_DATA sockets
+    pub(crate) mcts: u8, // Max. concurrent TCP_DATA sockets
     /// 0 ~ 255
-    pub(crate) ncts: u8,    // Current opened TCP_DATA sockets
+    pub(crate) ncts: u8, // Current opened TCP_DATA sockets
     /// 0 ~ 4GB
     pub(crate) max_data_size: Option<u32>,
 }
 
 impl EntityStatus {
-    pub fn new(
-        node_type: NodeType,
-        mcts: u8,
-        ncts: u8,
-        max_data_size: Option<u32>,
-    ) -> Self {
-        Self { node_type, mcts, ncts, max_data_size }
+    pub fn new(node_type: NodeType, mcts: u8, ncts: u8, max_data_size: Option<u32>) -> Self {
+        Self {
+            node_type,
+            mcts,
+            ncts,
+            max_data_size,
+        }
     }
 
     /// min length
@@ -171,7 +192,7 @@ impl EntityStatus {
 }
 
 impl TryFrom<&[u8]> for EntityStatus {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (data_len, mut offset) = utils::data_len_check(data, Self::length(), false)?;
         let node_type = data[offset];
@@ -183,11 +204,21 @@ impl TryFrom<&[u8]> for EntityStatus {
         offset += 1;
         let max_data_size = match data_len - offset {
             0 => Ok(None),
-            4 => Ok(Some(u32::from_be_bytes(data[offset..offset+4].try_into().unwrap()))),
-            _ => Err(Iso13400Error::InvalidLength { actual: data_len, expected: Self::length()+4 }),
+            4 => Ok(Some(u32::from_be_bytes(
+                data[offset..offset + 4].try_into().unwrap(),
+            ))),
+            _ => Err(Error::InvalidLength {
+                actual: data_len,
+                expected: Self::length() + 4,
+            }),
         }?;
 
-        Ok(Self { node_type, mcts, ncts, max_data_size })
+        Ok(Self {
+            node_type,
+            mcts,
+            ncts,
+            max_data_size,
+        })
     }
 }
 
@@ -223,7 +254,8 @@ impl Display for EntityStatus {
 
 #[derive(Debug, Clone, Eq, PartialEq, CopyGetters)]
 #[get_copy = "pub"]
-pub struct DiagnosticPowerMode {    // 0x4004
+pub struct DiagnosticPowerMode {
+    // 0x4004
     pub(crate) mode: PowerMode,
 }
 
@@ -239,7 +271,7 @@ impl DiagnosticPowerMode {
 }
 
 impl TryFrom<&[u8]> for DiagnosticPowerMode {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (_, offset) = utils::data_len_check(data, Self::length(), true)?;
         let mode = data[offset];
@@ -262,7 +294,8 @@ impl From<DiagnosticPowerMode> for Vec<u8> {
 /****** --- TCP --- ********/
 #[derive(Debug, Clone, Eq, PartialEq, CopyGetters)]
 #[get_copy = "pub"]
-pub struct RoutingActive {  // 0x0006
+pub struct RoutingActive {
+    // 0x0006
     pub(crate) dst_addr: LogicAddress,
     pub(crate) src_addr: LogicAddress,
     pub(crate) active_code: ActiveCode,
@@ -276,9 +309,15 @@ impl RoutingActive {
         dst_addr: LogicAddress,
         src_addr: LogicAddress,
         active_code: ActiveCode,
-        user_def: Option<u32>
+        user_def: Option<u32>,
     ) -> Self {
-        Self { dst_addr, src_addr, active_code, reserved: Default::default(), user_def }
+        Self {
+            dst_addr,
+            src_addr,
+            active_code,
+            reserved: Default::default(),
+            user_def,
+        }
     }
 
     /// min length
@@ -289,27 +328,40 @@ impl RoutingActive {
 }
 
 impl TryFrom<&[u8]> for RoutingActive {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (data_len, mut offset) = utils::data_len_check(data, Self::length(), false)?;
-        let dst_addr = u16::from_be_bytes(data[offset..offset+ SIZE_OF_ADDRESS].try_into().unwrap());
+        let dst_addr =
+            u16::from_be_bytes(data[offset..offset + SIZE_OF_ADDRESS].try_into().unwrap());
         offset += SIZE_OF_ADDRESS;
         let dst_addr = LogicAddress::from(dst_addr);
-        let src_addr = u16::from_be_bytes(data[offset..offset+ SIZE_OF_ADDRESS].try_into().unwrap());
+        let src_addr =
+            u16::from_be_bytes(data[offset..offset + SIZE_OF_ADDRESS].try_into().unwrap());
         offset += SIZE_OF_ADDRESS;
         let src_addr = LogicAddress::from(src_addr);
         let active = data[offset];
         offset += 1;
         let active_code = ActiveCode::from(active);
-        let reserved = u32::from_be_bytes(data[offset..offset+4].try_into().unwrap());
+        let reserved = u32::from_be_bytes(data[offset..offset + 4].try_into().unwrap());
         offset += 4;
         let user_def = match data_len - offset {
             0 => Ok(None),
-            4 => Ok(Some(u32::from_be_bytes(data[offset..offset+4].try_into().unwrap()))),
-            _ => Err(Iso13400Error::InvalidLength { actual: data_len, expected: Self::length()+4 }),
+            4 => Ok(Some(u32::from_be_bytes(
+                data[offset..offset + 4].try_into().unwrap(),
+            ))),
+            _ => Err(Error::InvalidLength {
+                actual: data_len,
+                expected: Self::length() + 4,
+            }),
         }?;
 
-        Ok(Self { dst_addr, src_addr, active_code, reserved, user_def })
+        Ok(Self {
+            dst_addr,
+            src_addr,
+            active_code,
+            reserved,
+            user_def,
+        })
     }
 }
 
@@ -337,7 +389,8 @@ impl From<RoutingActive> for Vec<u8> {
 
 #[derive(Debug, Clone, Eq, PartialEq, CopyGetters)]
 #[get_copy = "pub"]
-pub struct AliveCheck {     // 0x0008
+pub struct AliveCheck {
+    // 0x0008
     pub(crate) src_addr: LogicAddress,
 }
 
@@ -353,7 +406,7 @@ impl AliveCheck {
 }
 
 impl TryFrom<&[u8]> for AliveCheck {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (_, offset) = utils::data_len_check(data, Self::length(), true)?;
         let src_addr = u16::from_be_bytes(data[offset..].try_into().unwrap());
@@ -376,7 +429,8 @@ impl From<AliveCheck> for Vec<u8> {
 
 #[derive(Debug, Clone, Eq, PartialEq, Getters)]
 #[get = "pub"]
-pub struct DiagnosticPositive {     // 0x8002
+pub struct DiagnosticPositive {
+    // 0x8002
     #[getset(get_copy = "pub")]
     pub(crate) src_addr: LogicAddress,
     #[getset(get_copy = "pub")]
@@ -398,7 +452,12 @@ impl DiagnosticPositive {
         if code != DiagnosticPositiveCode::Confirm {
             rsutil::warn!("Diagnostic Positive code: {:?}", code);
         }
-        Self { src_addr, dst_addr, code, pre_diag_data }
+        Self {
+            src_addr,
+            dst_addr,
+            code,
+            pre_diag_data,
+        }
     }
     /// min length
     #[inline]
@@ -408,13 +467,15 @@ impl DiagnosticPositive {
 }
 
 impl TryFrom<&[u8]> for DiagnosticPositive {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (_, mut offset) = utils::data_len_check(data, Self::length(), false)?;
-        let src_addr = u16::from_be_bytes(data[offset..offset+ SIZE_OF_ADDRESS].try_into().unwrap());
+        let src_addr =
+            u16::from_be_bytes(data[offset..offset + SIZE_OF_ADDRESS].try_into().unwrap());
         offset += SIZE_OF_ADDRESS;
         let src_addr = LogicAddress::from(src_addr);
-        let dst_addr = u16::from_be_bytes(data[offset..offset+ SIZE_OF_ADDRESS].try_into().unwrap());
+        let dst_addr =
+            u16::from_be_bytes(data[offset..offset + SIZE_OF_ADDRESS].try_into().unwrap());
         offset += SIZE_OF_ADDRESS;
         let dst_addr = LogicAddress::from(dst_addr);
         let code = DiagnosticPositiveCode::from(data[offset]);
@@ -453,7 +514,8 @@ impl Display for DiagnosticPositive {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Getters, CopyGetters)]
-pub struct DiagnosticNegative {     // 0x8003
+pub struct DiagnosticNegative {
+    // 0x8003
     #[getset(get_copy = "pub")]
     pub(crate) src_addr: LogicAddress,
     #[getset(get_copy = "pub")]
@@ -472,7 +534,12 @@ impl DiagnosticNegative {
         code: DiagnosticNegativeCode,
         pre_diag_data: Vec<u8>,
     ) -> Self {
-        Self { src_addr, dst_addr, code, pre_diag_data }
+        Self {
+            src_addr,
+            dst_addr,
+            code,
+            pre_diag_data,
+        }
     }
 
     /// min length
@@ -483,20 +550,27 @@ impl DiagnosticNegative {
 }
 
 impl TryFrom<&[u8]> for DiagnosticNegative {
-    type Error = Iso13400Error;
+    type Error = Error;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
         let (_, mut offset) = utils::data_len_check(data, Self::length(), false)?;
-        let src_addr = u16::from_be_bytes(data[offset..offset+ SIZE_OF_ADDRESS].try_into().unwrap());
+        let src_addr =
+            u16::from_be_bytes(data[offset..offset + SIZE_OF_ADDRESS].try_into().unwrap());
         offset += SIZE_OF_ADDRESS;
         let src_addr = LogicAddress::from(src_addr);
-        let dst_addr = u16::from_be_bytes(data[offset..offset+ SIZE_OF_ADDRESS].try_into().unwrap());
+        let dst_addr =
+            u16::from_be_bytes(data[offset..offset + SIZE_OF_ADDRESS].try_into().unwrap());
         offset += SIZE_OF_ADDRESS;
         let dst_addr = LogicAddress::from(dst_addr);
         let code = DiagnosticNegativeCode::from(data[offset]);
         offset += 1;
         let pre_diag_data = data[offset..].to_vec();
 
-        Ok(Self { src_addr, dst_addr, code, pre_diag_data })
+        Ok(Self {
+            src_addr,
+            dst_addr,
+            code,
+            pre_diag_data,
+        })
     }
 }
 

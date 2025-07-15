@@ -1,10 +1,11 @@
 //! Commons of Service 29
 
-use crate::{enum_extend, Iso14229Error, utils};
+use crate::{error::Error, utils};
 
 pub(crate) const ALGORITHM_INDICATOR_LENGTH: usize = 16;
 
-enum_extend!(
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum AuthenticationTask {
         DeAuthenticate = 0x00,
         VerifyCertificateUnidirectional = 0x01,
@@ -15,18 +16,20 @@ enum_extend!(
         VerifyProofOfOwnershipUnidirectional = 0x06,
         VerifyProofOfOwnershipBidirectional = 0x07,
         AuthenticationConfiguration = 0x08,
-    }, u8);
+    },
+    u8,
+    Error,
+    ReservedError
+);
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct NotNullableData(pub(crate) Vec<u8>);
 
 impl NotNullableData {
     #[inline]
-    pub fn new(
-        data: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    pub fn new(data: Vec<u8>) -> Result<Self, Error> {
         if data.is_empty() || data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam("Data must not be empty, and the length of the data must be less than or equal to 0xFFFF".to_string()));
+            return Err(Error::InvalidParam("Data must not be empty, and the length of the data must be less than or equal to 0xFFFF".to_string()));
         }
 
         Ok(Self(data))
@@ -49,11 +52,11 @@ pub struct NullableData(pub(crate) Vec<u8>);
 
 impl NullableData {
     #[inline]
-    pub fn new(
-        data: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    pub fn new(data: Vec<u8>) -> Result<Self, Error> {
         if data.len() > u16::MAX as usize {
-            return Err(Iso14229Error::InvalidParam("the length of data must be less than or equal to 0xFFFF!".to_string()));
+            return Err(Error::InvalidParam(
+                "the length of data must be less than or equal to 0xFFFF!".to_string(),
+            ));
         }
 
         Ok(Self(data))
@@ -71,7 +74,7 @@ impl From<NullableData> for Vec<u8> {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct AlgorithmIndicator(pub [u8; ALGORITHM_INDICATOR_LENGTH]);
 
 impl From<AlgorithmIndicator> for Vec<u8> {
@@ -86,7 +89,7 @@ pub(crate) fn parse_nullable(
     data: &[u8],
     data_len: usize,
     offset: &mut usize,
-) -> Result<NullableData, Iso14229Error> {
+) -> Result<NullableData, Error> {
     utils::data_length_check(data_len, *offset + 2, false)?;
 
     let len = u16::from_be_bytes([data[*offset], data[*offset + 1]]) as usize;
@@ -104,13 +107,13 @@ pub(crate) fn parse_not_nullable(
     data: &[u8],
     data_len: usize,
     offset: &mut usize,
-) -> Result<NotNullableData, Iso14229Error> {
+) -> Result<NotNullableData, Error> {
     utils::data_length_check(data_len, *offset + 2, false)?;
 
     let len = u16::from_be_bytes([data[*offset], data[*offset + 1]]) as usize;
     *offset += 2;
     if len == 0 {
-        return Err(Iso14229Error::InvalidData(hex::encode(data)));
+        return Err(Error::InvalidData(hex::encode(data)));
     }
     utils::data_length_check(data_len, *offset + len, false)?;
 
@@ -121,10 +124,7 @@ pub(crate) fn parse_not_nullable(
 }
 
 #[inline]
-pub(crate) fn parse_algo_indicator(
-    data: &[u8],
-    offset: &mut usize,
-) -> AlgorithmIndicator {
+pub(crate) fn parse_algo_indicator(data: &[u8], offset: &mut usize) -> AlgorithmIndicator {
     let result = &data[*offset..*offset + ALGORITHM_INDICATOR_LENGTH];
     *offset += ALGORITHM_INDICATOR_LENGTH;
 

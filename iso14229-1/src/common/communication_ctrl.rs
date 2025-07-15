@@ -1,9 +1,9 @@
 //! Commons of Service 28
 
-use crate::{Iso14229Error, utils};
+use crate::{error::Error, utils};
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum CommunicationCtrlType {
     EnableRxAndTx = 0x00,
     EnableRxAndDisableTx = 0x01,
@@ -17,7 +17,7 @@ pub enum CommunicationCtrlType {
 }
 
 impl TryFrom<u8> for CommunicationCtrlType {
-    type Error = Iso14229Error;
+    type Error = Error;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0x00 => Ok(Self::EnableRxAndTx),
@@ -30,7 +30,7 @@ impl TryFrom<u8> for CommunicationCtrlType {
             0x40..=0x5F => Ok(Self::VehicleManufacturerSpecific(value)),
             0x60..=0x7E => Ok(Self::SystemSupplierSpecific(value)),
             0x7F => Ok(Self::Reserved(value)),
-            v => Err(Iso14229Error::ReservedError(v.to_string())),
+            v => Err(Error::ReservedError(v)),
         }
     }
 }
@@ -51,7 +51,6 @@ impl From<CommunicationCtrlType> for u8 {
     }
 }
 
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct CommunicationType(pub(crate) u8);
 
@@ -64,12 +63,9 @@ bitflags::bitflags! {
 
 impl CommunicationType {
     #[inline]
-    pub fn new(
-        comm_type: CommunicationType,
-        subnet: u8,
-    ) -> Result<Self, Iso14229Error> {
+    pub fn new(comm_type: CommunicationType, subnet: u8) -> Result<Self, Error> {
         if subnet > 0x0F {
-            return Err(Iso14229Error::ReservedError(subnet.to_string()));
+            return Err(Error::ReservedError(subnet));
         }
 
         let mut result = comm_type.bits();
@@ -83,4 +79,3 @@ impl CommunicationType {
         self.0
     }
 }
-

@@ -1,12 +1,14 @@
 //! response of Service 27
 
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    DidConfig, ResponseData, SecurityAccessLevel, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, Iso14229Error, response::{Code, Response, SubFunction}, SecurityAccessLevel, Service, ResponseData};
-
-lazy_static!(
-    pub static ref SECURITY_ACCESS_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static SECURITY_ACCESS_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
@@ -15,21 +17,33 @@ lazy_static!(
         Code::InvalidKey,
         Code::ExceedNumberOfAttempts,
         Code::RequiredTimeDelayNotExpired,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityAccess {
-    pub key: Vec<u8>
+    pub key: Vec<u8>,
+}
+
+impl From<SecurityAccess> for Vec<u8> {
+    fn from(v: SecurityAccess) -> Self {
+        v.key
+    }
 }
 
 impl ResponseData for SecurityAccess {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(level) => {
-                if level % 2 != 0
-                    && data.is_empty() {
-                    return Err(Iso14229Error::InvalidParam("Security access response does not contain a security key".to_owned()));
+                if level % 2 != 0 && data.is_empty() {
+                    return Err(Error::InvalidParam(
+                        "Security access response does not contain a security key".to_owned(),
+                    ));
                 }
 
                 Ok(Response {
@@ -39,22 +53,21 @@ impl ResponseData for SecurityAccess {
                     data: data.to_vec(),
                 })
             }
-            None => Err(Iso14229Error::SubFunctionError(Service::SecurityAccess)),
+            None => Err(Error::SubFunctionError(Service::SecurityAccess)),
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::SecurityAccess
-            || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for SecurityAccess {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::SecurityAccess || resp.sub_func.is_none() {
+            return Err(Error::ServiceError(service));
         }
 
-        Ok(Self { key: response.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.key
+        Ok(Self {
+            key: resp.data.clone(),
+        })
     }
 }

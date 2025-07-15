@@ -1,26 +1,40 @@
 //! response of Service 87
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{utils, Configuration, Iso14229Error, LinkCtrlType, response::{Code, Response, SubFunction}, Service, ResponseData};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DidConfig, LinkCtrlType, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static!(
-    pub static ref LINK_CTRL_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static LINK_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestSequenceError,
         Code::RequestOutOfRange,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct LinkCtrl {
-    pub data: Vec<u8>,  // should empty
+    pub data: Vec<u8>, // should empty
+}
+
+impl From<LinkCtrl> for Vec<u8> {
+    fn from(v: LinkCtrl) -> Self {
+        v.data
+    }
 }
 
 impl ResponseData for LinkCtrl {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let _ = LinkCtrlType::try_from(sub_func)?;
@@ -33,24 +47,23 @@ impl ResponseData for LinkCtrl {
                     sub_func: Some(SubFunction::new(sub_func)),
                     data: data.to_vec(),
                 })
-            },
-            None => Err(Iso14229Error::SubFunctionError(Service::LinkCtrl)),
+            }
+            None => Err(Error::SubFunctionError(Service::LinkCtrl)),
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::LinkCtrl
-            || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for LinkCtrl {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::LinkCtrl || resp.sub_func.is_none() {
+            return Err(Error::ServiceError(service));
         }
 
         // let sub_func: LinkCtrlType = response.sub_function().unwrap().function()?;
-        Ok(Self { data: response.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
+        Ok(Self {
+            data: resp.data.clone(),
+        })
     }
 }

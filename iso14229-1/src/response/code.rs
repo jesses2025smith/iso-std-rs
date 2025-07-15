@@ -1,7 +1,7 @@
 //! response code enum
 
 #[repr(u8)]
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq, Hash)]
 pub enum Code {
     #[default]
     Positive = 0x00,
@@ -79,8 +79,8 @@ pub enum Code {
 }
 
 impl From<u8> for Code {
-    fn from(value: u8) -> Self {
-        match value {
+    fn from(v: u8) -> Self {
+        match v {
             0x00 => Self::Positive,
 
             0x10 => Self::GeneralReject,
@@ -150,8 +150,8 @@ impl From<u8> for Code {
             0x92 => Self::VoltageTooHigh,
             0x93 => Self::VoltageTooLow,
             0x94 => Self::ResourceTemporarilyNotAvailable,
-            0xF0..=0xFE => Self::VehicleManufacturerSpecific(value),
-            _ => Self::Reserved(value),
+            0xF0..=0xFE => Self::VehicleManufacturerSpecific(v),
+            _ => Self::Reserved(v),
         }
     }
 }

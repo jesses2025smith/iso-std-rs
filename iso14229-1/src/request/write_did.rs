@@ -1,24 +1,36 @@
 //! request of Service 2E
 
-
-use crate::{Configuration, DataIdentifier, DIDData, Iso14229Error, request::{Request, SubFunction}, RequestData, Service, utils};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DIDData, DataIdentifier, DidConfig, RequestData, Service,
+};
 
 /// Service 2E
 pub struct WriteDID(pub DIDData);
 
+impl From<WriteDID> for Vec<u8> {
+    fn from(v: WriteDID) -> Self {
+        v.0.into()
+    }
+}
+
 impl RequestData for WriteDID {
-    fn request(data: &[u8], sub_func: Option<u8>, cfg: &Configuration) -> Result<Request, Iso14229Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        cfg: &DidConfig,
+    ) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::WriteDID)),
             None => {
                 utils::data_length_check(data.len(), 3, false)?;
                 let mut offset = 0;
-                let did = DataIdentifier::from(
-                    u16::from_be_bytes([data[offset], data[offset + 1]])
-                );
+                let did =
+                    DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                 offset += 2;
-                let &did_len = cfg.did_cfg.get(&did)
-                    .ok_or(Iso14229Error::DidNotSupported(did))?;
+                let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
 
                 utils::data_length_check(data.len(), offset + did_len, true)?;
 
@@ -30,26 +42,24 @@ impl RequestData for WriteDID {
             }
         }
     }
+}
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = request.service();
-        if service != Service::WriteDID
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Request, &DidConfig)> for WriteDID {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::WriteDID || req.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let mut offset = 0;
-        let did = DataIdentifier::from(
-            u16::from_be_bytes([data[offset], data[offset + 1]])
-        );
+        let did = DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
 
-        Ok(Self(DIDData { did, data: data[offset..].to_vec() }))
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.0.into()
+        Ok(Self(DIDData {
+            did,
+            data: data[offset..].to_vec(),
+        }))
     }
 }

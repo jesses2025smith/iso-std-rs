@@ -21,7 +21,3 @@ pub const TIMEOUT_BS_ISO15765_2: u32 = 1000;
 pub const TIMEOUT_CR_ISO15765_2: u32 = 1000;
 /// Default value for Timeout Cs in ms
 pub const TIMEOUT_CS_ISO15765_2: u32 = 1000;
-
-pub const P2_MAX: u16 = 50;
-pub const P2_STAR_MAX: u16 = 500;
-pub const DEFAULT_P2_START_MS: u64 = 5_000;

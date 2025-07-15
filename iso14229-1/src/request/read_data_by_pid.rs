@@ -1,16 +1,24 @@
 //! request of Service 2A
 
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DidConfig, RequestData, Service,
+};
 
-use crate::{Configuration, enum_extend, Iso14229Error, request::{Request, SubFunction}, RequestData, utils, Service};
-
-enum_extend!(
+rsutil::enum_extend!(
     /// Table C.10 — transmissionMode parameter definitions
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum TransmissionMode {
         SendAtSlowRate = 0x01,
         SendAtMediumRate = 0x02,
         SendAtFastRate = 0x03,
         StopSending = 0x04,
-    }, u8);
+    },
+    u8,
+    Error,
+    ReservedError
+);
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ReadDataByPeriodId {
@@ -19,12 +27,9 @@ pub struct ReadDataByPeriodId {
 }
 
 impl ReadDataByPeriodId {
-    pub fn new(
-        mode: TransmissionMode,
-        did: Vec<u8>
-    ) -> Result<Self, Iso14229Error> {
+    pub fn new(mode: TransmissionMode, did: Vec<u8>) -> Result<Self, Error> {
         if did.is_empty() {
-            return Err(Iso14229Error::InvalidParam("empty period_id".to_string()));
+            return Err(Error::InvalidParam("empty period_id".to_string()));
         }
 
         Ok(Self { mode, did })
@@ -41,37 +46,53 @@ impl ReadDataByPeriodId {
     }
 }
 
+impl From<ReadDataByPeriodId> for Vec<u8> {
+    fn from(mut v: ReadDataByPeriodId) -> Self {
+        let mut result = vec![v.mode.into()];
+        result.append(&mut v.did);
+
+        result
+    }
+}
+
 impl RequestData for ReadDataByPeriodId {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadDataByPeriodId)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadDataByPeriodId)),
             None => {
                 utils::data_length_check(data.len(), 2, false)?;
 
-                Ok(Request { service: Service::ReadDataByPeriodId, sub_func: None, data: data.to_vec(), })
-            },
+                Ok(Request {
+                    service: Service::ReadDataByPeriodId,
+                    sub_func: None,
+                    data: data.to_vec(),
+                })
+            }
         }
     }
+}
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = request.service();
-        if service != Service::ReadDataByPeriodId
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Request, &DidConfig)> for ReadDataByPeriodId {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::ReadDataByPeriodId || req.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
+        let data = &req.data;
         let mut offset = 0;
         let mode = TransmissionMode::try_from(data[offset])?;
         offset += 1;
 
-        Ok(Self { mode, did: data[offset..].to_vec() })
-    }
-
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let mut result = vec![self.mode.into(), ];
-        result.append(&mut self.did);
-
-        result
+        Ok(Self {
+            mode,
+            did: data[offset..].to_vec(),
+        })
     }
 }

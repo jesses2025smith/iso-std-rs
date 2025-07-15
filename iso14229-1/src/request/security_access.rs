@@ -1,38 +1,50 @@
 //! request of Service 27
 
-use crate::{Configuration, Iso14229Error, request::{Request, SubFunction}, Service, SecurityAccessLevel, RequestData};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    DidConfig, RequestData, SecurityAccessLevel, Service,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SecurityAccess {
-    pub data: Vec<u8>
+    pub data: Vec<u8>,
+}
+
+impl From<SecurityAccess> for Vec<u8> {
+    fn from(v: SecurityAccess) -> Self {
+        v.data
+    }
 }
 
 impl RequestData for SecurityAccess {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(level) => {
-                Ok(Request {
-                    service: Service::SecurityAccess,
-                    sub_func: Some(SubFunction::new(level, false)),
-                    data: data.to_vec(),
-                })
-            }
-            None => Err(Iso14229Error::SubFunctionError(Service::SecurityAccess)),
+            Some(level) => Ok(Request {
+                service: Service::SecurityAccess,
+                sub_func: Some(SubFunction::new(level, false)),
+                data: data.to_vec(),
+            }),
+            None => Err(Error::SubFunctionError(Service::SecurityAccess)),
         }
     }
+}
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = request.service();
-        if service != Service::SecurityAccess
-            || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Request, &DidConfig)> for SecurityAccess {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::SecurityAccess || req.sub_func.is_none() {
+            return Err(Error::ServiceError(service));
         }
 
-        Ok(Self { data: request.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
+        Ok(Self {
+            data: req.data.clone(),
+        })
     }
 }

@@ -1,14 +1,29 @@
 //! request of Service 83
 
-use crate::{Iso14229Error, request::{Request, SubFunction}, Service, TimingParameterAccessType, Configuration, RequestData, utils};
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DidConfig, RequestData, Service, TimingParameterAccessType,
+};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AccessTimingParameter {
     pub data: Vec<u8>,
 }
 
+impl From<AccessTimingParameter> for Vec<u8> {
+    fn from(v: AccessTimingParameter) -> Self {
+        v.data
+    }
+}
+
 impl RequestData for AccessTimingParameter {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let (suppress_positive, sub_func) = utils::peel_suppress_positive(sub_func);
@@ -17,7 +32,7 @@ impl RequestData for AccessTimingParameter {
                 match TimingParameterAccessType::try_from(sub_func)? {
                     TimingParameterAccessType::SetTimingParametersToGivenValues => {
                         if data.is_empty() {
-                            return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                            return Err(Error::InvalidData(hex::encode(data)));
                         }
 
                         Ok(Request {
@@ -28,7 +43,7 @@ impl RequestData for AccessTimingParameter {
                     }
                     _ => {
                         if !data.is_empty() {
-                            return Err(Iso14229Error::InvalidData(hex::encode(data)));
+                            return Err(Error::InvalidData(hex::encode(data)));
                         }
 
                         Ok(Request {
@@ -38,23 +53,22 @@ impl RequestData for AccessTimingParameter {
                         })
                     }
                 }
-            },
-            None => Err(Iso14229Error::SubFunctionError(Service::AccessTimingParam)),
+            }
+            None => Err(Error::SubFunctionError(Service::AccessTimingParam)),
         }
     }
+}
 
-    fn try_parse(request: &Request, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = request.service();
-        if service != Service::AccessTimingParam
-            || request.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Request, &DidConfig)> for AccessTimingParameter {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = req.service();
+        if service != Service::AccessTimingParam || req.sub_func.is_none() {
+            return Err(Error::ServiceError(service));
         }
 
-        Ok(Self { data: request.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
+        Ok(Self {
+            data: req.data.clone(),
+        })
     }
 }

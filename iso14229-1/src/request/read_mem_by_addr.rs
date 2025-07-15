@@ -1,36 +1,51 @@
 //! request of Service 23
 
+use crate::{
+    error::Error,
+    request::{Request, SubFunction},
+    utils, DidConfig, MemoryLocation, RequestData, Service,
+};
 
-use crate::{Configuration, Iso14229Error, MemoryLocation, request::{Request, SubFunction}, RequestData, Service, utils};
-
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ReadMemByAddr(pub MemoryLocation);
 
+impl From<ReadMemByAddr> for Vec<u8> {
+    fn from(v: ReadMemByAddr) -> Self {
+        v.0.into()
+    }
+}
+
 impl RequestData for ReadMemByAddr {
-    fn request(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Request, Iso14229Error> {
+    fn new_request<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Request, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::ReadMemByAddr)),
+            Some(_) => Err(Error::SubFunctionError(Service::ReadMemByAddr)),
             None => {
                 utils::data_length_check(data.len(), 3, false)?;
 
-                Ok(Request { service: Service::ReadMemByAddr, sub_func: None, data: data.to_vec() })
+                Ok(Request {
+                    service: Service::ReadMemByAddr,
+                    sub_func: None,
+                    data: data.to_vec(),
+                })
             }
         }
     }
+}
 
-    fn try_parse(request: &Request, cfg: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = request.service();
-        if service != Service::ReadMemByAddr
-            || request.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Request, &DidConfig)> for ReadMemByAddr {
+    type Error = Error;
+    fn try_from((req, _): (&Request, &DidConfig)) -> Result<ReadMemByAddr, Error> {
+        let service = req.service();
+        if service != Service::ReadMemByAddr || req.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        let data = &request.data;
-        Ok(Self(MemoryLocation::from_slice(data, cfg)?))
-    }
-
-    #[inline]
-    fn to_vec(self, cfg: &Configuration) -> Vec<u8> {
-        self.0.to_vec(cfg)
+        let data = &req.data;
+        Ok(Self(MemoryLocation::from_slice(data)?))
     }
 }

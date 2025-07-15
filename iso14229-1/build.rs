@@ -5,8 +5,7 @@ fn main() {
         std::env::var("CARGO_FEATURE_STD2020").is_ok(),
     ];
 
-    let crate_name = std::env::var("CARGO_PKG_NAME")
-        .unwrap_or("iso14229-1".into());
+    let crate_name = std::env::var("CARGO_PKG_NAME").unwrap_or("iso14229-1".into());
 
     match features.iter()
         .filter(|&&en| en)

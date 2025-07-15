@@ -23,15 +23,15 @@ fn parse_frame_util<const FIRST_FRAME_SIZE: usize>(
                 *offset += FIRST_FRAME_SIZE;
                 let frame = Frame::FirstFrame {
                     length: length as u32,
-                    data: Vec::from(&data[..*offset])
+                    data: Vec::from(&data[..*offset]),
                 };
                 results.push(frame);
-            },
+            }
             _ => {
                 if *offset + CONSECUTIVE_FRAME_SIZE >= length {
                     let frame = Frame::ConsecutiveFrame {
                         sequence: *sequence,
-                        data: Vec::from(&data[*offset..length])
+                        data: Vec::from(&data[*offset..length]),
                     };
                     results.push(frame);
                     break;
@@ -39,13 +39,12 @@ fn parse_frame_util<const FIRST_FRAME_SIZE: usize>(
 
                 let frame = Frame::ConsecutiveFrame {
                     sequence: *sequence,
-                    data: Vec::from(&data[*offset..*offset + CONSECUTIVE_FRAME_SIZE])
+                    data: Vec::from(&data[*offset..*offset + CONSECUTIVE_FRAME_SIZE]),
                 };
                 *offset += CONSECUTIVE_FRAME_SIZE;
                 if *sequence >= 0x0F {
                     *sequence = 0;
-                }
-                else {
+                } else {
                     *sequence += 1;
                 }
 

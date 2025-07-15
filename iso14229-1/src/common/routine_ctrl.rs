@@ -1,15 +1,18 @@
 //! Commons of Service 31
 
+use crate::{constant::ISO_SAE_RESERVED, error::Error, utils, Service};
 
-use crate::{constant::ISO_SAE_RESERVED, error::Iso14229Error, Service, utils};
-use crate::enum_extend;
-
-enum_extend! (
+rsutil::enum_extend!(
+    #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
     pub enum RoutineCtrlType {
         StartRoutine = 1,
         StopRoutine = 2,
         RequestRoutineResults = 3,
-    }, u8);
+    },
+    u8,
+    Error,
+    ReservedError
+);
 
 #[allow(non_upper_case_globals)]
 pub const TachographTestIds: RoutineId = RoutineId(0xE200);
@@ -21,7 +24,7 @@ pub const CheckProgrammingDependencies: RoutineId = RoutineId(0xFF01);
 pub const EraseMirrorMemoryDTCs: RoutineId = RoutineId(0xFF02);
 
 /// Table F.1 — routineIdentifier definition
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct RoutineId(pub u16);
 
 impl RoutineId {
@@ -47,8 +50,8 @@ impl RoutineId {
 
 impl From<u16> for RoutineId {
     #[inline]
-    fn from(value: u16) -> Self {
-        Self(value)
+    fn from(v: u16) -> Self {
+        Self(v)
     }
 }
 

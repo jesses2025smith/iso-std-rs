@@ -1,30 +1,45 @@
 //! response of Service 2E
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{DataIdentifier, Iso14229Error, response::{Code, Response, SubFunction}, Service, utils, ResponseData, Configuration, DIDData};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DIDData, DataIdentifier, DidConfig, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static!(
-    pub static ref WRITE_DID_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static WRITE_DID_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
         Code::GeneralProgrammingFailure,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WriteDID(pub DataIdentifier);
 
+impl From<WriteDID> for Vec<u8> {
+    fn from(v: WriteDID) -> Self {
+        let did: u16 = v.0.into();
+        did.to_be_bytes().to_vec()
+    }
+}
+
 impl ResponseData for WriteDID {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteDID)),
+            Some(_) => Err(Error::SubFunctionError(Service::WriteDID)),
             None => {
                 let data_len = data.len();
                 utils::data_length_check(data_len, 2, true)?;
-                
+
                 Ok(Response {
                     service: Service::WriteDID,
                     negative: false,
@@ -34,25 +49,19 @@ impl ResponseData for WriteDID {
             }
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::WriteDID
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for WriteDID {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::WriteDID || resp.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        let data = &response.data;
-        let did = DataIdentifier::from(
-            u16::from_be_bytes([data[0], data[1]])
-        );
+        let data = &resp.data;
+        let did = DataIdentifier::from(u16::from_be_bytes([data[0], data[1]]));
 
         Ok(Self(did))
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        let did: u16 = self.0.into();
-        did.to_be_bytes().to_vec()
     }
 }

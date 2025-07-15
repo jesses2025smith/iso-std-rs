@@ -1,13 +1,14 @@
 //! response of Service 31
 
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DidConfig, ResponseData, RoutineCtrlType, RoutineId, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, error::Iso14229Error, response::Code, ResponseData, RoutineCtrlType, RoutineId, utils, Service};
-use crate::response::{Response, SubFunction};
-
-lazy_static!(
-    pub static ref ROUTINE_CTRL_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static ROUTINE_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
@@ -15,8 +16,8 @@ lazy_static!(
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
         Code::GeneralProgrammingFailure,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RoutineCtrl {
@@ -30,19 +31,41 @@ impl RoutineCtrl {
         routine_id: RoutineId,
         routine_info: Option<u8>,
         routine_status: Vec<u8>,
-    ) -> Result<Self, Iso14229Error> {
+    ) -> Result<Self, Error> {
         if routine_info.is_none() && !routine_status.is_empty() {
-            return Err(Iso14229Error::InvalidData(
-                "`routineStatusRecord` mut be empty when `routineInfo` is None".to_string()
+            return Err(Error::InvalidData(
+                "`routineStatusRecord` mut be empty when `routineInfo` is None".to_string(),
             ));
         }
 
-        Ok(Self { routine_id, routine_info, routine_status })
+        Ok(Self {
+            routine_id,
+            routine_info,
+            routine_status,
+        })
+    }
+}
+
+impl From<RoutineCtrl> for Vec<u8> {
+    fn from(mut v: RoutineCtrl) -> Self {
+        let routine_id: u16 = v.routine_id.into();
+        let mut result = routine_id.to_be_bytes().to_vec();
+        if let Some(routine_info) = v.routine_info {
+            result.push(routine_info);
+            result.append(&mut v.routine_status);
+        }
+
+        result
     }
 }
 
 impl ResponseData for RoutineCtrl {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 utils::data_length_check(data.len(), 2, false)?;
@@ -55,20 +78,22 @@ impl ResponseData for RoutineCtrl {
                     sub_func: Some(SubFunction::new(sub_func)),
                     data: data.to_vec(),
                 })
-            },
-            None => Err(Iso14229Error::SubFunctionError(Service::RoutineCtrl)),
+            }
+            None => Err(Error::SubFunctionError(Service::RoutineCtrl)),
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service;
-        if service != Service::RoutineCtrl
-            || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+impl TryFrom<(&Response, &DidConfig)> for RoutineCtrl {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service;
+        if service != Service::RoutineCtrl || resp.sub_func.is_none() {
+            return Err(Error::ServiceError(service));
         }
         // let sub_func: RoutineCtrlType = response.sub_function().unwrap().function()?;
 
-        let data = &response.data;
+        let data = &resp.data;
         let data_len = data.len();
         let mut offset = 0;
         let routine_id = u16::from_be_bytes([data[offset], data[offset + 1]]);
@@ -80,23 +105,14 @@ impl ResponseData for RoutineCtrl {
             offset += 1;
             let routine_status = data[offset..].to_vec();
             (Some(routine_info), routine_status)
-        }
-        else {
+        } else {
             (None, vec![])
         };
 
-        Ok(Self { routine_id, routine_info, routine_status })
-    }
-
-    #[inline]
-    fn to_vec(mut self, _: &Configuration) -> Vec<u8> {
-        let routine_id: u16 = self.routine_id.into();
-        let mut result = routine_id.to_be_bytes().to_vec();
-        if let Some(routine_info) = self.routine_info {
-            result.push(routine_info);
-            result.append(&mut self.routine_status);
-        }
-
-        result
+        Ok(Self {
+            routine_id,
+            routine_info,
+            routine_status,
+        })
     }
 }

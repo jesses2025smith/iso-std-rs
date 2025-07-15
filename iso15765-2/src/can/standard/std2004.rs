@@ -2,20 +2,18 @@
 
 #[cfg(feature = "can-fd")]
 use rs_can::utils::can_dlc;
-use rs_can::{MAX_FRAME_SIZE, MAX_FD_FRAME_SIZE, DEFAULT_PADDING};
+use rs_can::{DEFAULT_PADDING, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
 
-use crate::can::constants::{CONSECUTIVE_FRAME_SIZE, FIRST_FRAME_SIZE_2004, SINGLE_FRAME_SIZE_2004};
+use crate::can::constants::{
+    CONSECUTIVE_FRAME_SIZE, FIRST_FRAME_SIZE_2004, SINGLE_FRAME_SIZE_2004,
+};
 use crate::constants::MAX_LENGTH_2004;
 use crate::error::Error;
 use crate::frame::{Frame, FrameType};
 
 use super::parse_frame_util as parse;
 
-pub(crate) fn decode_single(
-    data: &[u8],
-    byte0: u8,
-    length: usize
-) -> Result<Frame, Error> {
+pub(crate) fn decode_single(data: &[u8], byte0: u8, length: usize) -> Result<Frame, Error> {
     #[cfg(feature = "can-fd")]
     let max_len = MAX_FD_FRAME_SIZE;
     #[cfg(not(feature = "can-fd"))]
@@ -30,25 +28,32 @@ pub(crate) fn decode_single(
         return Err(Error::InvalidPdu(Vec::from(data)));
     }
 
-    Ok(Frame::SingleFrame { data: Vec::from(&data[1..=pdu_len as usize]) })
+    Ok(Frame::SingleFrame {
+        data: Vec::from(&data[1..=pdu_len as usize]),
+    })
 }
 
-pub(crate) fn decode_first(
-    data: &[u8],
-    byte0: u8,
-    length: usize,
-) -> Result<Frame, Error> {
+pub(crate) fn decode_first(data: &[u8], byte0: u8, length: usize) -> Result<Frame, Error> {
     #[cfg(not(feature = "can-fd"))]
     if length != MAX_FRAME_SIZE {
-        return Err(Error::InvalidDataLength { actual: length, expect: MAX_FRAME_SIZE })
+        return Err(Error::InvalidDataLength {
+            actual: length,
+            expect: MAX_FRAME_SIZE,
+        });
     }
     #[cfg(feature = "can-fd")]
     if length != MAX_FD_FRAME_SIZE {
-        return Err(Error::InvalidDataLength { actual: length, expect: MAX_FD_FRAME_SIZE })
+        return Err(Error::InvalidDataLength {
+            actual: length,
+            expect: MAX_FD_FRAME_SIZE,
+        });
     }
 
     let pdu_len = ((byte0 as u16 & 0x0F) << 8) | data[1] as u16;
-    Ok(Frame::FirstFrame { length: pdu_len as u32, data: Vec::from(&data[2..]) })
+    Ok(Frame::FirstFrame {
+        length: pdu_len as u32,
+        data: Vec::from(&data[2..]),
+    })
 }
 
 pub(crate) fn encode_single(mut data: Vec<u8>, padding: Option<u8>) -> Vec<u8> {
@@ -83,7 +88,7 @@ pub fn new_single<T: AsRef<[u8]>>(data: T) -> Result<Frame, Error> {
             result.append(&mut data.to_vec());
             result.resize(SINGLE_FRAME_SIZE_2004, DEFAULT_PADDING);
             Ok(Frame::SingleFrame { data: result })
-        },
+        }
         v => Err(Error::LengthOutOfRange(v)),
     }
 }
@@ -92,7 +97,9 @@ pub fn from_data(data: &[u8]) -> Result<Vec<Frame>, Error> {
     let length = data.len();
     match length {
         0 => Err(Error::EmptyPdu),
-        1..=CONSECUTIVE_FRAME_SIZE => Ok(vec![Frame::SingleFrame { data: Vec::from(data) }]),
+        1..=CONSECUTIVE_FRAME_SIZE => Ok(vec![Frame::SingleFrame {
+            data: Vec::from(data),
+        }]),
         ..=MAX_LENGTH_2004 => {
             let mut offset = 0;
             let mut sequence = 1;
@@ -101,7 +108,7 @@ pub fn from_data(data: &[u8]) -> Result<Vec<Frame>, Error> {
             parse::<FIRST_FRAME_SIZE_2004>(data, &mut offset, &mut sequence, &mut results, length);
 
             Ok(results)
-        },
+        }
         v => Err(Error::LengthOutOfRange(v)),
     }
 }

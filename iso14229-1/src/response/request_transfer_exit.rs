@@ -1,53 +1,61 @@
 //! response of Service 37
 
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    DidConfig, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, Iso14229Error, response::{Code, Response, SubFunction}, Service, ResponseData};
-
-lazy_static!(
-    pub static ref REQUEST_TRANSFER_EXIT_NEGATIVES: HashSet<Code>
-    = HashSet::from([
+pub static REQUEST_TRANSFER_EXIT_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::RequestSequenceError,
         Code::RequestOutOfRange,
         Code::GeneralProgrammingFailure,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct RequestTransferExit {
     pub data: Vec<u8>,
 }
 
+impl From<RequestTransferExit> for Vec<u8> {
+    fn from(v: RequestTransferExit) -> Self {
+        v.data
+    }
+}
+
 impl ResponseData for RequestTransferExit {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::RequestTransferExit)),
-            None => {
-                
-                Ok(Response {
-                    service: Service::RequestTransferExit,
-                    negative: false,
-                    sub_func: None,
-                    data: data.to_vec(),
-                })
-            }
+            Some(_) => Err(Error::SubFunctionError(Service::RequestTransferExit)),
+            None => Ok(Response {
+                service: Service::RequestTransferExit,
+                negative: false,
+                sub_func: None,
+                data: data.to_vec(),
+            }),
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::RequestTransferExit
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for RequestTransferExit {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::RequestTransferExit || resp.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        Ok(Self { data: response.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
+        Ok(Self {
+            data: resp.data.clone(),
+        })
     }
 }

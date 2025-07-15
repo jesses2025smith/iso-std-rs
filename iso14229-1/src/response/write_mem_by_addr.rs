@@ -1,28 +1,41 @@
 //! response of Service 3D
 
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, DidConfig, MemoryLocation, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Configuration, error::Iso14229Error, MemoryLocation, response::{Code, Response, SubFunction}, ResponseData, Service, utils};
-
-lazy_static!(
-    pub static ref WRITE_MEM_BY_ADDR_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static WRITE_MEM_BY_ADDR_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
         Code::SecurityAccessDenied,
         Code::AuthenticationRequired,
         Code::GeneralProgrammingFailure,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct WriteMemByAddr(pub MemoryLocation);
 
+impl From<WriteMemByAddr> for Vec<u8> {
+    fn from(v: WriteMemByAddr) -> Self {
+        v.0.into()
+    }
+}
+
 impl ResponseData for WriteMemByAddr {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
-            Some(_) => Err(Iso14229Error::SubFunctionError(Service::WriteMemByAddr)),
+            Some(_) => Err(Error::SubFunctionError(Service::WriteMemByAddr)),
             None => {
                 utils::data_length_check(data.len(), 3, false)?;
 
@@ -35,19 +48,16 @@ impl ResponseData for WriteMemByAddr {
             }
         }
     }
+}
 
-    fn try_parse(response: &Response, cfg: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::WriteMemByAddr
-            || response.sub_func.is_some() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for WriteMemByAddr {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::WriteMemByAddr || resp.sub_func.is_some() {
+            return Err(Error::ServiceError(service));
         }
 
-        Ok(Self(MemoryLocation::from_slice(&response.data, cfg)?))
-    }
-
-    #[inline]
-    fn to_vec(self, cfg: &Configuration) -> Vec<u8> {
-        self.0.to_vec(cfg)
+        Ok(Self(MemoryLocation::from_slice(&resp.data)?))
     }
 }

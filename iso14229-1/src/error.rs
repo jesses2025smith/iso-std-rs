@@ -1,7 +1,7 @@
 use crate::{DataIdentifier, Service};
 
 #[derive(thiserror::Error, Debug)]
-pub enum Iso14229Error {
+pub enum Error {
     #[error("ISO 14229-1 - invalid parameter `{0}`")]
     InvalidParam(String),
 
@@ -21,7 +21,7 @@ pub enum Iso14229Error {
     InvalidSessionData(String),
 
     #[error("ISO 14229-1 - ISO/SAEReserved: {0}")]
-    ReservedError(String),
+    ReservedError(u8),
 
     #[error("ISO 14229-1 - the sub-function is required/unnecessary on service `{0}`")]
     SubFunctionError(Service),
@@ -46,7 +46,6 @@ pub enum Iso14229Error {
 
     // #[error("{0}")]
     // IsoTpError(IsoTpError),
-
     #[error("ISO 14229-1 - other error: {0}")]
     OtherError(String),
 

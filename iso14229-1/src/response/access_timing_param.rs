@@ -1,36 +1,52 @@
 //! response of Service 83
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::{Iso14229Error, response::{Code, Response, SubFunction}, Service, TimingParameterAccessType, Configuration, ResponseData};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    DidConfig, ResponseData, Service, TimingParameterAccessType,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static!(
-    pub static ref ACCESS_TIMING_PARAM_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static ACCESS_TIMING_PARAM_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct AccessTimingParameter {
     pub data: Vec<u8>,
 }
 
+impl From<AccessTimingParameter> for Vec<u8> {
+    fn from(v: AccessTimingParameter) -> Self {
+        v.data
+    }
+}
+
 impl ResponseData for AccessTimingParameter {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 match TimingParameterAccessType::try_from(sub_func)? {
-                    TimingParameterAccessType::ReadExtendedTimingParameterSet => match data.is_empty() {
-                        true => Err(Iso14229Error::InvalidData(hex::encode(data))),
-                        false => Ok(())
+                    TimingParameterAccessType::ReadExtendedTimingParameterSet => {
+                        match data.is_empty() {
+                            true => Err(Error::InvalidData(hex::encode(data))),
+                            false => Ok(()),
+                        }
                     }
                     _ => match data.is_empty() {
                         true => Ok(()),
-                        false => Err(Iso14229Error::InvalidData(hex::encode(data))),
-                    }
+                        false => Err(Error::InvalidData(hex::encode(data))),
+                    },
                 }?;
 
                 Ok(Response {
@@ -39,23 +55,22 @@ impl ResponseData for AccessTimingParameter {
                     sub_func: Some(SubFunction::new(sub_func)),
                     data: data.to_vec(),
                 })
-            },
-            None => Err(Iso14229Error::SubFunctionError(Service::AccessTimingParam)),
+            }
+            None => Err(Error::SubFunctionError(Service::AccessTimingParam)),
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service();
-        if service != Service::AccessTimingParam
-            || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service))
+impl TryFrom<(&Response, &DidConfig)> for AccessTimingParameter {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::AccessTimingParam || resp.sub_func.is_none() {
+            return Err(Error::ServiceError(service));
         }
 
-        Ok(Self { data: response.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
+        Ok(Self {
+            data: resp.data.clone(),
+        })
     }
 }

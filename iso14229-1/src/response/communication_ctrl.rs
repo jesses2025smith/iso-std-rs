@@ -1,26 +1,39 @@
 //! response of Service 28
 
-use std::collections::HashSet;
-use lazy_static::lazy_static;
-use crate::response::{Code, Response, SubFunction};
-use crate::{utils, CommunicationCtrlType, Configuration, Iso14229Error, Service, ResponseData};
+use crate::{
+    error::Error,
+    response::{Code, Response, SubFunction},
+    utils, CommunicationCtrlType, DidConfig, ResponseData, Service,
+};
+use std::{collections::HashSet, sync::LazyLock};
 
-lazy_static!(
-    pub static ref COMMUNICATION_CTRL_NEGATIVES: HashSet<Code> = HashSet::from([
+pub static COMMUNICATION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
+    HashSet::from([
         Code::SubFunctionNotSupported,
         Code::IncorrectMessageLengthOrInvalidFormat,
         Code::ConditionsNotCorrect,
         Code::RequestOutOfRange,
-    ]);
-);
+    ])
+});
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CommunicationCtrl {
-    pub data: Vec<u8>,  // should empty
+    pub data: Vec<u8>, // should empty
+}
+
+impl From<CommunicationCtrl> for Vec<u8> {
+    fn from(v: CommunicationCtrl) -> Self {
+        v.data
+    }
 }
 
 impl ResponseData for CommunicationCtrl {
-    fn response(data: &[u8], sub_func: Option<u8>, _: &Configuration) -> Result<Response, Iso14229Error> {
+    fn new_response<T: AsRef<[u8]>>(
+        data: T,
+        sub_func: Option<u8>,
+        _: &DidConfig,
+    ) -> Result<Response, Error> {
+        let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 let _ = CommunicationCtrlType::try_from(sub_func)?;
@@ -33,25 +46,23 @@ impl ResponseData for CommunicationCtrl {
                     sub_func: Some(SubFunction::new(sub_func)),
                     data: vec![],
                 })
-            },
-            None => Err(Iso14229Error::SubFunctionError(Service::CommunicationCtrl))
+            }
+            None => Err(Error::SubFunctionError(Service::CommunicationCtrl)),
         }
     }
+}
 
-    fn try_parse(response: &Response, _: &Configuration) -> Result<Self, Iso14229Error> {
-        let service = response.service;
-        if service != Service::CommunicationCtrl
-            || response.sub_func.is_none() {
-            return Err(Iso14229Error::ServiceError(service));
+impl TryFrom<(&Response, &DidConfig)> for CommunicationCtrl {
+    type Error = Error;
+    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+        let service = resp.service;
+        if service != Service::CommunicationCtrl || resp.sub_func.is_none() {
+            return Err(Error::ServiceError(service));
         }
 
         // let sub_func: CommunicationCtrlType = response.sub_function().unwrap().function()?;
-
-        Ok(Self { data: response.data.clone() })
-    }
-
-    #[inline]
-    fn to_vec(self, _: &Configuration) -> Vec<u8> {
-        self.data
+        Ok(Self {
+            data: resp.data.clone(),
+        })
     }
 }
