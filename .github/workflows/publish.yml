@@ -45,12 +45,14 @@ jobs:
       - name: Publish
         run: |
           set -e
-          CRATES=(iso13400-2 iso14229-1 iso15765-2)
           
-          for CRATE in "${CRATES[@]}"; do
-            echo "Checking $CRATE version..."
-            VERSION=$(cargo metadata --no-deps --format-version 1 | jq -r \
-              ".packages[] | select(.name==\"$CRATE\") | .version")
+          META_DATA=$(cargo metadata --no-deps --format-version 1 | jq -r ".packages")
+          readarray -t CRATES < <(echo "${META_DATA}" | jq -r '.[].name')
+          readarray -t VERSSIONS < <(echo "${META_DATA}" | jq -r '.[].version')
+          
+          for i in "${!CRATES[@]}"; do
+            CRATE=${CRATES[$i]}
+            VERSION=${VERSSIONS[$i]}
             echo "Detected $CRATE version: $VERSION"
             EXISTS=$(curl -s https://crates.io/api/v1/crates/${CRATE} | jq -r \
               ".versions[] | select(.num==\"$VERSION\") | .num" || true)
