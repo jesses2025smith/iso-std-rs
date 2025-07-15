@@ -1,5 +1,5 @@
 /// ISO-TP address format.
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub enum AddressFormat {
     #[default]
     Normal = 0x01, // 11bit CAN-ID
@@ -10,7 +10,7 @@ pub enum AddressFormat {
 }
 
 /// ISO-TP address type.
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Default)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub enum AddressType {
     #[default]
     Physical,

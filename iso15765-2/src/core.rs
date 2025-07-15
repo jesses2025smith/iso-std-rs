@@ -18,7 +18,7 @@ use tokio::sync::Mutex;
 
 bitflags! {
     /// ISO 15765-2 state.
-    #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
     pub struct State: u8 {
         const Idle = 0b0000_0000;
         #[deprecated]
@@ -135,7 +135,7 @@ pub trait EventListener: Send + Sync {
 
 /// Flow control type define.
 #[repr(u8)]
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub enum FlowControlState {
     #[default]
     Continues = 0x00,

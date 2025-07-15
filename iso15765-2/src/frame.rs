@@ -4,7 +4,7 @@ use crate::error::Error;
 
 /// ISO 15765-2 frame type define.
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum FrameType {
     /// | - data length -| - N_PCI bytes - | - note - |
     ///

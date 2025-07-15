@@ -4,7 +4,7 @@ use std::fmt::{Display, Formatter};
 
 /// Table 16 — Generic DoIP header structure at line #48(ISO 13400-2-2019)
 #[repr(u8)]
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, Default, PartialEq)]
 pub enum Version {
     ISO13400_2_2010 = 0x01,
     ISO13400_2_2012 = 0x02,
@@ -71,7 +71,7 @@ impl TryFrom<&[u8]> for Version {
 
 /// Table 19 — Generic DoIP header NACK codes at line #52(ISO 13400-2-2019)
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum HeaderNegativeCode {
     IncorrectPatternFormat = 0x00, // close socket
     UnknownPayloadTYpe = 0x01,
@@ -141,7 +141,7 @@ impl From<u8> for HeaderNegativeCode {
 ///
 /// F000 to FFFF ISO/SAE reserved
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum LogicAddress {
     VMSpecific(u16),           // 0x0001 ~ 0x0DFF | 0x1000 ~ 0x7FFF
     Client(u16),               // 0x0E00 ~ 0x0FFF
@@ -183,7 +183,7 @@ impl Display for LogicAddress {
 
 /// Table 11 — DoIP entity status response
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum NodeType {
     Gateway = 0x00,
     Node = 0x01,
@@ -225,7 +225,7 @@ impl Display for NodeType {
 
 /// Table 6 — Definition of further action code values
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum FurtherAction {
     NoAction = 0x00,
     Reserved(u8), // 0x01 ~ 0x0f
@@ -260,7 +260,7 @@ impl From<u8> for FurtherAction {
 
 /// Table 7 — Definition of VIN/GID synchronization status code values
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum SyncStatus {
     VINorGIDSync = 0x00,
     VINorGIDNotSync = 0x10,
@@ -292,7 +292,7 @@ impl From<u8> for SyncStatus {
 
 /// Table 49 — Routing activation response code values
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum ActiveCode {
     SourceAddressUnknown = 0x00, // close TCP
     Activated = 0x01,            // close TCP
@@ -352,7 +352,7 @@ impl From<u8> for ActiveCode {
 
 /// Table 9 — Diagnostic power mode information response
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum PowerMode {
     NotReady = 0x00,
     Ready = 0x01,
@@ -387,7 +387,7 @@ impl From<u8> for PowerMode {
 
 /// Table 47 — Routing activation request activation types
 #[repr(u8)]
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub enum RoutingActiveType {
     #[default]
     Default = 0x00,
@@ -426,7 +426,7 @@ impl From<u8> for RoutingActiveType {
 
 /// Table 24 — Diagnostic message positive acknowledge codes
 #[repr(u8)]
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub enum DiagnosticPositiveCode {
     #[default]
     Confirm = 0x00,
@@ -468,7 +468,7 @@ impl Display for DiagnosticPositiveCode {
 
 /// Table 26 — Diagnostic message negative acknowledge codes
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum DiagnosticNegativeCode {
     InvalidSourceAddress = 0x02,
     UnknownTargetAddress = 0x03,

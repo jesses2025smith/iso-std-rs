@@ -4,7 +4,7 @@ use crate::error::Error;
 use bitflags::bitflags;
 
 bitflags! {
-    #[derive(Debug, Copy, Clone, PartialEq, Eq)]
+    #[derive(Debug, Copy, Clone, Eq, PartialEq)]
     pub struct DTCStatusMask: u8 {
         const TestFailed = 0x01;
         const TestFailedThisOperationCycle = 0x02;

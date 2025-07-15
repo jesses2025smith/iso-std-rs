@@ -14,7 +14,7 @@ rsutil::enum_extend!(
     ReservedError
 );
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct DynamicallyDID(pub(crate) u16);
 
 impl TryFrom<u16> for DynamicallyDID {

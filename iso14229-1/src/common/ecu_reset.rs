@@ -3,7 +3,7 @@
 use crate::{error::Error, utils};
 
 #[repr(u8)]
-#[derive(Default, Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub enum ECUResetType {
     #[default]
     HardReset = 1,

@@ -24,7 +24,7 @@ pub const CheckProgrammingDependencies: RoutineId = RoutineId(0xFF01);
 pub const EraseMirrorMemoryDTCs: RoutineId = RoutineId(0xFF02);
 
 /// Table F.1 — routineIdentifier definition
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct RoutineId(pub u16);
 
 impl RoutineId {

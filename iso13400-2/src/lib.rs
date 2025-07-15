@@ -106,7 +106,7 @@ pub mod response;
 
 pub(crate) mod utils;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Id(pub(crate) u64);
 
 impl Id {
@@ -153,7 +153,7 @@ impl From<Id> for Vec<u8> {
 }
 
 #[repr(u16)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum PayloadType {
     RespHeaderNegative = HEADER_NEGATIVE,
     ReqVehicleId = UDP_REQ_VEHICLE_IDENTIFIER,

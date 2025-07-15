@@ -3,7 +3,7 @@
 use crate::{error::Error, utils};
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum CommunicationCtrlType {
     EnableRxAndTx = 0x00,
     EnableRxAndDisableTx = 0x01,

@@ -34,6 +34,7 @@ rsutil::enum_extend!(
 /// | offset  | 10          | Offset on the positive response message from where to |
 /// |         |             | extract the data identifier value.                    |
 #[bitfield(u16, order = Msb)]
+#[derive(Eq, PartialEq)]
 pub struct Localization {
     pub sign: bool,
     #[bits(5)]
@@ -78,7 +79,7 @@ impl Localization {
 }
 
 #[repr(u8)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum EventTypeParameter {
     StopResponseOnEvent = 0x00,
     OnDTCStatusChange {
@@ -113,7 +114,7 @@ pub enum EventTypeParameter {
     } = 0x09, // C2
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct ResponseOnEvent {
     pub window_time: u8, // unit of window time is `s`(seconds)
     pub param: EventTypeParameter,

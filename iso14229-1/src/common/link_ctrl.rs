@@ -28,7 +28,7 @@ rsutil::enum_extend!(
 /// VerifyBaudrateTransitionWithSpecificBaudrate
 /// TransitionBaudrate
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum LinkCtrlType {
     VerifyModeTransitionWithFixedParameter = 0x01,
     VerifyModeTransitionWithSpecificParameter = 0x02,
