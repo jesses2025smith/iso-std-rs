@@ -27,15 +27,21 @@ where
             let guard = self.context.address.read().await;
             (guard.tx_id, guard.fid)
         };
-        if id == tx_id || id == fid {
+        let flag = if self.is_server {
+            id == tx_id
+        } else {
+            id == tx_id || id == fid
+        };
+
+        if flag {
             self.context.state_remove(State::Sending).await;
         }
     }
 
     async fn on_frame_received(&self, frames: Weak<Vec<F>>) {
-        let (tx_id, rx_id) = {
+        let (tx_id, rx_id, fid) = {
             let guard = self.context.address.read().await;
-            (guard.tx_id, guard.rx_id)
+            (guard.tx_id, guard.rx_id, guard.fid)
         };
         match frames.upgrade() {
             Some(frames) => {
@@ -48,7 +54,14 @@ where
                         continue;
                     }
 
-                    if frame.id().into_bits() != rx_id {
+                    let frame_id = frame.id().into_bits();
+                    let flag = if self.is_server {
+                        frame_id != rx_id && frame_id != fid
+                    } else {
+                        frame_id != rx_id
+                    };
+
+                    if flag {
                         if let Err(e) = self.sender.send(frame.clone()) {
                             rsutil::warn!("ISO-TP - Error: {} when sending non-IsoTP frame", e);
                         }
