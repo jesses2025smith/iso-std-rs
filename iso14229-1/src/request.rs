@@ -118,10 +118,10 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(
+    pub fn new<T: AsRef<[u8]>>(
         service: Service,
         sub_func: Option<u8>,
-        data: Vec<u8>,
+        data: T,
         cfg: &DidConfig,
     ) -> Result<Self, Error> {
         match service {
@@ -183,14 +183,14 @@ impl Request {
     }
 
     #[inline]
-    fn inner_new<T: AsRef<[u8]>>(
+    fn new_sub_func<T: AsRef<[u8]>>(
         data: T,
-        data_len: usize,
-        mut offset: usize,
         service: Service,
         cfg: &DidConfig,
     ) -> Result<Self, Error> {
         let data = data.as_ref();
+        let data_len = data.len();
+        let mut offset = 0;
         utils::data_length_check(data_len, offset + 1, false)?;
         let sub_func = data[offset];
         offset += 1;
@@ -213,16 +213,9 @@ impl From<Request> for Vec<u8> {
     }
 }
 
-impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
+impl<T: AsRef<[u8]>> TryFrom<(Service, T, &DidConfig)> for Request {
     type Error = Error;
-    fn try_from((data, cfg): (T, &DidConfig)) -> Result<Self, Self::Error> {
-        let data = data.as_ref();
-        let data_len = data.len();
-        utils::data_length_check(data_len, 1, false)?;
-
-        let mut offset = 0;
-        let service = Service::try_from(data[offset])?;
-        offset += 1;
+    fn try_from((service, data, cfg): (Service, T, &DidConfig)) -> Result<Self, Self::Error> {
         match service {
             Service::SessionCtrl
             | Service::ECUReset
@@ -233,13 +226,13 @@ impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
             | Service::CtrlDTCSetting
             | Service::TesterPresent
             | Service::LinkCtrl
-            | Service::DynamicalDefineDID => Self::inner_new(data, data_len, offset, service, cfg),
+            | Service::DynamicalDefineDID => Self::new_sub_func(data, service, cfg),
             #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Service::AccessTimingParam => Self::inner_new(data, data_len, offset, service, cfg),
+            Service::AccessTimingParam => Self::new_sub_func(data, service, cfg),
             #[cfg(any(feature = "std2020"))]
-            Service::Authentication => Self::inner_new(data, data_len, offset, service, cfg),
+            Service::Authentication => Self::new_sub_func(data, service, cfg),
             #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Service::RequestFileTransfer => Self::inner_new(data, data_len, offset, service, cfg),
+            Service::RequestFileTransfer => Self::new_sub_func(data, service, cfg),
             Service::ClearDiagnosticInfo
             | Service::ReadDID
             | Service::ReadMemByAddr
@@ -253,8 +246,22 @@ impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
             | Service::RequestTransferExit
             | Service::WriteMemByAddr
             | Service::SecuredDataTrans
-            | Service::ResponseOnEvent => Self::new(service, None, data[offset..].to_vec(), cfg),
+            | Service::ResponseOnEvent => Self::new(service, None, data, cfg),
             Service::NRC => Err(Error::OtherError("got an NRC service from request".into())),
         }
+    }
+}
+
+impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
+    type Error = Error;
+    fn try_from((data, cfg): (T, &DidConfig)) -> Result<Self, Self::Error> {
+        let data = data.as_ref();
+        let data_len = data.len();
+        utils::data_length_check(data_len, 1, false)?;
+
+        let mut offset = 0;
+        let service = Service::try_from(data[offset])?;
+        offset += 1;
+        Self::try_from((service, &data[offset..], cfg))
     }
 }

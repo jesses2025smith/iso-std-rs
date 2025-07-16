@@ -161,10 +161,10 @@ pub struct Response {
 }
 
 impl Response {
-    pub fn new(
+    pub fn new<T: AsRef<[u8]>>(
         service: Service,
         sub_func: Option<u8>,
-        data: Vec<u8>,
+        data: T,
         cfg: &DidConfig,
     ) -> Result<Self, Error> {
         match service {
@@ -199,6 +199,7 @@ impl Response {
             Service::ResponseOnEvent => ResponseOnEvent::new_response(data, sub_func, cfg),
             Service::LinkCtrl => LinkCtrl::new_response(data, sub_func, cfg),
             Service::NRC => {
+                let data = data.as_ref();
                 if sub_func.is_some() {
                     return Err(Error::SubFunctionError(service));
                 }
@@ -214,6 +215,23 @@ impl Response {
                     data,
                 })
             }
+        }
+    }
+
+    pub fn new_negative(service: Service, code: Code) -> Self {
+        match code {
+            Code::Positive => Self {
+                service,
+                negative: false,
+                sub_func: None,
+                data: vec![],
+            },
+            _ => Self {
+                service,
+                negative: true,
+                sub_func: None,
+                data: vec![code.into(), ],
+            },
         }
     }
 
@@ -261,14 +279,14 @@ impl Response {
     }
 
     #[inline]
-    fn inner_new<T: AsRef<[u8]>>(
+    fn new_sub_func<T: AsRef<[u8]>>(
         data: T,
-        data_len: usize,
-        mut offset: usize,
         service: Service,
         cfg: &DidConfig,
     ) -> Result<Self, Error> {
         let data = data.as_ref();
+        let data_len = data.len();
+        let mut offset = 0;
         utils::data_length_check(data_len, offset + 1, false)?;
 
         let sub_func = data[offset];
@@ -287,7 +305,7 @@ impl From<Response> for Vec<u8> {
         };
 
         let service: u8 = v.service.into();
-        result.push(service | POSITIVE_OFFSET);
+        result.push(service);
 
         if let Some(sub_func) = v.sub_func {
             result.push(sub_func.into());
@@ -296,6 +314,61 @@ impl From<Response> for Vec<u8> {
         result.append(&mut v.data);
 
         result
+    }
+}
+
+impl<T: AsRef<[u8]>> TryFrom<(Service, T, &DidConfig)> for Response {
+    type Error = Error;
+    fn try_from((service, data, cfg): (Service, T, &DidConfig)) -> Result<Self, Self::Error> {
+        match service {
+            Service::SessionCtrl
+            | Service::ECUReset
+            | Service::SecurityAccess
+            | Service::CommunicationCtrl
+            | Service::ReadDTCInfo
+            | Service::RoutineCtrl
+            | Service::CtrlDTCSetting
+            | Service::TesterPresent
+            | Service::LinkCtrl
+            | Service::DynamicalDefineDID => Self::new_sub_func(data, service, cfg),
+            #[cfg(any(feature = "std2006", feature = "std2013"))]
+            Service::AccessTimingParam => Self::new_sub_func(data, service, cfg),
+            #[cfg(any(feature = "std2020"))]
+            Service::Authentication => Self::new_sub_func(data, service, cfg),
+            #[cfg(any(feature = "std2013", feature = "std2020"))]
+            Service::RequestFileTransfer => Self::new_sub_func(data, service, cfg),
+            Service::ClearDiagnosticInfo
+            | Service::ReadDID
+            | Service::ReadMemByAddr
+            | Service::ReadScalingDID
+            | Service::ReadDataByPeriodId
+            | Service::WriteDID
+            | Service::IOCtrl
+            | Service::RequestDownload
+            | Service::RequestUpload
+            | Service::TransferData
+            | Service::RequestTransferExit
+            | Service::WriteMemByAddr
+            | Service::SecuredDataTrans
+            | Service::ResponseOnEvent => Self::new(service, None, data, cfg),
+            Service::NRC => {
+                let data = data.as_ref();
+                let data_len = data.len();
+                let mut offset = 0;
+                utils::data_length_check(data_len, offset + 2, true)?;
+                let nrc_service = Service::try_from(data[offset])?;
+                offset += 1;
+
+                let data = data[offset..].to_vec();
+
+                Ok(Self {
+                    service: nrc_service,
+                    negative: true,
+                    sub_func: None,
+                    data,
+                })
+            }
+        }
     }
 }
 
@@ -314,51 +387,6 @@ impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Response {
             Service::try_from(service & !POSITIVE_OFFSET)
         }?;
         offset += 1;
-        match service {
-            Service::SessionCtrl
-            | Service::ECUReset
-            | Service::SecurityAccess
-            | Service::CommunicationCtrl
-            | Service::ReadDTCInfo
-            | Service::RoutineCtrl
-            | Service::CtrlDTCSetting
-            | Service::TesterPresent
-            | Service::LinkCtrl
-            | Service::DynamicalDefineDID => Self::inner_new(data, data_len, offset, service, cfg),
-            #[cfg(any(feature = "std2006", feature = "std2013"))]
-            Service::AccessTimingParam => Self::inner_new(data, data_len, offset, service, cfg),
-            #[cfg(any(feature = "std2020"))]
-            Service::Authentication => Self::inner_new(data, data_len, offset, service, cfg),
-            #[cfg(any(feature = "std2013", feature = "std2020"))]
-            Service::RequestFileTransfer => Self::inner_new(data, data_len, offset, service, cfg),
-            Service::ClearDiagnosticInfo
-            | Service::ReadDID
-            | Service::ReadMemByAddr
-            | Service::ReadScalingDID
-            | Service::ReadDataByPeriodId
-            | Service::WriteDID
-            | Service::IOCtrl
-            | Service::RequestDownload
-            | Service::RequestUpload
-            | Service::TransferData
-            | Service::RequestTransferExit
-            | Service::WriteMemByAddr
-            | Service::SecuredDataTrans
-            | Service::ResponseOnEvent => Self::new(service, None, data[offset..].to_vec(), cfg),
-            Service::NRC => {
-                utils::data_length_check(data_len, offset + 2, true)?;
-                let nrc_service = Service::try_from(data[offset])?;
-                offset += 1;
-
-                let data = data[offset..].to_vec();
-
-                Ok(Self {
-                    service: nrc_service,
-                    negative: true,
-                    sub_func: None,
-                    data,
-                })
-            }
-        }
+        Self::try_from((service, &data[offset..], cfg))
     }
 }
