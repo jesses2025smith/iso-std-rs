@@ -1,7 +1,7 @@
 use crate::{error::Error, DataIdentifier, DidConfig, SUPPRESS_POSITIVE};
+use serde::ser::SerializeMap;
 use serde::{Deserialize, Deserializer, Serializer};
 use std::collections::HashMap;
-use serde::ser::SerializeMap;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct U24(pub(crate) u32);
@@ -168,7 +168,6 @@ where
 
     Ok(res)
 }
-
 
 /// serialize for [`DidConfig`]
 pub fn did_config_serialize<'de, S>(cfg: &DidConfig, serializer: S) -> Result<S::Ok, S::Error>

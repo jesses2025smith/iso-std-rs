@@ -230,7 +230,7 @@ impl Response {
                 service,
                 negative: true,
                 sub_func: None,
-                data: vec![code.into(), ],
+                data: vec![code.into()],
             },
         }
     }
@@ -305,7 +305,7 @@ impl From<Response> for Vec<u8> {
             true => {
                 result.push(Service::NRC.into());
                 result.push(service);
-            },
+            }
             false => {
                 result.push(service | POSITIVE_OFFSET);
 

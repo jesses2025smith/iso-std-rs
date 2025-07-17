@@ -62,13 +62,14 @@ impl Default for SessionTiming {
 
 impl SessionTiming {
     #[inline]
-    pub fn new(
-        p2_ms: u16,
-        p2_star_ms: u32,
-    ) -> Self {
+    pub fn new(p2_ms: u16, p2_star_ms: u32) -> Self {
         let p2 = if p2_ms > P2_MAX { P2_MAX } else { p2_ms };
         let p2_star = (p2_star_ms / 10) as u16;
-        let p2_star = if p2_star > P2_STAR_MAX { P2_STAR_MAX } else { p2_star };
+        let p2_star = if p2_star > P2_STAR_MAX {
+            P2_STAR_MAX
+        } else {
+            p2_star
+        };
         Self { p2, p2_star }
     }
 
