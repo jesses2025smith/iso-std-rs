@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 /// ISO-TP address format.
 #[derive(Debug, Copy, Clone, Default, Eq, PartialEq)]
 pub enum AddressFormat {
@@ -22,7 +24,7 @@ pub enum AddressType {
 /// * `tx_id`: transmit identifier.
 /// * `rx_id`: receive identifier.
 /// * `fid`: functional address identifier.
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Address {
     pub tx_id: u32,
     pub rx_id: u32,
