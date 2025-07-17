@@ -13,6 +13,11 @@ impl SecurityAccessLevel {
 
         Ok(Self(level))
     }
+
+    #[inline(always)]
+    pub fn is_request_seed(&self) -> bool {
+        self.0 % 2 == 1
+    }
 }
 
 impl TryFrom<u8> for SecurityAccessLevel {

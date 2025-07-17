@@ -299,18 +299,21 @@ impl Response {
 
 impl From<Response> for Vec<u8> {
     fn from(mut v: Response) -> Self {
-        let mut result = match v.negative {
-            true => vec![Service::NRC.into()],
-            false => vec![],
-        };
-
+        let mut result = Vec::new();
         let service: u8 = v.service.into();
-        result.push(service);
+        match v.negative {
+            true => {
+                result.push(Service::NRC.into());
+                result.push(service);
+            },
+            false => {
+                result.push(service | POSITIVE_OFFSET);
 
-        if let Some(sub_func) = v.sub_func {
-            result.push(sub_func.into());
+                if let Some(sub_func) = v.sub_func {
+                    result.push(sub_func.into());
+                }
+            }
         }
-
         result.append(&mut v.data);
 
         result
