@@ -183,7 +183,7 @@ where
 
                 match receiver.lock().await.try_recv() {
                     Ok(msg) => {
-                        rsutil::trace!("ISO-TP - transmitting: {}", msg);
+                        rsutil::debug!("ISO-TP - Transmitting: {}", msg);
                         let id = msg.id();
                         let chl = msg.channel();
                         if let Ok(_) = device.transmit(msg, Some(100)).await {

@@ -24,6 +24,7 @@ pub struct CanIsoTp<D, C, F> {
     pub(crate) context: context::Context,
     pub(crate) sender: broadcast::Sender<F>,
     pub(crate) triggers: Arc<RwLock<Vec<Trigger>>>,
+    pub(crate) is_server: bool,
 }
 
 unsafe impl<D, C, F> Send for CanIsoTp<D, C, F> {}
@@ -35,7 +36,7 @@ where
     C: Clone + Eq + Display + Send + Sync + 'static,
     F: CanFrame<Channel = C> + Clone + Display + Send + Sync + 'static,
 {
-    pub async fn new(device: D, channel: C, address: Address) -> Self {
+    pub async fn new(device: D, channel: C, address: Address, is_server: bool) -> Self {
         let (tx, _) = broadcast::channel(10240);
         let adapter = adapter::Adapter::new(device);
         let inst = Self {
@@ -44,6 +45,7 @@ where
             context: context::Context::new(address),
             sender: tx,
             triggers: Default::default(),
+            is_server
         };
         adapter
             .register_listener(format!("IsoTP-{}", channel), Box::new(inst.clone()))

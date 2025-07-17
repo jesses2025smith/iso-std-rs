@@ -16,6 +16,12 @@ impl ReadDID {
     pub fn new(did: DataIdentifier, others: Vec<DataIdentifier>) -> Self {
         Self { did, others }
     }
+
+    pub fn collect(self) -> Vec<DataIdentifier> {
+        let mut res = self.others;
+        res.insert(0, self.did);
+        res
+    }
 }
 
 impl From<ReadDID> for Vec<u8> {

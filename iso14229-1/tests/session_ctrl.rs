@@ -50,6 +50,9 @@ mod tests {
         assert_eq!(session.0.p2, 50);
         assert_eq!(session.0.p2_star, P2_STAR_MAX);
 
+        let res: Vec<_> = response.into();
+        assert_eq!(res, source);
+
         Ok(())
     }
 
@@ -75,6 +78,9 @@ mod tests {
             response.nrc_code()?,
             response::Code::SubFunctionNotSupported
         );
+
+        let res: Vec<_> = response.into();
+        assert_eq!(res, source);
 
         Ok(())
     }

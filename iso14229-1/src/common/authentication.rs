@@ -22,7 +22,7 @@ rsutil::enum_extend!(
     ReservedError
 );
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct NotNullableData(pub(crate) Vec<u8>);
 
 impl NotNullableData {
@@ -47,7 +47,7 @@ impl From<NotNullableData> for Vec<u8> {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct NullableData(pub(crate) Vec<u8>);
 
 impl NullableData {

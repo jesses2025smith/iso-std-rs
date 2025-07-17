@@ -30,10 +30,14 @@ tokio-stream = { workspace = true, features = ["sync"] }
 workspace = true
 optional = true
 
+[dependencies.serde]
+workspace = true
+optional = true
+
 [features]
 default = ["can", "std2004"]
 
-can = ["rs-can"]
-can-fd = ["can"]
+can = ["rs-can", "serde"]
+can-fd = ["can", "serde"]
 std2004 = []
 std2016 = []

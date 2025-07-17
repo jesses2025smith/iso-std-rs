@@ -33,6 +33,10 @@ mod tests {
     fn test_download_response() -> anyhow::Result<()> {
         let cfg = DidConfig::default();
 
+        let ctx = response::RequestDownload::new(0x00123456)?;
+        assert_eq!(ctx.lfi, LengthFormatIdentifier::new(0x04)?);
+        assert_eq!(ctx.max_num_of_block_len, 0x00123456);
+
         let source = hex::decode("744012345678")?;
         let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function();
