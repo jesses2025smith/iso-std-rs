@@ -6,6 +6,7 @@ use crate::{
     response::{Code, Response, SubFunction},
     utils, DidConfig, ResponseData, Service, SessionType,
 };
+use serde::{ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
 use std::{collections::HashSet, sync::LazyLock};
 
 pub static SESSION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
@@ -20,6 +21,34 @@ pub static SESSION_CTRL_NEGATIVES: LazyLock<HashSet<Code>> = LazyLock::new(|| {
 pub struct SessionTiming {
     pub p2: u16,
     pub p2_star: u16,
+}
+
+impl Serialize for SessionTiming {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("SessionTiming", 2)?;
+        state.serialize_field("p2", &self.p2_ms())?;
+        state.serialize_field("p2_star", &self.p2_star_ms())?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for SessionTiming {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct SessionTimingVisitor {
+            p2: u16,
+            p2_star: u32,
+        }
+
+        let visitor: SessionTimingVisitor = Deserialize::deserialize(deserializer)?;
+        Ok(Self::new(visitor.p2, visitor.p2_star))
+    }
 }
 
 impl Default for SessionTiming {

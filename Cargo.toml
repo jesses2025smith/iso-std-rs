@@ -24,6 +24,7 @@ hex = "0.4"
 log = "0.4"
 rs-can = { version = "0.3.0-b0" }
 rsutil = "0.1"
+serde = "1"
 stream-cancel = "0.8"
 #task-supervisor = "0.3"     # tokio任务监视
 thiserror = "2"

@@ -19,6 +19,7 @@ bitfield-struct = { workspace = true }
 bitflags = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 rsutil = { workspace = true, features = ["log", "macros"] }
 thiserror = { workspace = true }
 

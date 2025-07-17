@@ -1,4 +1,7 @@
-use crate::{error::Error, SUPPRESS_POSITIVE};
+use crate::{error::Error, DataIdentifier, DidConfig, SUPPRESS_POSITIVE};
+use serde::{Deserialize, Deserializer, Serializer};
+use std::collections::HashMap;
+use serde::ser::SerializeMap;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct U24(pub(crate) u32);
@@ -131,7 +134,16 @@ where
         value >>= 8.into();
     }
 
-    result
+    match result {
+        0 => 0,
+        ..=2 => 2,
+        ..=4 => 4,
+        ..=8 => 8,
+        ..=16 => 16,
+        ..=32 => 32,
+        ..=64 => 64,
+        _ => 64,
+    }
 }
 
 #[inline]
@@ -140,4 +152,33 @@ pub fn peel_suppress_positive(value: u8) -> (bool, u8) {
         (value & SUPPRESS_POSITIVE) == SUPPRESS_POSITIVE,
         value & 0x7F,
     )
+}
+
+/// deserialize for [`DidConfig`]
+pub fn did_config_deserialize<'de, D>(deserializer: D) -> Result<DidConfig, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw_map: HashMap<u16, usize> = HashMap::deserialize(deserializer)?;
+
+    let res = raw_map
+        .into_iter()
+        .map(|(k, v)| (DataIdentifier::from(k), v))
+        .collect::<HashMap<_, _>>();
+
+    Ok(res)
+}
+
+
+/// serialize for [`DidConfig`]
+pub fn did_config_serialize<'de, S>(cfg: &DidConfig, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let mut map = serializer.serialize_map(Some(cfg.len()))?;
+    for (&k, v) in cfg {
+        let val: u16 = k.into();
+        map.serialize_entry(&format!("0x{:04X}", val), v)?;
+    }
+    map.end()
 }
