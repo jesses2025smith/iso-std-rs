@@ -1,13 +1,11 @@
 #[cfg(feature = "can")]
-mod can;
+pub mod can;
 mod constants;
 mod core;
 mod error;
 mod frame;
 mod isotp;
 
-#[cfg(feature = "can")]
-pub use crate::can::*;
 pub use crate::constants::*;
 pub use crate::core::{
     Event as IsoTpEvent, FlowControlContext, FlowControlState, State as IsoTpState,

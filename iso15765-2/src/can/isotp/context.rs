@@ -1,12 +1,19 @@
 use crate::{
+    can::address::Address,
     constants::CONSECUTIVE_SEQUENCE_START,
     core::{Buffer, Consecutive, Event, EventListener, FlowControlContext, State, Timeout},
     error::Error,
-    Address, TIMEOUT_AS_ISO15765_2, TIMEOUT_CR_ISO15765_2,
+    TIMEOUT_AS_ISO15765_2, TIMEOUT_CR_ISO15765_2,
 };
 use bitflags::Flags;
-use std::{sync::Arc, time::{Duration, Instant}};
-use tokio::{sync::{Mutex, RwLock}, time::sleep};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+use tokio::{
+    sync::{Mutex, RwLock},
+    time::sleep,
+};
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Context {
@@ -185,7 +192,7 @@ impl Context {
                     } else if *state == State::Idle {
                         return Ok(());
                     }
-                }  else {
+                } else {
                     // avoid dead loop
                     sleep(Duration::from_millis(1)).await;
                 }

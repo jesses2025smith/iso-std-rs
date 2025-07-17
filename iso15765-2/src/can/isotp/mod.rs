@@ -4,12 +4,11 @@ mod isotp_impl;
 mod listener_impl;
 
 use crate::{
-    can::address::Address,
+    can::address::{Address, AddressType},
     core::{Event, EventListener, FlowControlContext, FlowControlState, State},
     error::Error,
     frame::Frame,
     isotp::IsoTp,
-    AddressType,
 };
 use bytes::Bytes;
 use rs_can::{CanDevice, CanFrame, CanId, CanListener};
@@ -45,7 +44,7 @@ where
             context: context::Context::new(address),
             sender: tx,
             triggers: Default::default(),
-            is_server
+            is_server,
         };
         adapter
             .register_listener(format!("IsoTP-{}", channel), Box::new(inst.clone()))
