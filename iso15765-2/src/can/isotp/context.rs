@@ -5,10 +5,8 @@ use crate::{
     Address, TIMEOUT_AS_ISO15765_2, TIMEOUT_CR_ISO15765_2,
 };
 use bitflags::Flags;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
-use tokio::sync::{Mutex, RwLock};
-use tokio::time::sleep;
+use std::{sync::Arc, time::{Duration, Instant}};
+use tokio::{sync::{Mutex, RwLock}, time::sleep};
 
 #[derive(Debug, Default, Clone)]
 pub(crate) struct Context {
@@ -138,16 +136,20 @@ impl Context {
     }
 
     pub async fn write_waiting(&self, index: &mut usize) -> Result<(), Error> {
-        if let Some(ctx) = &*self.flow_ctrl.lock().await {
-            if ctx.block_size != 0 {
-                if (*index + 1) == ctx.block_size as usize {
-                    *index = 0;
-                    self.state_append(State::WaitFlowCtrl).await;
-                } else {
-                    *index += 1;
+        {
+            // this is not elegant enough
+            if let Some(ctx) = &*self.flow_ctrl.lock().await {
+                if ctx.block_size != 0 {
+                    if (*index + 1) == ctx.block_size as usize {
+                        *index = 0;
+                        self.state_append(State::WaitFlowCtrl).await;
+                    } else {
+                        *index += 1;
+                    }
                 }
+                sleep(Duration::from_micros(ctx.st_min as u64)).await;
             }
-            sleep(Duration::from_micros(ctx.st_min as u64)).await;
+            // free `flow_ctrl` lock
         }
 
         tokio::time::timeout(Duration::from_millis(Self::MAX_TIMEOUT_MS), async move {
@@ -183,13 +185,19 @@ impl Context {
                     } else if *state == State::Idle {
                         return Ok(());
                     }
+                }  else {
+                    // avoid dead loop
+                    sleep(Duration::from_millis(1)).await;
                 }
             }
         })
         .await
-        .map_err(|_| Error::Timeout {
-            value: Self::MAX_TIMEOUT_MS,
-            unit: "ms",
+        .map_err(|_| {
+            rsutil::warn!("ISO-TP - write timeout");
+            Error::Timeout {
+                value: Self::MAX_TIMEOUT_MS,
+                unit: "ms",
+            }
         })?
     }
 }
