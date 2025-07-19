@@ -83,7 +83,7 @@ impl From<DataFormatIdentifier> for u8 {
 /// This parameter is a one Byte value with each nibble encoded separately (see Table H.1 for example values):
 /// — bit 7 - 4: Length (number of bytes) of the memorySize parameter
 /// — bit 3 - 0: Length (number of bytes) of the memoryAddress parameter
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub struct AddressAndLengthFormatIdentifier(u8);
 
 impl AddressAndLengthFormatIdentifier {
