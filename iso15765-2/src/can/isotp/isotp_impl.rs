@@ -13,7 +13,7 @@ use std::{
 };
 use stream_cancel::Valved;
 use tokio::{sync::mpsc::Sender, time::sleep};
-use tokio_stream::{Stream, StreamExt, wrappers::BroadcastStream};
+use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 
 #[async_trait::async_trait]
 impl<D, C, F> IsoTp for CanIsoTp<D, C, F>
