@@ -8,7 +8,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0-b3"
+version = "0.1.0-b4"
 edition = "2021"
 license = "MIT OR LGPL-3.0"
 authors = ["Jesse Smith <jesses2025smith@gmail.com>"]
@@ -22,11 +22,10 @@ bytes =  "1.10"
 getset = "0.1"
 hex = "0.4"
 log = "0.4"
-rs-can = "0.3.0"
+rs-can = "0.3"
 rsutil = "0.1"
 serde = "1"
 stream-cancel = "0.8"
-#task-supervisor = "0.3"     # tokio任务监视
 thiserror = "2"
 tokio = "1"
 tokio-stream = "0.1"

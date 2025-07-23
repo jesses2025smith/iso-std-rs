@@ -9,6 +9,8 @@ pub trait IsoTp {
     type Frame: Clone + Send + 'static;
     /// Get Frame transmitter
     fn transmitter(&self) -> Sender<Self::Frame>;
+    /// Shutdown the device
+    fn shutdown(&mut self);
     /// Get Frame Stream that does not belong to IsoTP
     async fn frame_stream(
         &self,
@@ -16,6 +18,7 @@ pub trait IsoTp {
     /// Start transmit and receive loop worker
     async fn start(&mut self, interval_us: u64);
     /// Stop transmit and receive loop worker
+    /// And the transmitter will disable
     async fn stop(&mut self);
     /// Wait IsoTP data
     async fn wait_data(&self, timeout: u64) -> Result<bytes::Bytes, Error>;

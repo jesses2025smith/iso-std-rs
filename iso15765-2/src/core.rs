@@ -124,9 +124,11 @@ pub enum Event {
     DataReceived(Bytes),
     ErrorOccurred(Error),
 }
+unsafe impl Send for Event {}
+unsafe impl Sync for Event {}
 
 #[async_trait::async_trait]
-pub trait EventListener: Send + Sync {
+pub trait EventListener {
     async fn buffer_data(&self) -> Option<Event>;
     async fn clear_buffer(&self);
     async fn on_iso_tp_event(&self, event: Event);
