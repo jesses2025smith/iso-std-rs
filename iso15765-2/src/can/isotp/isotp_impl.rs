@@ -18,15 +18,20 @@ use tokio_stream::{wrappers::BroadcastStream, Stream, StreamExt};
 #[async_trait::async_trait]
 impl<D, C, F> IsoTp for CanIsoTp<D, C, F>
 where
-    D: CanDevice<Channel = C, Frame = F> + Clone + Send + Sync + 'static,
+    D: CanDevice<Channel = C, Frame = F> + Clone + Send + 'static,
     C: Clone + Eq + Display + Send + Sync + 'static,
-    F: CanFrame<Channel = C> + Clone + Display + Send + Sync + 'static,
+    F: CanFrame<Channel = C> + Clone + Display + 'static,
 {
     type Frame = F;
 
     #[inline(always)]
     fn transmitter(&self) -> Sender<Self::Frame> {
         self.adapter.transmitter()
+    }
+
+    #[inline(always)]
+    fn shutdown(&mut self) {
+        self.adapter.shutdown();
     }
 
     async fn frame_stream(

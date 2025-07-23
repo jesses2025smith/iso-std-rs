@@ -32,9 +32,9 @@ pub struct Adapter<D, C, F> {
 
 impl<D, C, F> Adapter<D, C, F>
 where
-    D: CanDevice<Channel = C, Frame = F> + Clone + Send + Sync + 'static,
-    C: Clone + Display + Send + Sync + 'static,
-    F: CanFrame<Channel = C> + Clone + Display + Send + Sync + 'static,
+    D: CanDevice<Channel = C, Frame = F> + Clone + Send + 'static,
+    C: Clone + Display + Send + 'static,
+    F: CanFrame<Channel = C> + Display + 'static,
 {
     pub fn new(device: D) -> Self {
         let (tx, rx) = channel(10240);
@@ -90,6 +90,12 @@ where
     #[inline(always)]
     pub fn transmitter(&self) -> Sender<F> {
         self.transmitter.clone()
+    }
+
+    /// shutdown the device
+    #[inline(always)]
+    pub fn shutdown(&mut self) {
+        self.device.shutdown();
     }
 
     pub async fn start(&mut self, interval_us: u64) {

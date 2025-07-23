@@ -9,9 +9,9 @@ use std::{any::Any, fmt::Display, sync::Weak};
 #[async_trait::async_trait]
 impl<D, C, F> CanListener<C, F> for CanIsoTp<D, C, F>
 where
-    D: CanDevice<Channel = C, Frame = F> + Clone + Send + Sync + 'static,
+    D: CanDevice<Channel = C, Frame = F> + Clone + Send + 'static,
     C: Clone + Eq + Display + Send + Sync + 'static,
-    F: CanFrame<Channel = C> + Clone + Display + Send + Sync + 'static,
+    F: CanFrame<Channel = C> + Clone + Display + 'static,
 {
     fn as_any(&self) -> &dyn Any {
         self
