@@ -7,8 +7,7 @@ mod std2016;
 #[cfg(feature = "std2016")]
 pub use std2016::*;
 
-use crate::can::constants::CONSECUTIVE_FRAME_SIZE;
-use crate::frame::Frame;
+use crate::{can::constants::CONSECUTIVE_FRAME_SIZE, frame::Frame};
 
 fn parse_frame_util<const FIRST_FRAME_SIZE: usize>(
     data: &[u8],

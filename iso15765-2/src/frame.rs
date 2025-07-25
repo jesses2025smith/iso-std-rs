@@ -1,6 +1,8 @@
-use crate::constants::{DEFAULT_BLOCK_SIZE, DEFAULT_ST_MIN};
-use crate::core::{FlowControlContext, FlowControlState};
-use crate::error::Error;
+use crate::{
+    constants::{DEFAULT_BLOCK_SIZE, DEFAULT_ST_MIN},
+    core::{FlowControlContext, FlowControlState},
+    error::Error,
+};
 
 /// ISO 15765-2 frame type define.
 #[repr(u8)]

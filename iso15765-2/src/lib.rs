@@ -6,10 +6,10 @@ mod error;
 mod frame;
 mod isotp;
 
-pub use crate::constants::*;
-pub use crate::core::{
-    Event as IsoTpEvent, FlowControlContext, FlowControlState, State as IsoTpState,
+pub use crate::{
+    constants::*,
+    core::{Event as IsoTpEvent, FlowControlContext, FlowControlState, State as IsoTpState},
+    error::Error as IsoTpError,
+    frame::{Frame as IsoTpFrame, FrameType as IsoTpFrameType},
+    isotp::*,
 };
-pub use crate::error::Error as IsoTpError;
-pub use crate::frame::{Frame as IsoTpFrame, FrameType as IsoTpFrameType};
-pub use crate::isotp::*;

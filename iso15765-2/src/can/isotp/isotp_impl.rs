@@ -6,9 +6,9 @@ use crate::{
 };
 use bytes::Bytes;
 use rs_can::{CanDevice, CanFrame};
-use std::pin::Pin;
 use std::{
     fmt::Display,
+    pin::Pin,
     time::{Duration, Instant},
 };
 use stream_cancel::Valved;

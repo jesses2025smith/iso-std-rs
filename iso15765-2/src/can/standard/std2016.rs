@@ -1,15 +1,18 @@
 #![allow(unused_imports)]
 
 #[cfg(feature = "can-fd")]
-use rs_can::utils::can_dlc;
+use rs_can::can_utils::can_dlc;
 use rs_can::{DEFAULT_PADDING, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
 
-use crate::can::constants::{
-    FIRST_FRAME_SIZE_2004, FIRST_FRAME_SIZE_2016, SINGLE_FRAME_SIZE_2004, SINGLE_FRAME_SIZE_2016,
+use crate::{
+    can::constants::{
+        FIRST_FRAME_SIZE_2004, FIRST_FRAME_SIZE_2016, SINGLE_FRAME_SIZE_2004,
+        SINGLE_FRAME_SIZE_2016,
+    },
+    constants::{MAX_LENGTH_2004, MAX_LENGTH_2016},
+    error::Error,
+    frame::{Frame, FrameType},
 };
-use crate::constants::{MAX_LENGTH_2004, MAX_LENGTH_2016};
-use crate::error::Error;
-use crate::frame::{Frame, FrameType};
 
 use super::parse_frame_util as parse;
 
