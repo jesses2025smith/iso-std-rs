@@ -1,6 +1,4 @@
-use thiserror::Error;
-
-#[derive(Debug, Clone, Error)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum Error {
     #[error("ISO-TP - device error")]
     DeviceError,
