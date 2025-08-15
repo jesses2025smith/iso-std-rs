@@ -68,7 +68,7 @@ impl VehicleID {
         vin: String,
         address: LogicAddress,
         eid: Eid,
-        gid: Eid,
+        gid: Gid,
         further_act: FurtherAction,
         sync_status: Option<SyncStatus>,
     ) -> Result<Self, Error> {

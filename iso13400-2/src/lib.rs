@@ -104,108 +104,12 @@ pub mod response;
 
 pub(crate) mod utils;
 
-pub use self::{common::*, constants::*, error::Error as Iso13400Error};
+mod id;
+mod payload;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub struct Id(pub(crate) u64);
-
-impl Id {
-    pub fn new(id: u64) -> Result<Self, error::Error> {
-        if (id & 0xFFFF0000_00000000) > 0 {
-            return Err(error::Error::InvalidParam(format!(
-                "id: {} out of range",
-                id
-            )));
-        }
-
-        Ok(Self(id))
-    }
-
-    #[inline]
-    pub const fn length() -> usize {
-        SIZE_OF_ID
-    }
-}
-
-impl TryFrom<&[u8]> for Id {
-    type Error = error::Error;
-
-    #[inline]
-    fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        let _ = utils::data_len_check(data, Self::length(), false)?;
-        let id = u64::from_be_bytes([
-            0x00, 0x00, data[0], data[1], data[2], data[3], data[4], data[5],
-        ]);
-
-        Self::new(id)
-    }
-}
-
-impl From<Id> for Vec<u8> {
-    #[inline]
-    fn from(val: Id) -> Self {
-        let mut result = val.0.to_le_bytes().to_vec();
-        result.resize(Id::length(), Default::default());
-        result.reverse();
-
-        result
-    }
-}
-
-#[repr(u16)]
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum PayloadType {
-    RespHeaderNegative = HEADER_NEGATIVE,
-    ReqVehicleId = UDP_REQ_VEHICLE_IDENTIFIER,
-    ReqVehicleWithEid = UDP_REQ_VEHICLE_ID_WITH_EID,
-    ReqVehicleWithVIN = UDP_REQ_VEHICLE_ID_WITH_VIN,
-    RespVehicleId = UDP_RESP_VEHICLE_IDENTIFIER,
-    ReqRoutingActive = TCP_REQ_ROUTING_ACTIVE,
-    RespRoutingActive = TCP_RESP_ROUTING_ACTIVE,
-    ReqAliveCheck = TCP_REQ_ALIVE_CHECK,
-    RespAliveCheck = TCP_RESP_ALIVE_CHECK,
-    ReqEntityStatus = UDP_REQ_ENTITY_STATUS,
-    RespEntityStatus = UDP_RESP_ENTITY_STATUS,
-    ReqDiagPowerMode = UDP_REQ_DIAGNOSTIC_POWER_MODE,
-    RespDiagPowerMode = UDP_RESP_DIAGNOSTIC_POWER_MODE,
-    Diagnostic = TCP_DIAGNOSTIC,
-    RespDiagPositive = TCP_RESP_DIAGNOSTIC_POSITIVE,
-    RespDiagNegative = TCP_RESP_DIAGNOSTIC_NEGATIVE,
-}
-
-impl TryFrom<u16> for PayloadType {
-    type Error = error::Error;
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        match value {
-            HEADER_NEGATIVE => Ok(Self::RespHeaderNegative),
-            UDP_REQ_VEHICLE_IDENTIFIER => Ok(Self::ReqVehicleId),
-            UDP_REQ_VEHICLE_ID_WITH_EID => Ok(Self::ReqVehicleWithEid),
-            UDP_REQ_VEHICLE_ID_WITH_VIN => Ok(Self::ReqVehicleWithVIN),
-            UDP_RESP_VEHICLE_IDENTIFIER => Ok(Self::RespVehicleId),
-            TCP_REQ_ROUTING_ACTIVE => Ok(Self::ReqRoutingActive),
-            TCP_RESP_ROUTING_ACTIVE => Ok(Self::RespRoutingActive),
-            TCP_REQ_ALIVE_CHECK => Ok(Self::ReqAliveCheck),
-            TCP_RESP_ALIVE_CHECK => Ok(Self::RespAliveCheck),
-            UDP_REQ_ENTITY_STATUS => Ok(Self::ReqEntityStatus),
-            UDP_RESP_ENTITY_STATUS => Ok(Self::RespEntityStatus),
-            UDP_REQ_DIAGNOSTIC_POWER_MODE => Ok(Self::ReqDiagPowerMode),
-            UDP_RESP_DIAGNOSTIC_POWER_MODE => Ok(Self::RespDiagPowerMode),
-            TCP_DIAGNOSTIC => Ok(Self::Diagnostic),
-            TCP_RESP_DIAGNOSTIC_POSITIVE => Ok(Self::RespDiagPositive),
-            TCP_RESP_DIAGNOSTIC_NEGATIVE => Ok(Self::RespDiagNegative),
-            _ => Err(error::Error::InvalidPayloadType(value)),
-        }
-    }
-}
-
-impl From<PayloadType> for u16 {
-    fn from(val: PayloadType) -> Self {
-        val as u16
-    }
-}
-
-pub type Eid = Id;
-pub type Gid = Id;
+pub type Eid = id::Id;
+pub type Gid = id::Id;
+pub use self::{common::*, constants::*, error::Error as Iso13400Error, payload::*};
 
 /// It will be removed in a future version. Use [NodeType] instead
 #[deprecated(
