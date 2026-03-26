@@ -3,6 +3,8 @@ use crate::{
     core::{FlowControlContext, FlowControlState},
     error::Error,
 };
+#[cfg(feature = "can-fd")]
+use rs_can::{can_utils::can_dlc, CanType, MAX_FD_FRAME_SIZE};
 
 /// ISO 15765-2 frame type define.
 #[repr(u8)]
@@ -86,8 +88,7 @@ impl Frame {
         let length = data.len();
         match length {
             0 => Err(Error::EmptyPdu),
-            1..=2 => Err(Error::InvalidPdu(data.to_vec())),
-            3.. => {
+            _ => {
                 let byte0 = data[0];
                 match FrameType::try_from(byte0)? {
                     FrameType::Single => {
@@ -96,6 +97,10 @@ impl Frame {
                         crate::can::standard::decode_single(data, byte0, length)
                     }
                     FrameType::First => {
+                        if length < 2 {
+                            return Err(Error::InvalidPdu(data.to_vec()));
+                        }
+
                         // First frame
                         #[cfg(feature = "can")]
                         crate::can::standard::decode_first(data, byte0, length)
@@ -108,6 +113,10 @@ impl Frame {
                         })
                     }
                     FrameType::FlowControl => {
+                        if length < 3 {
+                            return Err(Error::InvalidPdu(data.to_vec()));
+                        }
+
                         // let suppress_positive = (data1 & 0x80) == 0x80;
                         let state = FlowControlState::try_from(byte0 & 0x0F)?;
                         let fc = FlowControlContext::new(state, data[1], data[2])?;
@@ -142,21 +151,44 @@ impl Frame {
             Self::ConsecutiveFrame { sequence, mut data } => {
                 let mut result = vec![FrameType::Consecutive as u8 | sequence];
                 result.append(&mut data);
-                #[cfg(feature = "can")]
+
+                #[cfg(not(feature = "can-fd"))]
                 result.resize(
                     rs_can::MAX_FRAME_SIZE,
                     padding.unwrap_or(rs_can::DEFAULT_PADDING),
                 );
+
+                #[cfg(feature = "can-fd")]
+                {
+                    let mut dlc = can_dlc(result.len(), CanType::CanFd);
+                    if dlc < 0 {
+                        dlc = MAX_FD_FRAME_SIZE as isize;
+                    }
+                    result.resize(dlc as usize, padding.unwrap_or(rs_can::DEFAULT_PADDING));
+                }
+
                 result
             }
             Self::FlowControlFrame(context) => {
                 let byte0_h: u8 = FrameType::FlowControl.into();
                 let byte0_l: u8 = context.state().into();
                 let mut result = vec![byte0_h | byte0_l, context.block_size(), context.st_min()];
+
+                #[cfg(not(feature = "can-fd"))]
                 result.resize(
                     rs_can::MAX_FRAME_SIZE,
                     padding.unwrap_or(rs_can::DEFAULT_PADDING),
                 );
+
+                #[cfg(feature = "can-fd")]
+                {
+                    let mut dlc = can_dlc(result.len(), CanType::CanFd);
+                    if dlc < 0 {
+                        dlc = MAX_FD_FRAME_SIZE as isize;
+                    }
+                    result.resize(dlc as usize, padding.unwrap_or(rs_can::DEFAULT_PADDING));
+                }
+
                 result
             }
         }
