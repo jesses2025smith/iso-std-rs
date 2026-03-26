@@ -1,7 +1,5 @@
 #![allow(unused_imports)]
 
-#[cfg(feature = "can-fd")]
-use rs_can::can_utils::can_dlc;
 use rs_can::{DEFAULT_PADDING, MAX_FD_FRAME_SIZE, MAX_FRAME_SIZE};
 
 use crate::{
@@ -60,12 +58,7 @@ pub(crate) fn encode_single(mut data: Vec<u8>, padding: Option<u8>) -> Vec<u8> {
     let length = data.len();
     let mut result = vec![FrameType::Single as u8 | length as u8];
     result.append(&mut data);
-    #[cfg(not(feature = "can-fd"))]
     result.resize(MAX_FRAME_SIZE, padding.unwrap_or(DEFAULT_PADDING));
-    #[cfg(feature = "can-fd")]
-    if let Some(resize) = can_dlc(length, true) {
-        result.resize(resize, padding.unwrap_or(DEFAULT_PADDING));
-    }
 
     result
 }

@@ -154,7 +154,7 @@ impl Context {
                         *index += 1;
                     }
                 }
-                sleep(Duration::from_micros(ctx.st_min as u64)).await;
+                sleep(Duration::from_micros(ctx.st_min_us() as u64)).await;
             }
             // free `flow_ctrl` lock
         }
