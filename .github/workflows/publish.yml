@@ -12,13 +12,13 @@ jobs:
     name: Check on Windows
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check debug code
-        run:  >
+        run: >
           cargo check
           # --verbose
       - name: Check release code
-        run:  >
+        run: >
           cargo check
           --release
           # --verbose
@@ -26,13 +26,13 @@ jobs:
     name: Check on Linux
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Check debug code
-        run:  >
+        run: >
           cargo check
           # --verbose
       - name: Check release code
-        run:  >
+        run: >
           cargo check
           --release
           # --verbose
@@ -41,15 +41,15 @@ jobs:
     needs: [windows, linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Publish
         run: |
           set -e
-          
+
           META_DATA=$(cargo metadata --no-deps --format-version 1 | jq -r ".packages")
           readarray -t CRATES < <(echo "${META_DATA}" | jq -r '.[].name')
           readarray -t VERSSIONS < <(echo "${META_DATA}" | jq -r '.[].version')
-          
+
           for i in "${!CRATES[@]}"; do
             CRATE=${CRATES[$i]}
             VERSION=${VERSSIONS[$i]}
