@@ -14,11 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Check debug code
-        run:  >
+        run: >
           cargo check
           # --verbose
       - name: Check release code
-        run:  >
+        run: >
           cargo check
           --release
           # --verbose
@@ -28,11 +28,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Check debug code
-        run:  >
+        run: >
           cargo check
           # --verbose
       - name: Check release code
-        run:  >
+        run: >
           cargo check
           --release
           # --verbose
@@ -45,11 +45,11 @@ jobs:
       - name: Publish
         run: |
           set -e
-          
+
           META_DATA=$(cargo metadata --no-deps --format-version 1 | jq -r ".packages")
           readarray -t CRATES < <(echo "${META_DATA}" | jq -r '.[].name')
           readarray -t VERSSIONS < <(echo "${META_DATA}" | jq -r '.[].version')
-          
+
           for i in "${!CRATES[@]}"; do
             CRATE=${CRATES[$i]}
             VERSION=${VERSSIONS[$i]}
