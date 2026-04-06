@@ -16,7 +16,7 @@ repository = "https://github.com/jesses2025smith/iso-std-rs"
 
 [workspace.dependencies]
 async-trait = "0.1"
-bitfield-struct = "0.12"
+bitfield-struct = "0.13"
 bitflags = "2.9"
 bytes =  "1.10"
 getset = "0.1"
