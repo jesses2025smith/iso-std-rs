@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    utils, DidConfig, ResponseData, Service,
+    utils, Configuration, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -38,7 +38,7 @@ impl ResponseData for TransferData {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -57,9 +57,9 @@ impl ResponseData for TransferData {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for TransferData {
+impl TryFrom<(&Response, &Configuration)> for TransferData {
     type Error = Error;
-    fn try_from((res, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((res, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = res.service();
         if service != Service::TransferData || res.sub_func.is_some() {
             return Err(Error::ServiceError(service));

@@ -2,11 +2,11 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, DidConfig, Service, SignatureEncryptionCalculation};
+    use iso14229_1::{request, response, Configuration, Service, SignatureEncryptionCalculation};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("84006100000601242EF123AA55DBD10EDC55AA")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -28,7 +28,7 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("C4002000000601246EF123FEDB910EDCFF")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -73,7 +73,7 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F8412")?;
         let response = response::Response::try_from((&source, &cfg))?;

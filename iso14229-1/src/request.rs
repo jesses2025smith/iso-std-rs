@@ -72,11 +72,11 @@ mod request_file_transfer; // 0x38
 #[cfg(any(feature = "std2013", feature = "std2020"))]
 pub use request_file_transfer::*;
 
-use crate::{error::Error, request, utils, DidConfig, RequestData, Service, SUPPRESS_POSITIVE};
+use crate::{error::Error, request, utils, Configuration, RequestData, Service, SUPPRESS_POSITIVE};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SubFunction {
-    function: u8,
+    pub(crate) function: u8,
     suppress_positive: bool,
 }
 
@@ -122,7 +122,7 @@ impl Request {
         service: Service,
         sub_func: Option<u8>,
         data: T,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Self, Error> {
         match service {
             Service::SessionCtrl => SessionCtrl::new_request(data, sub_func, cfg),
@@ -175,7 +175,7 @@ impl Request {
     }
 
     #[inline]
-    pub fn data<T>(&self, cfg: &DidConfig) -> Result<T, Error>
+    pub fn data<T>(&self, cfg: &Configuration) -> Result<T, Error>
     where
         T: RequestData,
     {
@@ -186,7 +186,7 @@ impl Request {
     fn new_sub_func<T: AsRef<[u8]>>(
         data: T,
         service: Service,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Self, Error> {
         let data = data.as_ref();
         let data_len = data.len();
@@ -213,9 +213,9 @@ impl From<Request> for Vec<u8> {
     }
 }
 
-impl<T: AsRef<[u8]>> TryFrom<(Service, T, &DidConfig)> for Request {
+impl<T: AsRef<[u8]>> TryFrom<(Service, T, &Configuration)> for Request {
     type Error = Error;
-    fn try_from((service, data, cfg): (Service, T, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((service, data, cfg): (Service, T, &Configuration)) -> Result<Self, Self::Error> {
         match service {
             Service::SessionCtrl
             | Service::ECUReset
@@ -252,9 +252,9 @@ impl<T: AsRef<[u8]>> TryFrom<(Service, T, &DidConfig)> for Request {
     }
 }
 
-impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Request {
+impl<T: AsRef<[u8]>> TryFrom<(T, &Configuration)> for Request {
     type Error = Error;
-    fn try_from((data, cfg): (T, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((data, cfg): (T, &Configuration)) -> Result<Self, Self::Error> {
         let data = data.as_ref();
         let data_len = data.len();
         utils::data_length_check(data_len, 1, false)?;

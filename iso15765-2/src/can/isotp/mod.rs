@@ -26,9 +26,6 @@ pub struct CanIsoTp<D, C, F> {
     pub(crate) is_server: bool,
 }
 
-unsafe impl<D, C, F> Send for CanIsoTp<D, C, F> {}
-unsafe impl<D, C, F> Sync for CanIsoTp<D, C, F> {}
-
 impl<D, C, F> CanIsoTp<D, C, F>
 where
     D: CanDevice<Channel = C, Frame = F> + Clone + Send + 'static,
@@ -118,11 +115,12 @@ where
         let mut index = 0;
         for iso_tp_frame in frames {
             let data = iso_tp_frame.encode(None);
-            let mut frame =
-                F::new(CanId::from_bits(can_id, None), data.as_slice()).ok_or_else(|| {
-                    rsutil::warn!("fail to convert iso-tp frame to can frame");
-                    Error::DeviceError
-                })?;
+            let id =
+                CanId::from_bits(can_id, None).map_err(|e| Error::InvalidParam(e.to_string()))?;
+            let mut frame = F::new_can(id, data.as_slice()).map_err(|e| {
+                rsutil::warn!("fail to convert iso-tp frame to can frame");
+                Error::InvalidParam(e.to_string())
+            })?;
             frame.set_channel(self.channel.clone());
 
             if need_flow_ctrl {
@@ -157,25 +155,38 @@ where
 
         let iso_tp_frame = Frame::default_flow_ctrl_frame();
         let data = iso_tp_frame.encode(None);
-        match F::new(CanId::from_bits(tx_id, None), data.as_slice()) {
-            Some(mut frame) => {
-                frame.set_channel(self.channel.clone());
+        match CanId::try_from(tx_id) {
+            Ok(id) => match F::new_can(id, data.as_slice()) {
+                Ok(mut frame) => {
+                    frame.set_channel(self.channel.clone());
 
-                self.context.state_append(State::Sending).await;
-                match self.transmitter().send(frame).await {
-                    Ok(_) => {
-                        self.iso_tp_event(Event::FirstFrameReceived).await;
-                    }
-                    Err(e) => {
-                        rsutil::warn!("ISO-TP - transmit failed: {:?}", e);
-                        self.context.state_append(State::Error).await;
+                    self.context.state_append(State::Sending).await;
+                    match self.transmitter().send(frame).await {
+                        Ok(_) => {
+                            self.iso_tp_event(Event::FirstFrameReceived).await;
+                        }
+                        Err(e) => {
+                            rsutil::warn!("ISO-TP - transmit failed: {:?}", e);
+                            self.context.state_append(State::Error).await;
 
-                        self.iso_tp_event(Event::ErrorOccurred(Error::DeviceError))
-                            .await;
+                            self.iso_tp_event(Event::ErrorOccurred(Error::DeviceError))
+                                .await;
+                        }
                     }
                 }
+                Err(e) => {
+                    rsutil::error!("ISO-TP - convert `iso-tp frame` to `can-frame` error: {e}");
+                    self.context.state_append(State::Error).await;
+                    self.iso_tp_event(Event::ErrorOccurred(Error::Other(e.to_string())))
+                        .await;
+                }
+            },
+            Err(e) => {
+                rsutil::warn!("ISO-TP - convert to id error: {e}");
+                self.context.state_append(State::Error).await;
+                self.iso_tp_event(Event::ErrorOccurred(Error::Other(e.to_string())))
+                    .await;
             }
-            None => rsutil::error!("ISO-TP - convert `iso-tp frame` to `can-frame` error"),
         }
     }
 

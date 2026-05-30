@@ -4,7 +4,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, DidConfig, RequestData, Service,
+    utils, Configuration, RequestData, Service,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -53,7 +53,7 @@ impl RequestData for ClearDiagnosticInfo {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -74,10 +74,10 @@ impl RequestData for ClearDiagnosticInfo {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for ClearDiagnosticInfo {
+impl TryFrom<(&Request, &Configuration)> for ClearDiagnosticInfo {
     type Error = Error;
     #[cfg(any(feature = "std2020"))]
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::ClearDiagnosticInfo || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
@@ -100,7 +100,7 @@ impl TryFrom<(&Request, &DidConfig)> for ClearDiagnosticInfo {
     }
 
     #[cfg(any(feature = "std2006", feature = "std2013"))]
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::ClearDiagnosticInfo || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));

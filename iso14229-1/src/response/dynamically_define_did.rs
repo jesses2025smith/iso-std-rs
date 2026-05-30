@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    DefinitionType, DidConfig, DynamicallyDID, ResponseData, Service,
+    DefinitionType, DynamicallyDID, Configuration, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -33,7 +33,7 @@ impl ResponseData for DynamicallyDefineDID {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -63,9 +63,9 @@ impl ResponseData for DynamicallyDefineDID {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for DynamicallyDefineDID {
+impl TryFrom<(&Response, &Configuration)> for DynamicallyDefineDID {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service;
         if service != Service::DynamicalDefineDID || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));

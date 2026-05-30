@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, DidConfig, LinkCtrlMode, LinkCtrlType, RequestData, Service,
+    utils, Configuration, LinkCtrlMode, LinkCtrlType, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -43,7 +43,7 @@ impl RequestData for LinkCtrl {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -75,9 +75,9 @@ impl RequestData for LinkCtrl {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for LinkCtrl {
+impl TryFrom<(&Request, &Configuration)> for LinkCtrl {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::LinkCtrl || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));

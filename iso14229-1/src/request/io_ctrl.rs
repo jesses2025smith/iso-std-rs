@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, DataIdentifier, DidConfig, IOCtrlOption, IOCtrlParameter, RequestData, Service,
+    utils, DataIdentifier, IOCtrlOption, IOCtrlParameter, Configuration, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -19,7 +19,7 @@ impl IOCtrl {
         param: IOCtrlParameter,
         state: Vec<u8>,
         mask: Vec<u8>,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Self, Error> {
         match param {
             IOCtrlParameter::ReturnControlToEcu
@@ -32,7 +32,7 @@ impl IOCtrl {
                 }
             }
             IOCtrlParameter::ShortTermAdjustment => {
-                let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+                let &did_len = cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
 
                 utils::data_length_check(state.len(), did_len, false)?;
             }
@@ -77,7 +77,7 @@ impl RequestData for IOCtrl {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -95,9 +95,9 @@ impl RequestData for IOCtrl {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for IOCtrl {
+impl TryFrom<(&Request, &Configuration)> for IOCtrl {
     type Error = Error;
-    fn try_from((req, cfg): (&Request, &DidConfig)) -> Result<IOCtrl, Error> {
+    fn try_from((req, cfg): (&Request, &Configuration)) -> Result<IOCtrl, Error> {
         let service = req.service();
         if service != Service::IOCtrl || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));
@@ -112,7 +112,7 @@ impl TryFrom<(&Request, &DidConfig)> for IOCtrl {
 
         let param = IOCtrlParameter::try_from(data[offset])?;
         offset += 1;
-        let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+        let &did_len = cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
         utils::data_length_check(data_len, offset + did_len, false)?;
         let state = data[offset..offset + did_len].to_vec();
         offset += did_len;

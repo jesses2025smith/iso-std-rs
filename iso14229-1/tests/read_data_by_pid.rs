@@ -3,11 +3,11 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::request::TransmissionMode;
-    use iso14229_1::{request, response, DidConfig, Iso14229Error, Service};
+    use iso14229_1::{request, response, Configuration, Iso14229Error, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("2A0100")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("6A0000")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F2A12")?;
         let response = response::Response::try_from((&source, &cfg))?;

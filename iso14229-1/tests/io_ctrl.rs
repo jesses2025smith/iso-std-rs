@@ -2,13 +2,13 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, DataIdentifier, DidConfig, IOCtrlParameter, Service};
+    use iso14229_1::{request, response, Configuration, DataIdentifier, IOCtrlParameter, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
         let did = DataIdentifier::from(0x4101);
-        let mut cfg = DidConfig::default();
-        cfg.insert(did, 2);
+        let mut cfg = Configuration::default();
+        cfg.did.insert(did, 2);
 
         let source = hex::decode("2f4101030040ffff")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -32,8 +32,8 @@ mod tests {
     #[test]
     fn test_response() -> anyhow::Result<()> {
         let did = DataIdentifier::from(0x4101);
-        let mut cfg = DidConfig::default();
-        cfg.insert(did, 2);
+        let mut cfg = Configuration::default();
+        cfg.did.insert(did, 2);
 
         let source = hex::decode("6f4101030040")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -54,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F2F12")?;
         let response = response::Response::try_from((&source, &cfg))?;

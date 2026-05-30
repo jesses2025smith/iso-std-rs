@@ -1,18 +1,16 @@
 #![allow(clippy::non_minimal_cfg)]
 
 mod common;
+mod config;
 mod constant;
 mod error;
 pub mod request;
 pub mod response;
 pub mod utils;
 
-pub use self::{common::*, constant::*, error::Error as Iso14229Error};
+pub use self::{common::*, config::*, constant::*, error::Error as Iso14229Error};
 
-use std::{
-    collections::HashMap,
-    fmt::{Display, Formatter},
-};
+use std::fmt::{Display, Formatter};
 
 rsutil::enum_extend!(
     /// the service marked with `✅` is completed.
@@ -25,14 +23,14 @@ rsutil::enum_extend!(
         SessionCtrl = 0x10,         // ✅
         ECUReset = 0x11,            // ✅
         ClearDiagnosticInfo = 0x14, // ✅
-        ReadDTCInfo = 0x19,         // ⭕
+        ReadDTCInfo = 0x19,         // ✅
         ReadDID = 0x22,             // ✅
         ReadMemByAddr = 0x23,       // ✅
         ReadScalingDID = 0x24,      // ✅
         SecurityAccess = 0x27,      // ✅
         CommunicationCtrl = 0x28,   // ✅
         #[cfg(any(feature = "std2020"))]
-        Authentication = 0x29, // ✅
+        Authentication = 0x29,      // ✅
         ReadDataByPeriodId = 0x2A,  // ✅
         DynamicalDefineDID = 0x2C,  // ✅
         WriteDID = 0x2E,            // ✅
@@ -47,10 +45,10 @@ rsutil::enum_extend!(
         WriteMemByAddr = 0x3D,      // ✅
         TesterPresent = 0x3E,       // ✅
         #[cfg(any(feature = "std2006", feature = "std2013"))]
-        AccessTimingParam = 0x83, // ✅
+        AccessTimingParam = 0x83,   // ✅
         SecuredDataTrans = 0x84,    // ✅
         CtrlDTCSetting = 0x85,      // ✅
-        ResponseOnEvent = 0x86,     // ❌
+        ResponseOnEvent = 0x86,     // ✅
         LinkCtrl = 0x87,            // ✅
         NRC = 0x7F,
     },
@@ -97,25 +95,23 @@ impl Display for Service {
     }
 }
 
-pub type DidConfig = HashMap<DataIdentifier, usize>;
-
 pub trait RequestData:
-    Into<Vec<u8>> + for<'a> TryFrom<(&'a request::Request, &'a DidConfig), Error = error::Error>
+    Into<Vec<u8>> + for<'a> TryFrom<(&'a request::Request, &'a Configuration), Error = error::Error>
 {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<request::Request, error::Error>;
 }
 
-// TryFrom<(T, &DidConfig)>
+// TryFrom<(T, &Configuration)>
 pub trait ResponseData:
-    Into<Vec<u8>> + for<'a> TryFrom<(&'a response::Response, &'a DidConfig), Error = error::Error>
+    Into<Vec<u8>> + for<'a> TryFrom<(&'a response::Response, &'a Configuration), Error = error::Error>
 {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<response::Response, error::Error>;
 }

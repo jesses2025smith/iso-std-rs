@@ -3,12 +3,12 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::{
-        request, response, AddressAndLengthFormatIdentifier, DidConfig, MemoryLocation, Service,
+        request, response, AddressAndLengthFormatIdentifier, Configuration, MemoryLocation, Service,
     };
 
     #[test]
     fn test_read_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("2312481305")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -37,7 +37,7 @@ mod tests {
 
     #[test]
     fn test_read_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("630102")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -50,7 +50,7 @@ mod tests {
 
     #[test]
     fn test_read_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F2312")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_write_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("3D4420481213000000051122334455")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -97,7 +97,7 @@ mod tests {
 
     #[test]
     fn test_write_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7D12481305")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn test_write_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F3D12")?;
         let response = response::Response::try_from((&source, &cfg))?;

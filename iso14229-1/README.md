@@ -31,7 +31,7 @@ iso14229-1 = { version="lastest-version" }
   *  SessionCtrl = 0x10,         // ✅
   *  ECUReset = 0x11,            // ✅
   *  ClearDiagnosticInfo = 0x14, // ✅
-  *  ReadDTCInfo = 0x19,         // ⭕
+  *  ReadDTCInfo = 0x19,         // ✅
   *  ReadDID = 0x22,             // ✅
   *  ReadMemByAddr = 0x23,       // ✅
   *  ReadScalingDID = 0x24,      // ✅
@@ -53,7 +53,7 @@ iso14229-1 = { version="lastest-version" }
   *  AccessTimingParam = 0x83,   // ✅
   *  SecuredDataTrans = 0x84,    // ✅
   *  CtrlDTCSetting = 0x85,      // ✅
-  *  ResponseOnEvent = 0x86,     // ❌
+  *  ResponseOnEvent = 0x86,     // ✅
   *  LinkCtrl = 0x87,            // ✅
 
 ## Contributing

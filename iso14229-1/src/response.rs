@@ -76,7 +76,7 @@ mod code;
 pub use code::Code;
 
 use crate::{
-    constant::POSITIVE_OFFSET, error::Error, response, utils, DidConfig, ECUResetType,
+    constant::POSITIVE_OFFSET, error::Error, response, utils, Configuration, ECUResetType,
     ResponseData, Service,
 };
 
@@ -165,7 +165,7 @@ impl Response {
         service: Service,
         sub_func: Option<u8>,
         data: T,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Self, Error> {
         match service {
             Service::SessionCtrl => SessionCtrl::new_response(data, sub_func, cfg),
@@ -271,7 +271,7 @@ impl Response {
     }
 
     #[inline]
-    pub fn data<T>(&self, cfg: &DidConfig) -> Result<T, Error>
+    pub fn data<T>(&self, cfg: &Configuration) -> Result<T, Error>
     where
         T: ResponseData,
     {
@@ -282,7 +282,7 @@ impl Response {
     fn new_sub_func<T: AsRef<[u8]>>(
         data: T,
         service: Service,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Self, Error> {
         let data = data.as_ref();
         let data_len = data.len();
@@ -320,9 +320,9 @@ impl From<Response> for Vec<u8> {
     }
 }
 
-impl<T: AsRef<[u8]>> TryFrom<(Service, T, &DidConfig)> for Response {
+impl<T: AsRef<[u8]>> TryFrom<(Service, T, &Configuration)> for Response {
     type Error = Error;
-    fn try_from((service, data, cfg): (Service, T, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((service, data, cfg): (Service, T, &Configuration)) -> Result<Self, Self::Error> {
         match service {
             Service::SessionCtrl
             | Service::ECUReset
@@ -375,16 +375,16 @@ impl<T: AsRef<[u8]>> TryFrom<(Service, T, &DidConfig)> for Response {
     }
 }
 
-impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Response {
+impl<T: AsRef<[u8]>> TryFrom<(T, &Configuration)> for Response {
     type Error = Error;
-    fn try_from((data, cfg): (T, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((data, cfg): (T, &Configuration)) -> Result<Self, Self::Error> {
         let data = data.as_ref();
         let data_len = data.len();
         utils::data_length_check(data_len, 1, false)?;
 
         let mut offset = 0;
         let service = data[offset];
-        let service = if service == Service::NRC.into() {
+        let service = if service == Service::NRC as u8 {
             Ok(Service::NRC)
         } else {
             Service::try_from(service & !POSITIVE_OFFSET)

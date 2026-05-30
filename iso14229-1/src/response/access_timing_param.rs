@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    DidConfig, ResponseData, Service, TimingParameterAccessType,
+    Configuration, ResponseData, Service, TimingParameterAccessType,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -31,22 +31,21 @@ impl ResponseData for AccessTimingParameter {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
                 match TimingParameterAccessType::try_from(sub_func)? {
-                    TimingParameterAccessType::ReadExtendedTimingParameterSet => {
-                        match data.is_empty() {
-                            true => Err(Error::InvalidData(hex::encode(data))),
-                            false => Ok(()),
+                    TimingParameterAccessType::ReadExtendedTimingParameterSet
+                    | TimingParameterAccessType::ReadCurrentlyActiveTimingParameters => Ok(()),
+                    _ => {
+                        if data.is_empty() {
+                            Ok(())
+                        } else {
+                            Err(Error::InvalidData(hex::encode(data)))
                         }
                     }
-                    _ => match data.is_empty() {
-                        true => Ok(()),
-                        false => Err(Error::InvalidData(hex::encode(data))),
-                    },
                 }?;
 
                 Ok(Response {
@@ -61,9 +60,9 @@ impl ResponseData for AccessTimingParameter {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for AccessTimingParameter {
+impl TryFrom<(&Response, &Configuration)> for AccessTimingParameter {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service();
         if service != Service::AccessTimingParam || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));

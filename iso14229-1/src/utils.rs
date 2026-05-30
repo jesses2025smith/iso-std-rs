@@ -147,7 +147,7 @@ where
 }
 
 #[inline]
-pub fn peel_suppress_positive(value: u8) -> (bool, u8) {
+pub(crate) fn peel_suppress_positive(value: u8) -> (bool, u8) {
     (
         (value & SUPPRESS_POSITIVE) == SUPPRESS_POSITIVE,
         value & 0x7F,
@@ -155,7 +155,7 @@ pub fn peel_suppress_positive(value: u8) -> (bool, u8) {
 }
 
 /// deserialize for [`DidConfig`]
-pub fn did_config_deserialize<'de, D>(deserializer: D) -> Result<DidConfig, D::Error>
+pub(crate) fn did_config_deserialize<'de, D>(deserializer: D) -> Result<DidConfig, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -170,7 +170,10 @@ where
 }
 
 /// serialize for [`DidConfig`]
-pub fn did_config_serialize<'de, S>(cfg: &DidConfig, serializer: S) -> Result<S::Ok, S::Error>
+pub(crate) fn did_config_serialize<'de, S>(
+    cfg: &DidConfig,
+    serializer: S,
+) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {

@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    utils, DIDData, DataIdentifier, DidConfig, ResponseData, Service,
+    utils, DIDData, DataIdentifier, Configuration, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -31,7 +31,7 @@ impl ResponseData for WriteDID {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -51,9 +51,9 @@ impl ResponseData for WriteDID {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for WriteDID {
+impl TryFrom<(&Response, &Configuration)> for WriteDID {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service();
         if service != Service::WriteDID || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));

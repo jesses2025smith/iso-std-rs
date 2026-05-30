@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, DIDData, DataIdentifier, DidConfig, RequestData, Service,
+    utils, DIDData, DataIdentifier, Configuration, RequestData, Service,
 };
 
 /// Service 2E
@@ -19,7 +19,7 @@ impl RequestData for WriteDID {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -30,7 +30,7 @@ impl RequestData for WriteDID {
                 let did =
                     DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                 offset += 2;
-                let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+                let &did_len = &cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
 
                 utils::data_length_check(data.len(), offset + did_len, true)?;
 
@@ -44,9 +44,9 @@ impl RequestData for WriteDID {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for WriteDID {
+impl TryFrom<(&Request, &Configuration)> for WriteDID {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::WriteDID || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));

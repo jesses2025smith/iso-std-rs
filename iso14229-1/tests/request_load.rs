@@ -3,13 +3,13 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::{
-        request, response, AddressAndLengthFormatIdentifier, DataFormatIdentifier, DidConfig,
+        request, response, AddressAndLengthFormatIdentifier, Configuration, DataFormatIdentifier,
         LengthFormatIdentifier, MemoryLocation, Service,
     };
 
     #[test]
     fn test_download_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("3411440000000112345678")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -31,7 +31,7 @@ mod tests {
 
     #[test]
     fn test_download_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let ctx = response::RequestDownload::new(0x00123456)?;
         assert_eq!(ctx.lfi, LengthFormatIdentifier::new(0x04)?);
@@ -50,7 +50,7 @@ mod tests {
 
     #[test]
     fn test_download_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F3412")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_upload_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("3511440000000112345678")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn test_upload_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("754012345678")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn test_upload_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F3512")?;
         let response = response::Response::try_from((&source, &cfg))?;

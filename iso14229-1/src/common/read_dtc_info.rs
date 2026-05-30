@@ -25,6 +25,9 @@ rsutil::enum_extend!(
         ReportDTCByStatusMask = 0x02,
         ReportDTCSnapshotIdentification = 0x03,
         ReportDTCSnapshotRecordByDTCNumber = 0x04,
+        #[cfg(feature = "std2006")]
+        ReportDTCSnapshotRecordByRecordNumber = 0x05,
+        #[cfg(any(feature = "std2013", feature = "std2020"))]
         ReportDTCStoredDataByRecordNumber = 0x05,
         ReportDTCExtDataRecordByDTCNumber = 0x06,
         ReportNumberOfDTCBySeverityMaskRecord = 0x07, // (((statusOfDTC & DTCStatusMask) != 0) && ((severity & DTCSeverityMask) != 0)) == TRUE

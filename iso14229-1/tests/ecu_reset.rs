@@ -2,13 +2,13 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, DidConfig, ECUResetType, Iso14229Error, Service};
+    use iso14229_1::{request, response, Configuration, ECUResetType, Iso14229Error, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
         let source = hex::decode("1101")?;
 
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
         let request = request::Request::try_from((&source, &cfg))?;
         let sub_func = request.sub_function().unwrap();
         assert_eq!(
@@ -43,7 +43,7 @@ mod tests {
     fn test_response() -> anyhow::Result<()> {
         let source = hex::decode("5101")?;
 
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
         let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
@@ -76,7 +76,7 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F1112")?;
         let response = response::Response::try_from((&source, &cfg))?;

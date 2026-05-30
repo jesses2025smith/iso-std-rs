@@ -84,6 +84,16 @@ mod tests {
             TimingParameterAccessType::ReadCurrentlyActiveTimingParameters
         );
 
+        let source = hex::decode("C30300")?;
+        let response = response::Response::try_from((&source, &cfg))?;
+        let sub_func = response.sub_function().unwrap();
+        assert_eq!(
+            sub_func.function::<TimingParameterAccessType>()?,
+            TimingParameterAccessType::ReadCurrentlyActiveTimingParameters
+        );
+        let data = response.data::<response::AccessTimingParameter>(&cfg)?;
+        assert_eq!(data, response::AccessTimingParameter { data: vec![0x00] });
+
         let source = hex::decode("C304")?;
         let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();

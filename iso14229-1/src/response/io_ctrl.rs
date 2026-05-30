@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    utils, DataIdentifier, DidConfig, IOCtrlOption, IOCtrlParameter, ResponseData, Service,
+    utils, DataIdentifier, IOCtrlOption, IOCtrlParameter, Configuration, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -49,7 +49,7 @@ impl ResponseData for IOCtrl {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -63,7 +63,7 @@ impl ResponseData for IOCtrl {
                     DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                 offset += 2;
 
-                let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+                let &did_len = &cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
                 utils::data_length_check(data_len, offset + did_len, false)?;
 
                 Ok(Response {
@@ -77,9 +77,9 @@ impl ResponseData for IOCtrl {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for IOCtrl {
+impl TryFrom<(&Response, &Configuration)> for IOCtrl {
     type Error = Error;
-    fn try_from((resp, cfg): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, cfg): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service();
         if service != Service::IOCtrl || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
@@ -94,7 +94,7 @@ impl TryFrom<(&Response, &DidConfig)> for IOCtrl {
 
         let ctrl_type = IOCtrlParameter::try_from(data[offset])?;
         offset += 1;
-        let &record_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+        let &record_len = &cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
 
         utils::data_length_check(data_len, offset + record_len, true)?;
 

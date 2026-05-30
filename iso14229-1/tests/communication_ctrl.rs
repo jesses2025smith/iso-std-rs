@@ -3,12 +3,12 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::{
-        request, response, CommunicationCtrlType, CommunicationType, DidConfig, Service,
+        request, response, CommunicationCtrlType, CommunicationType, Configuration, Service,
     };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("280203")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -30,7 +30,7 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("6801")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -47,7 +47,7 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F2812")?;
         let response = response::Response::try_from((&source, &cfg))?;

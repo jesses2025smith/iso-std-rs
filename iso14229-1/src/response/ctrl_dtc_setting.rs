@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    utils, DTCSettingType, DidConfig, ResponseData, Service,
+    utils, Configuration, DTCSettingType, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -31,12 +31,15 @@ impl ResponseData for CtrlDTCSetting {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
             Some(sub_func) => {
-                let _ = DTCSettingType::try_from(sub_func)?;
+                match DTCSettingType::try_from(sub_func)? {
+                    DTCSettingType::On | DTCSettingType::Off => {}
+                    _ => return Err(Error::ReservedError(sub_func)),
+                }
 
                 utils::data_length_check(data.len(), 0, true)?;
 
@@ -52,17 +55,26 @@ impl ResponseData for CtrlDTCSetting {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for CtrlDTCSetting {
+impl TryFrom<(&Response, &Configuration)> for CtrlDTCSetting {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<CtrlDTCSetting, Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<CtrlDTCSetting, Error> {
         let service = resp.service;
         if service != Service::CtrlDTCSetting || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
         }
 
-        // let sub_func: DTCSettingType = request.sub_function().unwrap().function()?;
-        Ok(Self {
-            data: resp.data.clone(),
-        })
+        let Some(sub_func) = resp.sub_function() else {
+            return Err(Error::SubFunctionError(service));
+        };
+
+        let r#type: DTCSettingType = sub_func.function()?;
+        match r#type {
+            DTCSettingType::On | DTCSettingType::Off => {}
+            _ => return Err(Error::ReservedError(sub_func.0)),
+        }
+
+        utils::data_length_check(resp.raw_data().len(), 0, true)?;
+
+        Ok(Self { data: vec![] })
     }
 }

@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, AdministrativeParameter, DidConfig, RequestData, Service,
+    utils, AdministrativeParameter, Configuration, RequestData, Service,
     SignatureEncryptionCalculation,
 };
 
@@ -68,7 +68,7 @@ impl RequestData for SecuredDataTrans {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -86,9 +86,9 @@ impl RequestData for SecuredDataTrans {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for SecuredDataTrans {
+impl TryFrom<(&Request, &Configuration)> for SecuredDataTrans {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::SecuredDataTrans || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));

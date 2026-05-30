@@ -4,12 +4,12 @@
 mod tests {
     use iso14229_1::utils::U24;
     use iso14229_1::{
-        request, response, DidConfig, Iso14229Error, LinkCtrlMode, LinkCtrlType, Service,
+        request, response, Configuration, Iso14229Error, LinkCtrlMode, LinkCtrlType, Service,
     };
 
     #[test]
     fn new() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("870113")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -59,7 +59,7 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("C701")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -86,7 +86,7 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F8712")?;
         let response = response::Response::try_from((&source, &cfg))?;

@@ -8,7 +8,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0-b4"
+version = "0.1.0"
 edition = "2021"
 license = "MIT OR LGPL-3.0"
 authors = ["Jesse Smith <jesses2025smith@gmail.com>"]
@@ -16,18 +16,18 @@ repository = "https://github.com/jesses2025smith/iso-std-rs"
 
 [workspace.dependencies]
 async-trait = "0.1"
-bitfield-struct = "0.12"
-bitflags = "2.9"
+bitfield-struct = "0.13"
+bitflags = "2.11"
 bytes =  "1.10"
 getset = "0.1"
 hex = "0.4"
 log = "0.4"
-rs-can = "0.3"
+rs-can = "0.4"
 rsutil = "0.1"
 serde = "1.0"
 stream-cancel = "0.8"
 thiserror = "2.0"
-tokio = "1.50"
+tokio = "1.52"
 tokio-stream = "0.1"
 
 # dev-dependencies

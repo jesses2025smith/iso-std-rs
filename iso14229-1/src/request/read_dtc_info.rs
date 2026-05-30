@@ -4,7 +4,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, DTCReportType, DidConfig, RequestData, Service,
+    utils, DTCReportType, Configuration, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -23,6 +23,12 @@ pub enum DTCInfo {
         mask_record: utils::U24,
         record_num: u8,
     },
+    #[cfg(feature = "std2006")]
+    ReportDTCSnapshotRecordByRecordNumber {
+        // 0x05 in std2006
+        record_num: u8,
+    },
+    #[cfg(any(feature = "std2013", feature = "std2020"))]
     ReportDTCStoredDataByRecordNumber {
         // 0x05
         stored_num: u8,
@@ -140,6 +146,11 @@ impl From<DTCInfo> for Vec<u8> {
                 result.append(&mut mask_record.into());
                 result.push(record_num);
             }
+            #[cfg(feature = "std2006")]
+            DTCInfo::ReportDTCSnapshotRecordByRecordNumber { record_num } => {
+                result.push(record_num)
+            }
+            #[cfg(any(feature = "std2013", feature = "std2020"))]
             DTCInfo::ReportDTCStoredDataByRecordNumber { stored_num } => result.push(stored_num),
             DTCInfo::ReportDTCExtDataRecordByDTCNumber {
                 mask_record,
@@ -242,7 +253,7 @@ impl RequestData for DTCInfo {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -263,6 +274,11 @@ impl RequestData for DTCInfo {
                     DTCReportType::ReportDTCSnapshotRecordByDTCNumber => {
                         utils::data_length_check(data_len, 4, true)?
                     }
+                    #[cfg(feature = "std2006")]
+                    DTCReportType::ReportDTCSnapshotRecordByRecordNumber => {
+                        utils::data_length_check(data_len, 1, true)?
+                    }
+                    #[cfg(any(feature = "std2013", feature = "std2020"))]
                     DTCReportType::ReportDTCStoredDataByRecordNumber => {
                         utils::data_length_check(data_len, 1, true)?
                     }
@@ -364,9 +380,9 @@ impl RequestData for DTCInfo {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for DTCInfo {
+impl TryFrom<(&Request, &Configuration)> for DTCInfo {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::ReadDTCInfo || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
@@ -395,6 +411,13 @@ impl TryFrom<(&Request, &DidConfig)> for DTCInfo {
                     record_num,
                 })
             }
+            #[cfg(feature = "std2006")]
+            DTCReportType::ReportDTCSnapshotRecordByRecordNumber => {
+                Ok(Self::ReportDTCSnapshotRecordByRecordNumber {
+                    record_num: data[offset],
+                })
+            }
+            #[cfg(any(feature = "std2013", feature = "std2020"))]
             DTCReportType::ReportDTCStoredDataByRecordNumber => {
                 Ok(Self::ReportDTCStoredDataByRecordNumber {
                     stored_num: data[offset],
@@ -527,10 +550,6 @@ impl TryFrom<(&Request, &DidConfig)> for DTCInfo {
             DTCReportType::ReportWWHOBDDTCByMaskRecord => {
                 let func_gid = data[offset];
                 offset += 1;
-                if func_gid > 0xFE {
-                    return Err(Error::InvalidData(hex::encode(data)));
-                }
-
                 Ok(Self::ReportWWHOBDDTCByMaskRecord {
                     func_gid,
                     status_mask: data[offset],
@@ -540,10 +559,6 @@ impl TryFrom<(&Request, &DidConfig)> for DTCInfo {
             #[cfg(any(feature = "std2013", feature = "std2020"))]
             DTCReportType::ReportWWHOBDDTCWithPermanentStatus => {
                 let func_gid = data[offset];
-                if func_gid > 0xFE {
-                    return Err(Error::InvalidData(hex::encode(data)));
-                }
-
                 Ok(Self::ReportWWHOBDDTCWithPermanentStatus { func_gid })
             }
             #[cfg(any(feature = "std2020"))]

@@ -4,7 +4,7 @@ use crate::{
     error::Error,
     parse_algo_indicator, parse_not_nullable, parse_nullable,
     request::{Request, SubFunction},
-    utils, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData, NullableData,
+    utils, AlgorithmIndicator, AuthenticationTask, Configuration, NotNullableData, NullableData,
     RequestData, Service,
 };
 
@@ -132,7 +132,7 @@ impl RequestData for Authentication {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -181,9 +181,9 @@ impl RequestData for Authentication {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for Authentication {
+impl TryFrom<(&Request, &Configuration)> for Authentication {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service;
         if service != Service::Authentication || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));
