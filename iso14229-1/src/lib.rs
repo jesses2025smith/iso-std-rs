@@ -1,5 +1,3 @@
-#![allow(clippy::non_minimal_cfg)]
-
 mod common;
 mod config;
 mod constant;

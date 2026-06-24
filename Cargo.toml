@@ -8,7 +8,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT OR LGPL-3.0"
 authors = ["Jesse Smith <jesses2025smith@gmail.com>"]
@@ -17,8 +17,8 @@ repository = "https://github.com/jesses2025smith/iso-std-rs"
 [workspace.dependencies]
 async-trait = "0.1"
 bitfield-struct = "0.13"
-bitflags = "2.11"
-bytes =  "1.10"
+bitflags = "2.13"
+bytes =  "1.12"
 getset = "0.1"
 hex = "0.4"
 log = "0.4"

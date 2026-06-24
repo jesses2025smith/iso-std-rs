@@ -3,8 +3,6 @@ use crate::{
     core::{FlowControlContext, FlowControlState},
     error::Error,
 };
-#[cfg(feature = "can-fd")]
-use rs_can::{can_utils::can_dlc, CanType, MAX_FD_FRAME_SIZE};
 
 /// ISO 15765-2 frame type define.
 #[repr(u8)]
@@ -73,7 +71,11 @@ impl From<&Frame> for FrameType {
     }
 }
 
-impl Frame {
+pub trait FrameProcessor {
+    fn decode_single<T: AsRef<[u8]>>(data: T, byte0: u8, len: usize) -> Result<Frame, Error>;
+
+    fn decode_first<T: AsRef<[u8]>>(data: T, byte0: u8, len: usize) -> Result<Frame, Error>;
+
     /// Decode frame from origin data like `02 10 01`.
     ///
     /// # Parameters
@@ -83,7 +85,7 @@ impl Frame {
     /// # Return
     ///
     /// A struct that implements [`IsoTpFrame`] if parameters are valid.
-    pub fn decode<T: AsRef<[u8]>>(data: T) -> Result<Self, Error> {
+    fn decode<T: AsRef<[u8]>>(data: T) -> Result<Frame, Error> {
         let data = data.as_ref();
         let length = data.len();
         match length {
@@ -93,8 +95,7 @@ impl Frame {
                 match FrameType::try_from(byte0)? {
                     FrameType::Single => {
                         // Single frame
-                        #[cfg(feature = "can")]
-                        crate::can::standard::decode_single(data, byte0, length)
+                        Self::decode_first(data, byte0, length)
                     }
                     FrameType::First => {
                         if length < 2 {
@@ -102,12 +103,11 @@ impl Frame {
                         }
 
                         // First frame
-                        #[cfg(feature = "can")]
-                        crate::can::standard::decode_first(data, byte0, length)
+                        Self::decode_first(data, byte0, length)
                     }
                     FrameType::Consecutive => {
                         let sequence = byte0 & 0x0F;
-                        Ok(Self::ConsecutiveFrame {
+                        Ok(Frame::ConsecutiveFrame {
                             sequence,
                             data: Vec::from(&data[1..]),
                         })
@@ -120,7 +120,7 @@ impl Frame {
                         // let suppress_positive = (data1 & 0x80) == 0x80;
                         let state = FlowControlState::try_from(byte0 & 0x0F)?;
                         let fc = FlowControlContext::new(state, data[1], data[2])?;
-                        Ok(Self::FlowControlFrame(fc))
+                        Ok(Frame::FlowControlFrame(fc))
                     }
                 }
             } // v => Err(IsoTpError::LengthOutOfRange(v)),
@@ -136,63 +136,7 @@ impl Frame {
     /// # Returns
     ///
     /// The encoded data.
-    pub fn encode(self, padding: Option<u8>) -> Vec<u8> {
-        match self {
-            Self::SingleFrame { data } =>
-            {
-                #[cfg(feature = "can")]
-                crate::can::standard::encode_single(data, padding)
-            }
-            Self::FirstFrame { length, data } =>
-            {
-                #[cfg(feature = "can")]
-                crate::can::standard::encode_first(length, data)
-            }
-            Self::ConsecutiveFrame { sequence, mut data } => {
-                let mut result = vec![FrameType::Consecutive as u8 | sequence];
-                result.append(&mut data);
-
-                #[cfg(not(feature = "can-fd"))]
-                result.resize(
-                    rs_can::MAX_FRAME_SIZE,
-                    padding.unwrap_or(rs_can::DEFAULT_PADDING),
-                );
-
-                #[cfg(feature = "can-fd")]
-                {
-                    let mut dlc = can_dlc(result.len(), CanType::CanFd);
-                    if dlc < 0 {
-                        dlc = MAX_FD_FRAME_SIZE as isize;
-                    }
-                    result.resize(dlc as usize, padding.unwrap_or(rs_can::DEFAULT_PADDING));
-                }
-
-                result
-            }
-            Self::FlowControlFrame(context) => {
-                let byte0_h: u8 = FrameType::FlowControl.into();
-                let byte0_l: u8 = context.state().into();
-                let mut result = vec![byte0_h | byte0_l, context.block_size(), context.st_min()];
-
-                #[cfg(not(feature = "can-fd"))]
-                result.resize(
-                    rs_can::MAX_FRAME_SIZE,
-                    padding.unwrap_or(rs_can::DEFAULT_PADDING),
-                );
-
-                #[cfg(feature = "can-fd")]
-                {
-                    let mut dlc = can_dlc(result.len(), CanType::CanFd);
-                    if dlc < 0 {
-                        dlc = MAX_FD_FRAME_SIZE as isize;
-                    }
-                    result.resize(dlc as usize, padding.unwrap_or(rs_can::DEFAULT_PADDING));
-                }
-
-                result
-            }
-        }
-    }
+    fn encode(self, padding: Option<u8>) -> Vec<u8>;
 
     /// Encoding full multi-frame from original data.
     ///
@@ -207,11 +151,7 @@ impl Frame {
     /// The frames contain either a `SingleFrame` or a multi-frame sequence starting
     ///
     /// with a `FirstFrame` and followed by at least one `FlowControlFrame`.
-    #[inline]
-    pub fn from_data<T: AsRef<[u8]>>(data: T) -> Result<Vec<Self>, Error> {
-        #[cfg(feature = "can")]
-        crate::can::standard::from_data(data.as_ref())
-    }
+    fn from_data<T: AsRef<[u8]>>(data: T) -> Result<Vec<Frame>, Error>;
 
     /// New single frame from data.
     ///
@@ -220,11 +160,7 @@ impl Frame {
     /// # Returns
     ///
     /// A new `SingleFrame` if parameters are valid.
-    #[inline]
-    pub fn single_frame<T: AsRef<[u8]>>(data: T) -> Result<Self, Error> {
-        #[cfg(feature = "can")]
-        crate::can::standard::new_single(data)
-    }
+    fn single_frame<T: AsRef<[u8]>>(data: T) -> Result<Frame, Error>;
 
     /// New flow control frame from data.
     ///
@@ -237,19 +173,11 @@ impl Frame {
     /// # Returns
     ///
     /// A new `FlowControlFrame` if parameters are valid.
-    #[inline]
-    pub fn flow_ctrl_frame(
-        state: FlowControlState,
-        block_size: u8,
-        st_min: u8,
-    ) -> Result<Self, Error> {
-        Ok(Self::FlowControlFrame(FlowControlContext::new(
-            state, block_size, st_min,
-        )?))
-    }
+    fn flow_ctrl_frame(state: FlowControlState, block_size: u8, st_min: u8)
+        -> Result<Frame, Error>;
 
-    #[inline]
-    pub fn default_flow_ctrl_frame() -> Self {
+    #[allow(clippy::unwrap_used)]
+    fn default_flow_ctrl_frame() -> Frame {
         Self::flow_ctrl_frame(
             FlowControlState::Continues,
             DEFAULT_BLOCK_SIZE,

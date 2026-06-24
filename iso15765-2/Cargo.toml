@@ -20,19 +20,13 @@ bitflags = { workspace = true }
 bytes = { workspace = true }
 hex = { workspace = true }
 log = { workspace = true }
+rs-can = { workspace = true, optional = true }
 rsutil = { workspace = true, features = ["log"] }
+serde = { workspace = true, optional = true }
 stream-cancel = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["rt", "sync", "time"] }
 tokio-stream = { workspace = true, features = ["sync"] }
-
-[dependencies.rs-can]
-workspace = true
-optional = true
-
-[dependencies.serde]
-workspace = true
-optional = true
 
 [features]
 default = ["can", "std2004"]

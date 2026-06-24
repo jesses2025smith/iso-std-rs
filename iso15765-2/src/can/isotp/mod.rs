@@ -7,7 +7,7 @@ use crate::{
     can::address::{Address, AddressType},
     core::{Event, EventListener, FlowControlContext, FlowControlState, State},
     error::Error,
-    frame::Frame,
+    frame::{Frame, FrameProcessor as _},
     isotp::IsoTp,
 };
 use bytes::Bytes;

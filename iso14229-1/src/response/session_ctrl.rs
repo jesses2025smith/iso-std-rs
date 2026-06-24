@@ -97,7 +97,7 @@ impl<'a> TryFrom<&'a [u8]> for SessionTiming {
         offset += 2;
         let mut p2_star = u16::from_be_bytes([data[offset], data[offset + 1]]);
 
-        #[cfg(not(feature = "session_data_check"))]
+        #[cfg(not(feature = "session-data-check"))]
         if p2 > P2_MAX || p2_star > P2_STAR_MAX {
             rsutil::warn!("UDS - invalid session data P2: {}, P2*: {}", p2, p2_star);
             if p2 > P2_MAX {
@@ -107,7 +107,7 @@ impl<'a> TryFrom<&'a [u8]> for SessionTiming {
                 p2_star = P2_STAR_MAX;
             }
         }
-        #[cfg(feature = "session_data_check")]
+        #[cfg(feature = "session-data-check")]
         if p2 > P2_MAX || p2_star > P2_STAR_MAX {
             return Err(Error::InvalidSessionData(format!(
                 "P2: {}, P2*: {}",

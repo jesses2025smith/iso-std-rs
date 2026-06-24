@@ -80,52 +80,6 @@ use crate::{
     ResponseData, Service,
 };
 
-// #[cfg(any(feature = "std2006", feature = "std2013"))]
-// pub(crate) use crate::response::AccessTimingParam::ACCESS_TIMING_PARAM_NEGATIVES;
-// #[cfg(any(feature = "std2020"))]
-// pub(crate) use crate::response::Authentication::AUTH_NEGATIVES;
-// pub(crate) use crate::response::ClearDiagnosticInfo::CLEAR_DIAGNOSTIC_INFO_NEGATIVES;
-// pub(crate) use crate::response::CommunicationCtrl::COMMUNICATION_CTRL_NEGATIVES;
-// pub(crate) use crate::response::CtrlDTCSetting::CTRL_DTC_SETTING_NEGATIVES;
-// pub(crate) use crate::response::DynamicalDefineDID::DYNAMICAL_DID_NEGATIVES;
-// pub(crate) use crate::response::ECUReset::ECU_RESET_NEGATIVES;
-// pub(crate) use crate::response::IOCtrl::IO_CTRL_NEGATIVES;
-// pub(crate) use crate::response::LinkCtrl::LINK_CTRL_NEGATIVES;
-// pub(crate) use crate::response::ReadDataByPeriodId::READ_DATA_BY_PERIOD_ID_NEGATIVES;
-// pub(crate) use crate::response::ReadDID::READ_DID_NEGATIVES;
-// pub(crate) use crate::response::ReadDTCInfo::READ_DTC_INFO_NEGATIVES;
-// pub(crate) use crate::response::ReadMemByAddr::READ_MEM_BY_ADDR_NEGATIVES;
-// pub(crate) use crate::response::ReadScalingDID::READ_SCALING_DID_NEGATIVES;
-// pub(crate) use crate::response::RequestDownload::REQUEST_DOWNLOAD_NEGATIVES;
-// #[cfg(any(feature = "std2013", feature = "std2020"))]
-// pub(crate) use crate:response::RequestFileTransfer::REQUEST_FILE_TRANSFER_NEGATIVES;
-// pub(crate) use crate:response::RequestTransferExit::REQUEST_TRANSFER_EXIT_NEGATIVES;
-// pub(crate) use crate:response::RequestUpload::REQUEST_UPLOAD_NEGATIVES;
-// pub(crate) use crate:response::ResponseOnEvent::RESPONSE_ON_EVENT_NEGATIVES;
-// pub(crate) use crate:response::RoutineCtrl::ROUTINE_CTRL_NEGATIVES;
-// pub(crate) use crate:response::SecuredDataTrans::SECURED_DATA_TRANS_NEGATIVES;
-// pub(crate) use crate:response::SecurityAccess::SECURITY_ACCESS_NEGATIVES;
-// pub(crate) use crate:response::SessionCtrl::SESSION_CTRL_NEGATIVES;
-// pub(crate) use crate:response::TesterPresent::TESTER_PRESENT_NEGATIVES;
-// pub(crate) use crate:response::TransferData::TRANSFER_DATA_NEGATIVES;
-// pub(crate) use crate:response::WriteDID::WRITE_DID_NEGATIVES;
-// pub(crate) use crate:response::WriteMemByAddr::WRITE_MEM_BY_ADDR_NEGATIVES;
-//
-// enum_to_vec! (
-//     /// Defined by ISO-15764. Offset of 0x38 is defined within UDS standard (ISO-14229)
-//     pub enum ISO15764 {
-//         GeneralSecurityViolation = Code::SecureDataTransmissionRequired as u8 + 0,
-//         SecuredModeRequested = Code::SecureDataTransmissionRequired as u8 + 1,
-//         InsufficientProtection = Code::SecureDataTransmissionRequired as u8 + 2,
-//         TerminationWithSignatureRequested = Code::SecureDataTransmissionRequired as u8 + 3,
-//         AccessDenied = Code::SecureDataTransmissionRequired as u8 + 4,
-//         VersionNotSupported = Code::SecureDataTransmissionRequired as u8 + 5,
-//         SecuredLinkNotSupported = Code::SecureDataTransmissionRequired as u8 + 6,
-//         CertificateNotAvailable = Code::SecureDataTransmissionRequired as u8 + 7,
-//         AuditTrailInformationNotAvailable = Code::SecureDataTransmissionRequired as u8 + 8,
-//     }, u8, Error, InvalidParam
-// );
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SubFunction(u8);
 

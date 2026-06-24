@@ -1,7 +1,7 @@
 use crate::{
     can::isotp::CanIsoTp,
     core::{Event, State},
-    frame::Frame,
+    frame::{Frame, FrameProcessor as _},
 };
 use rs_can::{CanDevice, CanFrame, CanId, CanListener};
 use std::{any::Any, fmt::Display, sync::Weak};
