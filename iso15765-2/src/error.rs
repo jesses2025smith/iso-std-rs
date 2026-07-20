@@ -32,4 +32,7 @@ pub enum Error {
 
     #[error("ISO-TP - ECU has overload flow control response")]
     OverloadFlow,
+
+    #[error("ISO-TP - other error: {0}")]
+    Other(String),
 }

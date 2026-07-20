@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    DidConfig, ResponseData, Service,
+    Configuration, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -32,7 +32,7 @@ impl ResponseData for ResponseOnEvent {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -48,9 +48,16 @@ impl ResponseData for ResponseOnEvent {
 }
 
 #[allow(unused_variables)]
-impl TryFrom<(&Response, &DidConfig)> for ResponseOnEvent {
+impl TryFrom<(&Response, &Configuration)> for ResponseOnEvent {
     type Error = Error;
-    fn try_from((resp, cfg): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
-        Err(Error::NotImplement)
+    fn try_from((resp, cfg): (&Response, &Configuration)) -> Result<Self, Self::Error> {
+        let service = resp.service();
+        if service != Service::ResponseOnEvent || resp.sub_function().is_some() {
+            return Err(Error::ServiceError(service));
+        }
+
+        Ok(Self {
+            data: resp.raw_data().to_vec(),
+        })
     }
 }

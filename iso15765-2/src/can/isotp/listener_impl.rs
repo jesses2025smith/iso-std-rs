@@ -1,7 +1,7 @@
 use crate::{
     can::isotp::CanIsoTp,
     core::{Event, State},
-    frame::Frame,
+    frame::{Frame, FrameProcessor as _},
 };
 use rs_can::{CanDevice, CanFrame, CanId, CanListener};
 use std::{any::Any, fmt::Display, sync::Weak};
@@ -18,7 +18,7 @@ where
     }
 
     async fn on_frame_transmitted(&self, channel: C, id: CanId) {
-        let id = id.into_bits();
+        let id = id.as_raw();
         rsutil::trace!("ISO-TP - transmitted: {:04X} from {}", id, channel);
         if channel != self.channel {
             return;
@@ -54,7 +54,7 @@ where
                         continue;
                     }
 
-                    let frame_id = frame.id().into_bits();
+                    let frame_id = frame.id().as_raw();
                     let flag = if self.is_server {
                         frame_id != rx_id && frame_id != fid
                     } else {

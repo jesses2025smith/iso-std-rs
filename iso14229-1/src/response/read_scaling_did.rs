@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    utils, DataIdentifier, DidConfig, ResponseData, Service,
+    utils, DataIdentifier, Configuration, ResponseData, Service,
 };
 use bitfield_struct::bitfield;
 use std::{collections::HashSet, sync::LazyLock};
@@ -147,7 +147,7 @@ impl ResponseData for ReadScalingDID {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -167,9 +167,9 @@ impl ResponseData for ReadScalingDID {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for ReadScalingDID {
+impl TryFrom<(&Response, &Configuration)> for ReadScalingDID {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service();
         if service != Service::ReadScalingDID || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));

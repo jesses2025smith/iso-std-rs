@@ -2,11 +2,11 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, DidConfig, SecurityAccessLevel, Service};
+    use iso14229_1::{request, response, Configuration, SecurityAccessLevel, Service};
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("2701")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("270211223344")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -60,7 +60,7 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F2712")?;
         let response = response::Response::try_from((&source, &cfg))?;

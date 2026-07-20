@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    utils, DIDData, DataIdentifier, DidConfig, ResponseData, Service,
+    utils, DIDData, DataIdentifier, Configuration, ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -39,7 +39,7 @@ impl ResponseData for ReadDID {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -51,7 +51,7 @@ impl ResponseData for ReadDID {
                 let did =
                     DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                 offset += 2;
-                let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+                let &did_len = &cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
                 utils::data_length_check(data_len, offset + did_len, false)?;
                 offset += did_len;
 
@@ -60,7 +60,7 @@ impl ResponseData for ReadDID {
                     let did =
                         DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
                     offset += 2;
-                    let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+                    let &did_len = &cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
                     utils::data_length_check(data_len, offset + did_len, false)?;
                     offset += did_len;
                 }
@@ -76,9 +76,9 @@ impl ResponseData for ReadDID {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for ReadDID {
+impl TryFrom<(&Response, &Configuration)> for ReadDID {
     type Error = Error;
-    fn try_from((resp, cfg): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, cfg): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service();
         if service != Service::ReadDID || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
@@ -90,7 +90,7 @@ impl TryFrom<(&Response, &DidConfig)> for ReadDID {
 
         let did = DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
         offset += 2;
-        let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+        let &did_len = &cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
 
         let context = DIDData {
             did,
@@ -102,7 +102,7 @@ impl TryFrom<(&Response, &DidConfig)> for ReadDID {
         while data_len > offset {
             let did = DataIdentifier::from(u16::from_be_bytes([data[offset], data[offset + 1]]));
             offset += 2;
-            let &did_len = cfg.get(&did).ok_or(Error::DidNotSupported(did))?;
+            let &did_len = &cfg.did.get(&did).ok_or(Error::DidNotSupported(did))?;
 
             others.push(DIDData {
                 did,

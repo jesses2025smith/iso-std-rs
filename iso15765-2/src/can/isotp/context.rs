@@ -143,58 +143,62 @@ impl Context {
     }
 
     pub async fn write_waiting(&self, index: &mut usize) -> Result<(), Error> {
-        {
-            // this is not elegant enough
-            if let Some(ctx) = &*self.flow_ctrl.lock().await {
-                if ctx.block_size != 0 {
-                    if (*index + 1) == ctx.block_size as usize {
-                        *index = 0;
-                        self.state_append(State::WaitFlowCtrl).await;
-                    } else {
-                        *index += 1;
-                    }
+        let flow_ctrl = {
+            let guard = self.flow_ctrl.lock().await;
+            *guard
+        };
+
+        if let Some(ctx) = flow_ctrl {
+            if ctx.block_size != 0 {
+                if (*index + 1) == ctx.block_size as usize {
+                    *index = 0;
+                    self.state_append(State::WaitFlowCtrl).await;
+                } else {
+                    *index += 1;
                 }
-                sleep(Duration::from_micros(ctx.st_min_us() as u64)).await;
             }
-            // free `flow_ctrl` lock
+            sleep(Duration::from_micros(ctx.st_min_us() as u64)).await;
         }
 
         tokio::time::timeout(Duration::from_millis(Self::MAX_TIMEOUT_MS), async move {
             let start = Instant::now();
             loop {
-                if let Ok(state) = self.state.try_lock() {
-                    if state.contains(State::Error) {
-                        return Err(Error::DeviceError);
-                    }
-
-                    if state.contains(State::Sending) {
-                        if start.elapsed() > Duration::from_millis(TIMEOUT_AS_ISO15765_2 as u64) {
-                            return Err(Error::Timeout {
-                                value: TIMEOUT_AS_ISO15765_2 as u64,
-                                unit: "ms",
-                            });
-                        }
-                    } else if state.contains(State::WaitBusy) {
-                        let p2_star = self.get_ar().await;
-                        if start.elapsed() > Duration::from_millis(p2_star) {
-                            return Err(Error::Timeout {
-                                value: p2_star,
-                                unit: "ms",
-                            });
-                        }
-                    } else if state.contains(State::WaitFlowCtrl) {
-                        if start.elapsed() > Duration::from_millis(TIMEOUT_CR_ISO15765_2 as u64) {
-                            return Err(Error::Timeout {
-                                value: TIMEOUT_CR_ISO15765_2 as u64,
-                                unit: "ms",
-                            });
-                        }
-                    } else if *state == State::Idle {
-                        return Ok(());
-                    }
+                let state = if let Ok(state) = self.state.try_lock() {
+                    *state
                 } else {
                     // avoid dead loop
                     sleep(Duration::from_millis(1)).await;
+                    continue;
+                };
+
+                if state.contains(State::Error) {
+                    return Err(Error::DeviceError);
+                }
+
+                if state.contains(State::Sending) {
+                    if start.elapsed() > Duration::from_millis(TIMEOUT_AS_ISO15765_2 as u64) {
+                        return Err(Error::Timeout {
+                            value: TIMEOUT_AS_ISO15765_2 as u64,
+                            unit: "ms",
+                        });
+                    }
+                } else if state.contains(State::WaitBusy) {
+                    let p2_star = self.get_ar().await;
+                    if start.elapsed() > Duration::from_millis(p2_star) {
+                        return Err(Error::Timeout {
+                            value: p2_star,
+                            unit: "ms",
+                        });
+                    }
+                } else if state.contains(State::WaitFlowCtrl) {
+                    if start.elapsed() > Duration::from_millis(TIMEOUT_CR_ISO15765_2 as u64) {
+                        return Err(Error::Timeout {
+                            value: TIMEOUT_CR_ISO15765_2 as u64,
+                            unit: "ms",
+                        });
+                    }
+                } else if state == State::Idle {
+                    return Ok(());
                 }
             }
         })

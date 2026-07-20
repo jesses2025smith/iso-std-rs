@@ -4,13 +4,13 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::{
-        request, response, DataFormatIdentifier, DidConfig, ModeOfOperation, Service,
+        request, response, Configuration, DataFormatIdentifier, ModeOfOperation, Service,
     };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
         // D:\mapdata\europe\germany1.yxz
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode(
             "3801001E443A5C6D6170646174615C6575726F70655C6765726D616E79312E79787A1102C3507530",
@@ -45,9 +45,9 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
-        let source = hex::decode("780102C35011")?;
+        let source = hex::decode("780120C35011")?;
         let response = response::Response::try_from((&source, &cfg))?;
         let sub_func = response.sub_function().unwrap();
         assert_eq!(
@@ -61,19 +61,25 @@ mod tests {
                 max_block_len,
                 dfi,
             } => {
-                assert_eq!(lfi, 0x02);
+                assert_eq!(lfi, iso14229_1::LengthFormatIdentifier::new(0x02)?);
                 assert_eq!(max_block_len, 0xC350);
                 assert_eq!(dfi, DataFormatIdentifier::new(0x01, 0x01));
             }
             _ => panic!("Unexpected data: {:?}", data),
         }
 
+        let source = hex::decode("780120C35011")?;
+        let response = response::Response::try_from((&source, &cfg))?;
+        let data = response.data::<response::RequestFileTransfer>(&cfg)?;
+        let encoded: Vec<u8> = data.into();
+        assert_eq!(encoded, hex::decode("20C35011")?);
+
         Ok(())
     }
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F3812")?;
         let response = response::Response::try_from((&source, &cfg))?;

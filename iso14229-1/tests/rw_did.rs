@@ -2,11 +2,11 @@
 
 #[cfg(test)]
 mod tests {
-    use iso14229_1::{request, response, DIDData, DataIdentifier, DidConfig, Service};
+    use iso14229_1::{request, response, Configuration, DIDData, DataIdentifier, Service};
 
     #[test]
     fn test_read_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("22F190F180")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -47,9 +47,10 @@ mod tests {
 
     #[test]
     fn test_read_did_response() -> anyhow::Result<()> {
-        let mut cfg = DidConfig::default();
-        cfg.insert(DataIdentifier::VIN, 17);
-        cfg.insert(DataIdentifier::VehicleManufacturerSparePartNumber, 12);
+        let mut cfg = Configuration::default();
+        cfg.did.insert(DataIdentifier::VIN, 17);
+        cfg.did
+            .insert(DataIdentifier::VehicleManufacturerSparePartNumber, 12);
 
         let source = hex::decode(
             "62\
@@ -79,7 +80,7 @@ mod tests {
 
     #[test]
     fn test_read_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F2212")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -105,8 +106,8 @@ mod tests {
 
     #[test]
     fn test_write_request() -> anyhow::Result<()> {
-        let mut cfg = DidConfig::default();
-        cfg.insert(DataIdentifier::VIN, 17);
+        let mut cfg = Configuration::default();
+        cfg.did.insert(DataIdentifier::VIN, 17);
 
         let source = hex::decode("2ef1904441564443313030394e544c5036313338")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -125,7 +126,7 @@ mod tests {
 
     #[test]
     fn test_write_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("6EF190")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -138,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_write_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F2E12")?;
         let response = response::Response::try_from((&source, &cfg))?;

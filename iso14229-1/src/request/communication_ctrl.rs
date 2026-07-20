@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, CommunicationCtrlType, CommunicationType, DidConfig, RequestData, Service,
+    utils, CommunicationCtrlType, CommunicationType, Configuration, RequestData, Service,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -72,7 +72,7 @@ impl RequestData for CommunicationCtrl {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -98,9 +98,9 @@ impl RequestData for CommunicationCtrl {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for CommunicationCtrl {
+impl TryFrom<(&Request, &Configuration)> for CommunicationCtrl {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service;
         if service != Service::CommunicationCtrl || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));

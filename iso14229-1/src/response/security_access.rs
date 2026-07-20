@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    DidConfig, ResponseData, SecurityAccessLevel, Service,
+    Configuration, ResponseData, SecurityAccessLevel, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -35,7 +35,7 @@ impl ResponseData for SecurityAccess {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -58,9 +58,9 @@ impl ResponseData for SecurityAccess {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for SecurityAccess {
+impl TryFrom<(&Response, &Configuration)> for SecurityAccess {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service();
         if service != Service::SecurityAccess || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));

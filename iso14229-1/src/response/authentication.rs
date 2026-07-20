@@ -4,7 +4,7 @@ use crate::{
     error::Error,
     parse_algo_indicator, parse_not_nullable, parse_nullable,
     response::{Code, Response, SubFunction},
-    utils, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData, NullableData,
+    utils, AlgorithmIndicator, AuthenticationTask, Configuration, NotNullableData, NullableData,
     ResponseData, Service, ALGORITHM_INDICATOR_LENGTH,
 };
 use std::{collections::HashSet, sync::LazyLock};
@@ -81,7 +81,7 @@ impl From<AuthReturnValue> for u8 {
             AuthReturnValue::AuthenticationConfigurationAPCE => 0x02,
             AuthReturnValue::AuthenticationConfigurationACRWithAsymmetricCryptography => 0x03,
             AuthReturnValue::AuthenticationConfigurationACRWithSymmetricCryptography => 0x04,
-            AuthReturnValue::DeAuthenticationSuccessful => 0x11,
+            AuthReturnValue::DeAuthenticationSuccessful => 0x10,
             AuthReturnValue::CertificateVerifiedOrOwnershipVerificationNecessary => 0x11,
             AuthReturnValue::OwnershipVerifiedOrAuthenticationComplete => 0x12,
             AuthReturnValue::CertificateVerified => 0x13,
@@ -210,7 +210,7 @@ impl ResponseData for Authentication {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -258,9 +258,9 @@ impl ResponseData for Authentication {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for Authentication {
+impl TryFrom<(&Response, &Configuration)> for Authentication {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service;
         if service != Service::Authentication || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));

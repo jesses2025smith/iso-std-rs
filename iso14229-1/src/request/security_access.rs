@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    DidConfig, RequestData, SecurityAccessLevel, Service,
+    Configuration, RequestData, SecurityAccessLevel, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -21,7 +21,7 @@ impl RequestData for SecurityAccess {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -35,9 +35,9 @@ impl RequestData for SecurityAccess {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for SecurityAccess {
+impl TryFrom<(&Request, &Configuration)> for SecurityAccess {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::SecurityAccess || req.sub_func.is_none() {
             return Err(Error::ServiceError(service));

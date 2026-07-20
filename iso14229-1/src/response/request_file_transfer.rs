@@ -3,8 +3,8 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    utils, DataFormatIdentifier, DidConfig, LengthFormatIdentifier, ModeOfOperation, ResponseData,
-    Service,
+    utils, DataFormatIdentifier, Configuration, LengthFormatIdentifier, ModeOfOperation,
+    ResponseData, Service,
 };
 use std::{collections::HashSet, sync::LazyLock};
 
@@ -85,20 +85,20 @@ or 05 (ReadDir) this parameter shall not be included in the request.
 pub enum RequestFileTransfer {
     AddFile {
         // 1 modeOfOperation
-        lfi: u8,
+        lfi: LengthFormatIdentifier,
         max_block_len: u128,
         dfi: DataFormatIdentifier,
     },
     DeleteFile, // 2 modeOfOperation
     ReplaceFile {
         // 3 modeOfOperation
-        lfi: u8,
+        lfi: LengthFormatIdentifier,
         max_block_len: u128,
         dfi: DataFormatIdentifier,
     },
     ReadFile {
         // 4 modeOfOperation
-        lfi: u8,
+        lfi: LengthFormatIdentifier,
         max_block_len: u128,
         dfi: DataFormatIdentifier,
         filesize_or_dir_param_len: u16,
@@ -107,7 +107,7 @@ pub enum RequestFileTransfer {
     },
     ReadDir {
         // 5 modeOfOperation
-        lfi: u8,
+        lfi: LengthFormatIdentifier,
         max_block_len: u128,
         dfi: DataFormatIdentifier, // always 0x00
         filesize_or_dir_param_len: u16,
@@ -115,7 +115,7 @@ pub enum RequestFileTransfer {
     },
     ResumeFile {
         // 6 modeOfOperation
-        lfi: u8,
+        lfi: LengthFormatIdentifier,
         max_block_len: u128,
         dfi: DataFormatIdentifier,
         file_pos: [u8; 8],
@@ -131,8 +131,11 @@ impl From<RequestFileTransfer> for Vec<u8> {
                 max_block_len,
                 dfi,
             } => {
-                result.push(lfi);
-                result.extend(utils::u128_to_vec_fix(max_block_len));
+                result.push(lfi.into());
+                result.extend(utils::u128_to_vec(
+                    max_block_len,
+                    lfi.max_number_of_block_length(),
+                ));
                 result.push(dfi.into());
             }
             RequestFileTransfer::DeleteFile => {}
@@ -141,8 +144,11 @@ impl From<RequestFileTransfer> for Vec<u8> {
                 max_block_len,
                 dfi,
             } => {
-                result.push(lfi);
-                result.extend(utils::u128_to_vec_fix(max_block_len));
+                result.push(lfi.into());
+                result.extend(utils::u128_to_vec(
+                    max_block_len,
+                    lfi.max_number_of_block_length(),
+                ));
                 result.push(dfi.into());
             }
             RequestFileTransfer::ReadFile {
@@ -153,8 +159,11 @@ impl From<RequestFileTransfer> for Vec<u8> {
                 uncompressed_size_or_dir_len,
                 compressed_size,
             } => {
-                result.push(lfi);
-                result.extend(utils::u128_to_vec_fix(max_block_len));
+                result.push(lfi.into());
+                result.extend(utils::u128_to_vec(
+                    max_block_len,
+                    lfi.max_number_of_block_length(),
+                ));
                 result.push(dfi.into());
                 result.extend(filesize_or_dir_param_len.to_be_bytes());
                 result.extend(utils::u128_to_vec_fix(uncompressed_size_or_dir_len));
@@ -167,8 +176,11 @@ impl From<RequestFileTransfer> for Vec<u8> {
                 filesize_or_dir_param_len,
                 uncompressed_size_or_dir_len,
             } => {
-                result.push(lfi);
-                result.extend(utils::u128_to_vec_fix(max_block_len));
+                result.push(lfi.into());
+                result.extend(utils::u128_to_vec(
+                    max_block_len,
+                    lfi.max_number_of_block_length(),
+                ));
                 result.push(dfi.into());
                 result.extend(filesize_or_dir_param_len.to_be_bytes());
                 result.extend(utils::u128_to_vec_fix(uncompressed_size_or_dir_len));
@@ -179,8 +191,11 @@ impl From<RequestFileTransfer> for Vec<u8> {
                 dfi,
                 file_pos,
             } => {
-                result.push(lfi);
-                result.extend(utils::u128_to_vec_fix(max_block_len));
+                result.push(lfi.into());
+                result.extend(utils::u128_to_vec(
+                    max_block_len,
+                    lfi.max_number_of_block_length(),
+                ));
                 result.push(dfi.into());
                 result.extend(file_pos);
             }
@@ -194,7 +209,7 @@ impl ResponseData for RequestFileTransfer {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -221,9 +236,9 @@ impl ResponseData for RequestFileTransfer {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for RequestFileTransfer {
+impl TryFrom<(&Response, &Configuration)> for RequestFileTransfer {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service();
         if service != Service::RequestFileTransfer || resp.sub_func.is_none() {
             return Err(Error::ServiceError(service));
@@ -237,12 +252,17 @@ impl TryFrom<(&Response, &DidConfig)> for RequestFileTransfer {
             ModeOfOperation::AddFile => {
                 utils::data_length_check(data_len, offset + 1, false)?;
 
-                let lfi = data[offset];
+                let lfi = LengthFormatIdentifier::try_from(data[offset])?;
                 offset += 1;
-                utils::data_length_check(data_len, offset + lfi as usize + 1, false)?;
+                utils::data_length_check(
+                    data_len,
+                    offset + lfi.max_number_of_block_length() + 1,
+                    true,
+                )?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize]);
-                offset += lfi as usize;
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi.max_number_of_block_length()]);
+                offset += lfi.max_number_of_block_length();
                 let dfi = DataFormatIdentifier::from(data[offset]);
                 Ok(Self::AddFile {
                     lfi,
@@ -254,12 +274,17 @@ impl TryFrom<(&Response, &DidConfig)> for RequestFileTransfer {
             ModeOfOperation::ReplaceFile => {
                 utils::data_length_check(data_len, offset + 1, false)?;
 
-                let lfi = data[offset];
+                let lfi = LengthFormatIdentifier::try_from(data[offset])?;
                 offset += 1;
-                utils::data_length_check(data_len, offset + lfi as usize + 1, false)?;
+                utils::data_length_check(
+                    data_len,
+                    offset + lfi.max_number_of_block_length() + 1,
+                    true,
+                )?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize]);
-                offset += lfi as usize;
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi.max_number_of_block_length()]);
+                offset += lfi.max_number_of_block_length();
                 let dfi = DataFormatIdentifier::from(data[offset]);
                 Ok(Self::ReplaceFile {
                     lfi,
@@ -270,12 +295,17 @@ impl TryFrom<(&Response, &DidConfig)> for RequestFileTransfer {
             ModeOfOperation::ReadFile => {
                 utils::data_length_check(data_len, offset + 1, false)?;
 
-                let lfi = data[offset];
+                let lfi = LengthFormatIdentifier::try_from(data[offset])?;
                 offset += 1;
-                utils::data_length_check(data_len, offset + lfi as usize + 4, false)?;
+                utils::data_length_check(
+                    data_len,
+                    offset + lfi.max_number_of_block_length() + 4,
+                    false,
+                )?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize]);
-                offset += lfi as usize;
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi.max_number_of_block_length()]);
+                offset += lfi.max_number_of_block_length();
 
                 let dfi = DataFormatIdentifier::from(data[offset]);
                 offset += 1;
@@ -309,12 +339,17 @@ impl TryFrom<(&Response, &DidConfig)> for RequestFileTransfer {
             ModeOfOperation::ReadDir => {
                 utils::data_length_check(data_len, offset + 1, false)?;
 
-                let lfi = data[offset];
+                let lfi = LengthFormatIdentifier::try_from(data[offset])?;
                 offset += 1;
-                utils::data_length_check(data_len, offset + lfi as usize + 4, false)?;
+                utils::data_length_check(
+                    data_len,
+                    offset + lfi.max_number_of_block_length() + 4,
+                    false,
+                )?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize]);
-                offset += lfi as usize;
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi.max_number_of_block_length()]);
+                offset += lfi.max_number_of_block_length();
 
                 let dfi = data[offset];
                 offset += 1;
@@ -341,12 +376,17 @@ impl TryFrom<(&Response, &DidConfig)> for RequestFileTransfer {
             ModeOfOperation::ResumeFile => {
                 utils::data_length_check(data_len, offset + 1, false)?;
 
-                let lfi = data[offset];
+                let lfi = LengthFormatIdentifier::try_from(data[offset])?;
                 offset += 1;
-                utils::data_length_check(data_len, offset + lfi as usize + 9, false)?;
+                utils::data_length_check(
+                    data_len,
+                    offset + lfi.max_number_of_block_length() + 9,
+                    true,
+                )?;
 
-                let max_block_len = utils::slice_to_u128(&data[offset..offset + lfi as usize]);
-                offset += lfi as usize;
+                let max_block_len =
+                    utils::slice_to_u128(&data[offset..offset + lfi.max_number_of_block_length()]);
+                offset += lfi.max_number_of_block_length();
                 let dfi = DataFormatIdentifier::from(data[offset]);
                 offset += 1;
                 let file_pos = <[u8; 8]>::try_from(&data[offset..])

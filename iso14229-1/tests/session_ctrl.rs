@@ -3,12 +3,12 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::{
-        request, response, DidConfig, Iso14229Error, Service, SessionType, P2_STAR_MAX,
+        request, response, Configuration, Iso14229Error, Service, SessionType, P2_STAR_MAX,
     };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("1001")?;
 
@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("5003003201f4")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -58,7 +58,7 @@ mod tests {
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F1012")?;
         let response = response::Response::try_from((&source, &cfg))?;

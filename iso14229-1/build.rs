@@ -12,7 +12,7 @@ fn main() {
         .count() {
         1 => {},
         _ => panic!(
-            "***`{}`*** at most one of the features `std2006` `std2013` or `std2016` can be enabled at a time.",
+            "***`{}`*** at most one of the features `std2006` `std2013` or `std2020` can be enabled at a time.",
             crate_name
         )
     }

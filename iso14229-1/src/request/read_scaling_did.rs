@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, DataIdentifier, DidConfig, RequestData, Service,
+    utils, DataIdentifier, Configuration, RequestData, Service,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -20,7 +20,7 @@ impl RequestData for ReadScalingDID {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -38,9 +38,9 @@ impl RequestData for ReadScalingDID {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for ReadScalingDID {
+impl TryFrom<(&Request, &Configuration)> for ReadScalingDID {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<ReadScalingDID, Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<ReadScalingDID, Error> {
         let service = req.service();
         if service != Service::ReadScalingDID || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));

@@ -22,7 +22,8 @@ rsutil::enum_extend!(
     pub enum ResponseOnEventType {
         StopResponseOnEvent = 0x00,
         OnDTCStatusChange = 0x01,
-        OnChangeOfDataIdentifier = 0x02,
+        OnTimerInterrupt = 0x02,
+        OnChangeOfDataIdentifier = 0x03,
         ReportActivatedEvents = 0x04,
         StartResponseOnEvent = 0x05,
         ClearResponseOnEvent = 0x06,
@@ -70,5 +71,16 @@ impl From<EventType> for u8 {
         }
 
         result
+    }
+}
+
+impl TryFrom<u8> for EventType {
+    type Error = Error;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Ok(Self {
+            store_event: (value & POSITIVE_OFFSET) == POSITIVE_OFFSET,
+            event_type: ResponseOnEventType::try_from(value & 0x3F)?,
+        })
     }
 }

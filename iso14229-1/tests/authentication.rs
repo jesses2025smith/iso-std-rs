@@ -5,13 +5,13 @@
 #[cfg(test)]
 mod tests {
     use iso14229_1::{
-        request, response, AlgorithmIndicator, AuthenticationTask, DidConfig, NotNullableData,
+        request, response, AlgorithmIndicator, AuthenticationTask, Configuration, NotNullableData,
         NullableData, Service,
     };
 
     #[test]
     fn test_request() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("2900")?;
         let request = request::Request::try_from((&source, &cfg))?;
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn test_response() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("690000")?;
         let response = response::Response::try_from((&source, &cfg))?;
@@ -363,12 +363,17 @@ mod tests {
             _ => panic!("Unexpected data"),
         }
 
+        let encoded = Vec::<u8>::from(response::Authentication::DeAuthenticate(
+            response::AuthReturnValue::DeAuthenticationSuccessful,
+        ));
+        assert_eq!(encoded, vec![0x10]);
+
         Ok(())
     }
 
     #[test]
     fn test_nrc() -> anyhow::Result<()> {
-        let cfg = DidConfig::default();
+        let cfg = Configuration::default();
 
         let source = hex::decode("7F2912")?;
         let response = response::Response::try_from((&source, &cfg))?;

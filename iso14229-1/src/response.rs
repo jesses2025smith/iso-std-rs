@@ -76,55 +76,9 @@ mod code;
 pub use code::Code;
 
 use crate::{
-    constant::POSITIVE_OFFSET, error::Error, response, utils, DidConfig, ECUResetType,
+    constant::POSITIVE_OFFSET, error::Error, response, utils, Configuration, ECUResetType,
     ResponseData, Service,
 };
-
-// #[cfg(any(feature = "std2006", feature = "std2013"))]
-// pub(crate) use crate::response::AccessTimingParam::ACCESS_TIMING_PARAM_NEGATIVES;
-// #[cfg(any(feature = "std2020"))]
-// pub(crate) use crate::response::Authentication::AUTH_NEGATIVES;
-// pub(crate) use crate::response::ClearDiagnosticInfo::CLEAR_DIAGNOSTIC_INFO_NEGATIVES;
-// pub(crate) use crate::response::CommunicationCtrl::COMMUNICATION_CTRL_NEGATIVES;
-// pub(crate) use crate::response::CtrlDTCSetting::CTRL_DTC_SETTING_NEGATIVES;
-// pub(crate) use crate::response::DynamicalDefineDID::DYNAMICAL_DID_NEGATIVES;
-// pub(crate) use crate::response::ECUReset::ECU_RESET_NEGATIVES;
-// pub(crate) use crate::response::IOCtrl::IO_CTRL_NEGATIVES;
-// pub(crate) use crate::response::LinkCtrl::LINK_CTRL_NEGATIVES;
-// pub(crate) use crate::response::ReadDataByPeriodId::READ_DATA_BY_PERIOD_ID_NEGATIVES;
-// pub(crate) use crate::response::ReadDID::READ_DID_NEGATIVES;
-// pub(crate) use crate::response::ReadDTCInfo::READ_DTC_INFO_NEGATIVES;
-// pub(crate) use crate::response::ReadMemByAddr::READ_MEM_BY_ADDR_NEGATIVES;
-// pub(crate) use crate::response::ReadScalingDID::READ_SCALING_DID_NEGATIVES;
-// pub(crate) use crate::response::RequestDownload::REQUEST_DOWNLOAD_NEGATIVES;
-// #[cfg(any(feature = "std2013", feature = "std2020"))]
-// pub(crate) use crate:response::RequestFileTransfer::REQUEST_FILE_TRANSFER_NEGATIVES;
-// pub(crate) use crate:response::RequestTransferExit::REQUEST_TRANSFER_EXIT_NEGATIVES;
-// pub(crate) use crate:response::RequestUpload::REQUEST_UPLOAD_NEGATIVES;
-// pub(crate) use crate:response::ResponseOnEvent::RESPONSE_ON_EVENT_NEGATIVES;
-// pub(crate) use crate:response::RoutineCtrl::ROUTINE_CTRL_NEGATIVES;
-// pub(crate) use crate:response::SecuredDataTrans::SECURED_DATA_TRANS_NEGATIVES;
-// pub(crate) use crate:response::SecurityAccess::SECURITY_ACCESS_NEGATIVES;
-// pub(crate) use crate:response::SessionCtrl::SESSION_CTRL_NEGATIVES;
-// pub(crate) use crate:response::TesterPresent::TESTER_PRESENT_NEGATIVES;
-// pub(crate) use crate:response::TransferData::TRANSFER_DATA_NEGATIVES;
-// pub(crate) use crate:response::WriteDID::WRITE_DID_NEGATIVES;
-// pub(crate) use crate:response::WriteMemByAddr::WRITE_MEM_BY_ADDR_NEGATIVES;
-//
-// enum_to_vec! (
-//     /// Defined by ISO-15764. Offset of 0x38 is defined within UDS standard (ISO-14229)
-//     pub enum ISO15764 {
-//         GeneralSecurityViolation = Code::SecureDataTransmissionRequired as u8 + 0,
-//         SecuredModeRequested = Code::SecureDataTransmissionRequired as u8 + 1,
-//         InsufficientProtection = Code::SecureDataTransmissionRequired as u8 + 2,
-//         TerminationWithSignatureRequested = Code::SecureDataTransmissionRequired as u8 + 3,
-//         AccessDenied = Code::SecureDataTransmissionRequired as u8 + 4,
-//         VersionNotSupported = Code::SecureDataTransmissionRequired as u8 + 5,
-//         SecuredLinkNotSupported = Code::SecureDataTransmissionRequired as u8 + 6,
-//         CertificateNotAvailable = Code::SecureDataTransmissionRequired as u8 + 7,
-//         AuditTrailInformationNotAvailable = Code::SecureDataTransmissionRequired as u8 + 8,
-//     }, u8, Error, InvalidParam
-// );
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct SubFunction(u8);
@@ -165,7 +119,7 @@ impl Response {
         service: Service,
         sub_func: Option<u8>,
         data: T,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Self, Error> {
         match service {
             Service::SessionCtrl => SessionCtrl::new_response(data, sub_func, cfg),
@@ -271,7 +225,7 @@ impl Response {
     }
 
     #[inline]
-    pub fn data<T>(&self, cfg: &DidConfig) -> Result<T, Error>
+    pub fn data<T>(&self, cfg: &Configuration) -> Result<T, Error>
     where
         T: ResponseData,
     {
@@ -282,7 +236,7 @@ impl Response {
     fn new_sub_func<T: AsRef<[u8]>>(
         data: T,
         service: Service,
-        cfg: &DidConfig,
+        cfg: &Configuration,
     ) -> Result<Self, Error> {
         let data = data.as_ref();
         let data_len = data.len();
@@ -320,9 +274,9 @@ impl From<Response> for Vec<u8> {
     }
 }
 
-impl<T: AsRef<[u8]>> TryFrom<(Service, T, &DidConfig)> for Response {
+impl<T: AsRef<[u8]>> TryFrom<(Service, T, &Configuration)> for Response {
     type Error = Error;
-    fn try_from((service, data, cfg): (Service, T, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((service, data, cfg): (Service, T, &Configuration)) -> Result<Self, Self::Error> {
         match service {
             Service::SessionCtrl
             | Service::ECUReset
@@ -375,16 +329,16 @@ impl<T: AsRef<[u8]>> TryFrom<(Service, T, &DidConfig)> for Response {
     }
 }
 
-impl<T: AsRef<[u8]>> TryFrom<(T, &DidConfig)> for Response {
+impl<T: AsRef<[u8]>> TryFrom<(T, &Configuration)> for Response {
     type Error = Error;
-    fn try_from((data, cfg): (T, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((data, cfg): (T, &Configuration)) -> Result<Self, Self::Error> {
         let data = data.as_ref();
         let data_len = data.len();
         utils::data_length_check(data_len, 1, false)?;
 
         let mut offset = 0;
         let service = data[offset];
-        let service = if service == Service::NRC.into() {
+        let service = if service == Service::NRC as u8 {
             Ok(Service::NRC)
         } else {
             Service::try_from(service & !POSITIVE_OFFSET)

@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, AddressAndLengthFormatIdentifier, DidConfig, MemoryLocation, RequestData, Service,
+    utils, AddressAndLengthFormatIdentifier, Configuration, MemoryLocation, RequestData, Service,
 };
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -57,7 +57,7 @@ impl RequestData for WriteMemByAddr {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -75,9 +75,9 @@ impl RequestData for WriteMemByAddr {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for WriteMemByAddr {
+impl TryFrom<(&Request, &Configuration)> for WriteMemByAddr {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::WriteMemByAddr || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));

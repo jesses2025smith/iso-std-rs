@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     request::{Request, SubFunction},
-    utils, DataFormatIdentifier, DidConfig, MemoryLocation, RequestData, Service,
+    utils, DataFormatIdentifier, Configuration, MemoryLocation, RequestData, Service,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -25,7 +25,7 @@ impl RequestData for RequestUpload {
     fn new_request<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Request, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -43,9 +43,9 @@ impl RequestData for RequestUpload {
     }
 }
 
-impl TryFrom<(&Request, &DidConfig)> for RequestUpload {
+impl TryFrom<(&Request, &Configuration)> for RequestUpload {
     type Error = Error;
-    fn try_from((req, _): (&Request, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((req, _): (&Request, &Configuration)) -> Result<Self, Self::Error> {
         let service = req.service();
         if service != Service::RequestUpload || req.sub_func.is_some() {
             return Err(Error::ServiceError(service));

@@ -3,7 +3,7 @@
 use crate::{
     error::Error,
     response::{Code, Response, SubFunction},
-    utils, AdministrativeParameter, DidConfig, ResponseData, Service,
+    utils, AdministrativeParameter, Configuration, ResponseData, Service,
     SignatureEncryptionCalculation,
 };
 use std::{collections::HashSet, sync::LazyLock};
@@ -155,7 +155,7 @@ impl ResponseData for SecuredDataTrans {
     fn new_response<T: AsRef<[u8]>>(
         data: T,
         sub_func: Option<u8>,
-        _: &DidConfig,
+        _: &Configuration,
     ) -> Result<Response, Error> {
         let data = data.as_ref();
         match sub_func {
@@ -174,9 +174,9 @@ impl ResponseData for SecuredDataTrans {
     }
 }
 
-impl TryFrom<(&Response, &DidConfig)> for SecuredDataTrans {
+impl TryFrom<(&Response, &Configuration)> for SecuredDataTrans {
     type Error = Error;
-    fn try_from((resp, _): (&Response, &DidConfig)) -> Result<Self, Self::Error> {
+    fn try_from((resp, _): (&Response, &Configuration)) -> Result<Self, Self::Error> {
         let service = resp.service;
         if service != Service::SecuredDataTrans || resp.sub_func.is_some() {
             return Err(Error::ServiceError(service));
@@ -201,7 +201,7 @@ impl TryFrom<(&Response, &DidConfig)> for SecuredDataTrans {
 
         let code = data[offset];
         offset += 1;
-        if code == Service::NRC.into() {
+        if code == Service::NRC as u8 {
             utils::data_length_check(data_len, offset + signature_len as usize + 2, false)?;
 
             let service = data[offset];
